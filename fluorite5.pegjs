@@ -54,12 +54,12 @@ Factor
   / Dice
   / Integer
 
-Integer "integer"
-  = [0-9]+ { return parseInt(text(), 10); }
-
 Dice
   = count:Integer "d" faces:Integer { return dice(count, faces); }
   / count:Integer "d" { return dice(count, 6); }
 
 _ "whitespace"
+Integer "Integer"
+  = [0-9]+ { return parseInt(text(), 10); }
+
   = [ \t\n\r]*
