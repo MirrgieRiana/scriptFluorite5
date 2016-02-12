@@ -38,7 +38,51 @@ Text
   = [^\\]* { return text(); }
 
 Formula
-  = head:Factor tail:(_ ("+" / "-") _ Factor)* {
+  = Or
+
+Or
+  = head:And tail:(_ ("||") _ And)* {
+      var result = head, i;
+
+      for (i = 0; i < tail.length; i++) {
+        if (tail[i][1] === "||") { result = result || tail[i][3]; }
+      }
+
+      return result;
+    }
+
+And
+  = head:Compare tail:(_ ("&&") _ Compare)* {
+      var result = head, i;
+
+      for (i = 0; i < tail.length; i++) {
+        if (tail[i][1] === "&&") { result = result && tail[i][3]; }
+      }
+
+      return result;
+    }
+
+Compare
+  = head:Add tail:(_ (">=" / ">" / "<=" / "<" / "!=" / "==") _ Add)* {
+      var left = head, i;
+      if (tail.length == 0) return head;
+
+      for (i = 0; i < tail.length; i++) {
+        if (tail[i][1] === ">") if (!(left > tail[i][3])) return false;
+        if (tail[i][1] === ">=") if (!(left >= tail[i][3])) return false;
+        if (tail[i][1] === "<") if (!(left < tail[i][3])) return false;
+        if (tail[i][1] === "<=") if (!(left <= tail[i][3])) return false;
+        if (tail[i][1] === "==") if (!(left == tail[i][3])) return false;
+        if (tail[i][1] === "!=") if (!(left != tail[i][3])) return false;
+
+        left = tail[i][3];
+      }
+
+      return true;
+    }
+
+Add
+  = head:Term tail:(_ ("+" / "-") _ Term)* {
       var result = head, i;
 
       for (i = 0; i < tail.length; i++) {
@@ -46,6 +90,41 @@ Formula
         if (tail[i][1] === "-") { result -= tail[i][3]; }
       }
 
+      return result;
+    }
+
+Term
+  = head:Power tail:(_ ("*" / "/") _ Power)* {
+      var result = head, i;
+
+      for (i = 0; i < tail.length; i++) {
+        if (tail[i][1] === "*") { result *= tail[i][3]; }
+        if (tail[i][1] === "/") { result /= tail[i][3]; }
+      }
+
+      return result;
+    }
+
+Power
+  = head:(Signed _ ("^") _)* tail:Signed {
+      var result = tail, i;
+
+      for (i = head.length - 1; i >= 0; i--) {
+        if (head[i][2] === "^") { result = Math.pow(head[i][0], result); }
+      }
+
+      return result;
+    }
+
+Signed
+  = head:(("+" / "-") _)* tail:Factor {
+      var result = tail, i;
+      
+      for (i = head.length - 1; i >= 0; i--) {
+        if (head[i][0] === "+") { }
+        if (head[i][0] === "-") { result = -result; }
+      }
+      
       return result;
     }
 
