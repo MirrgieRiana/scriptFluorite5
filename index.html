@@ -14,7 +14,9 @@
 					url: "fluorite5.pegjs",
 					dataType: "text",
 					success: function(data) {
-						parser = PEG.buildParser(data);
+						parser = PEG.buildParser(data, {
+							cache: true,
+						});
 						$('#src').keyup(changed);
 						if ($("#src").val() === "") $("#src").val("Damage: \\2d+4\\");
 						changed();
