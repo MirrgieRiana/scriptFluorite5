@@ -16,7 +16,7 @@
 					success: function(data) {
 						parser = PEG.buildParser(data);
 						$('#src').keyup(changed);
-						$("#src").val("Damage: \\2d+4\\");
+						if ($("#src").val() === "") $("#src").val("Damage: \\2d+4\\");
 						changed();
 					},
 					error: function(XMLHttpRequest, textStatus, errorThrown) {
