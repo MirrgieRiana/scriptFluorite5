@@ -52,6 +52,7 @@ Formula
 Factor
   = "(" _ main:Formula _ ")" { return main; }
   / Dice
+  / Float
   / Integer
 
 Dice
@@ -59,6 +60,10 @@ Dice
   / count:Integer "d" { return dice(count, 6); }
 
 _ "whitespace"
+Float "Float"
+  = [0-9]+ ("." [0-9]+)? [eE] [+-]? [0-9]+ { return parseFloat(text()); }
+  / [0-9]+ "." [0-9]+ { return parseFloat(text()); }
+
 Integer "Integer"
   = [0-9]+ { return parseInt(text(), 10); }
 
