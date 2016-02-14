@@ -23,7 +23,7 @@ Expression
   = Message
 
 Message
-  = head:Text tail:("\\" _ Formula _ "\\" Text)* {
+  = head:MessageText tail:("\\" _ MessageFormula _ "\\" MessageText)* {
       var result = [head], i;
 
       for (i = 0; i < tail.length; i++) {
@@ -34,8 +34,11 @@ Message
       return [result, dices];
     }
 
-Text
+MessageText
   = [^\\]* { return text(); }
+
+MessageFormula
+  = Formula
 
 Formula
   = Vector
