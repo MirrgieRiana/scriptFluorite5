@@ -38,7 +38,19 @@ Text
   = [^\\]* { return text(); }
 
 Formula
-  = Or
+  = Vector
+
+Vector
+  = head:Or tail:(_ (",") _ Or)* {
+      if (tail.length == 0) return head;
+      var result = [head], i;
+
+      for (i = 0; i < tail.length; i++) {
+        result.push(tail[i][3]);
+      }
+
+      return result;
+    }
 
 Or
   = head:And tail:(_ ("||") _ And)* {
