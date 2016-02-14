@@ -23,7 +23,7 @@ Expression
   = Message
 
 Message
-  = head:Text tail:("\\" _ Formula _ "\\" Text)* {
+  = head:MessageText tail:("\\" _ MessageFormula _ "\\" MessageText)* {
       var result = [head], i;
 
       for (i = 0; i < tail.length; i++) {
@@ -34,10 +34,10 @@ Message
       return [result, dices];
     }
 
-Text
+MessageText
   = [^\\]* { return text(); }
 
-Formula
+MessageFormula
   = Vector
 
 Vector
@@ -141,7 +141,7 @@ Signed
     }
 
 Factor
-  = "(" _ main:Formula _ ")" { return main; }
+  = "(" _ main:MessageFormula _ ")" { return main; }
   / Dice
   / Float
   / Integer
