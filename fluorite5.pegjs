@@ -19,26 +19,48 @@
   }
 }
 
+ExpressionPlain
+  = main:Expression { return main.plain(); }
+
 Expression
   = Message
 
 Message
   = head:MessageText tail:("\\" _ MessageFormula _ "\\" MessageText)* {
-      var result = [head], i;
+      return {
+        plain: function() {
+          var result = [head], i;
 
-      for (i = 0; i < tail.length; i++) {
-        result.push(tail[i][2]);
-        result.push(tail[i][5]);
-      }
+          for (i = 0; i < tail.length; i++) {
+            result.push(tail[i][2][1]);
+            result.push(tail[i][5]);
+          }
 
-      return [result, dices];
+          return result.join("");
+        },
+        data: function() {
+          var result = [head], i;
+
+          for (i = 0; i < tail.length; i++) {
+            result.push(tail[i][2]);
+            result.push(tail[i][5]);
+          }
+
+          return {
+            result: result,
+            dices: dices,
+          };
+        },
+      };
     }
 
 MessageText
   = [^\\]* { return text(); }
 
 MessageFormula
-  = Formula
+  = main:Formula {
+      return [text(), main];
+    }
 
 Formula
   = Vector

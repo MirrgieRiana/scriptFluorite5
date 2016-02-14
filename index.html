@@ -1,11 +1,67 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<meta charset="UTF-8">
 		<link rel="stylesheet" href="main.css">
 		<script src="jquery-2.2.0.min.js"></script>
 		<script src="peg-0.9.0.min.js"></script>
 		<script src="jsDump.js"></script>
+		<script src="util.js"></script>
 		<script>
+			
+			var form = (function() {
+				
+				function getDestBody()
+				{
+					return $("#dest").contents().find("body");
+				}
+				
+				var views = ["html", "dump", "plain"];
+				
+				return {
+					setDestView: function(view) {
+						views.map(function(view2) {
+							getDestBody().toggleClass(view2, view === view2)
+						});
+					},
+					setDestHTML: function(html) {
+						getDestBody().empty();
+						getDestBody().html(html);
+					},
+					setDestDom: function(dom) {
+						getDestBody().empty();
+						getDestBody().append(dom);
+					},
+					setDestText: function(text) {
+						getDestBody().empty();
+						getDestBody().text(text);
+					},
+					getSrc: function() {
+						return $("#src").val();
+					},
+					setSrc: function(text) {
+						return $("#src").val(text);
+					},
+					getView: function() {
+						return $("input[name='view']:checked").val();
+					},
+					setView: function(view) {
+						$("input[name='view'][value='" + view + "']").prop('checked', true);
+					},
+					initialize: function(changed) {
+						// events
+						$("input[name='view']:radio").change(changed);
+						$("#src").keyup(changed);
+						$("#dest").load(changed);
+						
+						// default values
+						if (this.getSrc() === "") this.setSrc("Damage: \\2d+4\\");
+						if (this.getView() === undefined) this.setView("html");
+						$("#dest").attr("src", "dest.html");
+					},
+				};
+			})();
+			
 			var parser;
 			
 			$(function() {
@@ -20,29 +76,92 @@
 								"Expression",
 							],
 						});
-						$('#src').keyup(changed);
-						if ($("#src").val() === "") $("#src").val("Damage: \\2d+4\\");
-						changed();
+						
+						form.initialize(changed);
 					},
 					error: function(XMLHttpRequest, textStatus, errorThrown) {
-						$("#src").val("Status: " + textStatus);
+						form.setSrc("Status: " + textStatus);
 					},
 				})
 			});
 			
 			var src;
+			var view;
+			
 			function changed()
 			{
-				var src2 = $("#src").val();
-				if (src === src2) return;
+				var src2 = form.getSrc();
+				var view2 = form.getView();
+				var res;
+				if (src === src2 && view === view2) return;
 				
 				src = src2;
+				view = view2;
+				
 				try {
-					$("#dest").val(jsDump.parse(parser.parse(src, {
+					res = parser.parse(src, {
 						startRule: "Expression",
-					})));
+					});
 				} catch(e) {
-					$("#dest").val(e);
+					form.setDestView("plain");
+					form.setDestText(e);
+					return;
+				}
+				
+				form.setDestView(view);
+				if (view === "html") {
+					var data = res.data();
+					var html = [convHtml(data.result[0])];
+
+					var buttonScript = 'href="javascript: void(0);" onclick="dicebot_script_openclose(this)"';
+					var buttonReport = 'href="javascript: void(0);" onclick="dicebot_report_openclose(this)"';
+					for (var i = 1; i < data.result.length; i += 2) {
+						html.push('<span class="dicebot_container">');
+						{
+							html.push('<span class="dicebot_script_container">');
+							{
+								html.push('<span class="dicebot_script">');
+								{
+									html.push('<a ' + buttonScript + '>');
+									html.push(convHtml(data.result[i][0]));
+									html.push("</a>");
+								}
+								html.push("</span>");
+
+								html.push('<span class="dicebot_report">');
+								{
+									var report = data.dices.map(function(item) {
+										return "[" + item.join(", ") + "]";
+									}).join(", ");
+
+									html.push('<a ' + buttonReport + '>');
+									html.push(report);
+									html.push('</a>');
+								}
+								html.push("</span>");
+
+								html.push('<a class="dicebot_equal" ' + buttonReport + '>=</a>');
+							}
+							html.push("</span>");
+
+							html.push('<span class="dicebot_result">');
+							{
+								html.push('<a ' + buttonScript + '>');
+								html.push(convHtml(data.result[i][1]));
+								html.push("</a>");
+							}
+							html.push("</span>");
+						}
+						html.push("</span>");
+
+						html.push(convHtml(data.result[i + 1]));
+					}
+
+					form.setDestHTML(html.join(""));
+				} else if (view === "plain") {
+					form.setDestText(res.plain());
+				} else if (view === "dump") {
+					form.setDestText(jsDump.parse(res.data()));
 				}
 			}
 			
@@ -51,9 +170,18 @@
 	<body>
 		<div id="container">
 			<table>
+				<col>
+				<col>
 				<tr id="tr_textarea">
-					<td><textarea id="src"></textarea></td>
-					<td><textarea id="dest"></textarea></td>
+					<td rowspan="2"><textarea id="src"></textarea></td>
+					<td><iframe id="dest"></iframe></td>
+				</tr>
+				<tr>
+					<td>
+						<input type="radio" name="view" value="html">HTML
+						<input type="radio" name="view" value="plain">Plain
+						<input type="radio" name="view" value="dump">Dump
+					</td>
 				</tr>
 				<tr>
 					<td colspan="2">
