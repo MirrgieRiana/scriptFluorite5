@@ -167,7 +167,7 @@ Signed
     }
 
 Factor
-  = "(" _ main:Formula _ ")" { return main; }
+  = "(" _ main:MessageFormula _ ")" { return main; }
   / Dice
   / Float
   / Integer
