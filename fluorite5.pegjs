@@ -5,7 +5,7 @@
 
 {
   var dices = [];
-  
+
   function dice(count, faces)
   {
     var t = 0, i, value, values = [];
@@ -17,6 +17,7 @@
     dices.push(values);
     return t;
   }
+
 }
 
 ExpressionPlain
