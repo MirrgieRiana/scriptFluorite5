@@ -16,6 +16,9 @@
 					success: function(data) {
 						parser = PEG.buildParser(data, {
 							cache: true,
+							allowedStartRules: [
+								"Expression",
+							],
 						});
 						$('#src').keyup(changed);
 						if ($("#src").val() === "") $("#src").val("Damage: \\2d+4\\");
@@ -35,7 +38,9 @@
 				
 				src = src2;
 				try {
-					$("#dest").val(jsDump.parse(parser.parse(src)));
+					$("#dest").val(jsDump.parse(parser.parse(src, {
+						startRule: "Expression",
+					})));
 				} catch(e) {
 					$("#dest").val(e);
 				}
