@@ -133,6 +133,7 @@ Factor
   / Dice
   / Float
   / Integer
+  / Identifier
 
 Dice
   = count:Integer "d" faces:Integer { return dice(count, faces); }
@@ -144,6 +145,9 @@ Float "Float"
 
 Integer "Integer"
   = [0-9]+ { return parseInt(text(), 10); }
+
+Identifier "Identifier"
+  = [a-zA-Z]+ { return text(); }
 
 _ "Blanks"
   = [ \t\n\r]*
