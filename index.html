@@ -74,6 +74,7 @@
 							cache: true,
 							allowedStartRules: [
 								"Expression",
+								"ExpressionPlain",
 							],
 						});
 						
@@ -99,9 +100,19 @@
 				view = view2;
 				
 				try {
-					res = parser.parse(src, {
-						startRule: "Expression",
-					});
+					if (view === "html") {
+						res = parser.parse(src, {
+							startRule: "Expression",
+						});
+					} else if (view === "plain") {
+						res = parser.parse(src, {
+							startRule: "ExpressionPlain",
+						});
+					} else if (view === "dump") {
+						res = parser.parse(src, {
+							startRule: "Expression",
+						});
+					}
 				} catch(e) {
 					form.setDestView("plain");
 					form.setDestText(e);
@@ -110,59 +121,63 @@
 				
 				form.setDestView(view);
 				if (view === "html") {
-					var data = res.data();
-					var html = [convHtml(data.result[0])];
+					form.setDestHTML(buildHTML(res));
+				} else if (view === "plain") {
+					form.setDestText(res);
+				} else if (view === "dump") {
+					form.setDestText(jsDump.parse(res));
+				}
+			}
 
-					var buttonScript = 'href="javascript: void(0);" onclick="dicebot_script_openclose(this)"';
-					var buttonReport = 'href="javascript: void(0);" onclick="dicebot_report_openclose(this)"';
-					for (var i = 1; i < data.result.length; i += 2) {
-						html.push('<span class="dicebot_container">');
+			function buildHTML(res)
+			{
+				var html = [convHtml(res.result[0])];
+
+				var buttonScript = 'href="javascript: void(0);" onclick="dicebot_script_openclose(this)"';
+				var buttonReport = 'href="javascript: void(0);" onclick="dicebot_report_openclose(this)"';
+				for (var i = 1; i < res.result.length; i += 2) {
+					html.push('<span class="dicebot_container">');
+					{
+						html.push('<span class="dicebot_script_container">');
 						{
-							html.push('<span class="dicebot_script_container">');
-							{
-								html.push('<span class="dicebot_script">');
-								{
-									html.push('<a ' + buttonScript + '>');
-									html.push(convHtml(data.result[i][0]));
-									html.push("</a>");
-								}
-								html.push("</span>");
-
-								html.push('<span class="dicebot_report">');
-								{
-									var report = data.dices.map(function(item) {
-										return "[" + item.join(", ") + "]";
-									}).join(", ");
-
-									html.push('<a ' + buttonReport + '>');
-									html.push(report);
-									html.push('</a>');
-								}
-								html.push("</span>");
-
-								html.push('<a class="dicebot_equal" ' + buttonReport + '>=</a>');
-							}
-							html.push("</span>");
-
-							html.push('<span class="dicebot_result">');
+							html.push('<span class="dicebot_script">');
 							{
 								html.push('<a ' + buttonScript + '>');
-								html.push(convHtml(data.result[i][1]));
+								html.push(convHtml(res.result[i][0]));
 								html.push("</a>");
 							}
 							html.push("</span>");
+
+							html.push('<span class="dicebot_report">');
+							{
+								var report = res.dices.map(function(item) {
+									return "[" + item.join(", ") + "]";
+								}).join(", ");
+
+								html.push('<a ' + buttonReport + '>');
+								html.push(report);
+								html.push('</a>');
+							}
+							html.push("</span>");
+
+							html.push('<a class="dicebot_equal" ' + buttonReport + '>=</a>');
 						}
 						html.push("</span>");
 
-						html.push(convHtml(data.result[i + 1]));
+						html.push('<span class="dicebot_result">');
+						{
+							html.push('<a ' + buttonScript + '>');
+							html.push(convHtml(res.result[i][1]));
+							html.push("</a>");
+						}
+						html.push("</span>");
 					}
+					html.push("</span>");
 
-					form.setDestHTML(html.join(""));
-				} else if (view === "plain") {
-					form.setDestText(res.plain());
-				} else if (view === "dump") {
-					form.setDestText(jsDump.parse(res.data()));
+					html.push(convHtml(res.result[i + 1]));
 				}
+
+				return html.join("");
 			}
 			
 		</script>

@@ -18,40 +18,47 @@
     return t;
   }
 
+  function createCodeOfOperator(operator, codes)
+  {
+    return function(context, args) {
+      if (context === "get") {
+        if (operator === "operatorPlus") return codes[0]("get", []) + codes[1]("get", []);
+        return "Unknown operator: " + operator;
+      } else {
+        throw "Unknown context: " + context;
+      }
+    };
+  }
+
 }
 
 ExpressionPlain
-  = main:Expression { return main.plain(); }
+  = main:Expression {
+      var strings = [main.result[0]], i;
+
+      for (i = 1; i < main.result.length; i += 2) {
+        strings.push(main.result[i][1]);
+        strings.push(main.result[i + 1]);
+      }
+
+      return strings.join("");
+    }
 
 Expression
   = Message
 
 Message
   = head:MessageText tail:("\\" _ MessageFormula _ "\\" MessageText)* {
+      var result = [head], i;
+
+      for (i = 0; i < tail.length; i++) {
+        result.push(tail[i][2]);
+        result.push(tail[i][5]);
+      }
+
       return {
-        plain: function() {
-          var result = [head], i;
-
-          for (i = 0; i < tail.length; i++) {
-            result.push(tail[i][2][1]);
-            result.push(tail[i][5]);
-          }
-
-          return result.join("");
-        },
-        data: function() {
-          var result = [head], i;
-
-          for (i = 0; i < tail.length; i++) {
-            result.push(tail[i][2]);
-            result.push(tail[i][5]);
-          }
-
-          return {
-            result: result,
-            dices: dices,
-          };
-        },
+        result: result,
+        dices: dices,
       };
     }
 
