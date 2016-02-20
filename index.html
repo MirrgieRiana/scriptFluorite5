@@ -121,7 +121,7 @@
 				
 				form.setDestView(view);
 				if (view === "html") {
-					form.setDestHTML(buildHTML(res));
+					form.setDestHTML(buildHTMLRes(res));
 				} else if (view === "plain") {
 					form.setDestText(res);
 				} else if (view === "dump") {
@@ -129,57 +129,71 @@
 				}
 			}
 
-			function buildHTML(res)
+			function buildHTMLRes(res)
 			{
-				var html = [convHtml(res.result[0])];
+				var html = [convHtml(res[0])];
 
-				var buttonScript = 'href="javascript: void(0);" onclick="dicebot_script_openclose(this)"';
-				var buttonReport = 'href="javascript: void(0);" onclick="dicebot_report_openclose(this)"';
-				for (var i = 1; i < res.result.length; i += 2) {
-					html.push('<span class="dicebot_container">');
-					{
-						html.push('<span class="dicebot_script_container">');
-						{
-							html.push('<span class="dicebot_script">');
-							{
-								html.push('<a ' + buttonScript + '>');
-								html.push(convHtml(res.result[i][0]));
-								html.push("</a>");
-							}
-							html.push("</span>");
-
-							html.push('<span class="dicebot_report">');
-							{
-								var report = res.dices.map(function(item) {
-									return "[" + item.join(", ") + "]";
-								}).join(", ");
-
-								html.push('<a ' + buttonReport + '>');
-								html.push(report);
-								html.push('</a>');
-							}
-							html.push("</span>");
-
-							html.push('<a class="dicebot_equal" ' + buttonReport + '>=</a>');
-						}
-						html.push("</span>");
-
-						html.push('<span class="dicebot_result">');
-						{
-							html.push('<a ' + buttonScript + '>');
-							html.push(convHtml(res.result[i][1]));
-							html.push("</a>");
-						}
-						html.push("</span>");
-					}
-					html.push("</span>");
-
-					html.push(convHtml(res.result[i + 1]));
+				for (var i = 1; i < res.length; i += 2) {
+					buildHTMLFormula(html, res[i][0], res[i][1]);
+					html.push(convHtml(res[i + 1]));
 				}
 
 				return html.join("");
 			}
-			
+
+			function buildHTMLFormula(html, src, code)
+			{
+				var buttonScript = 'href="javascript: void(0);" onclick="dicebot_script_openclose(this)"';
+				var buttonReport = 'href="javascript: void(0);" onclick="dicebot_report_openclose(this)"';
+				var vm = {
+					dices: [],
+				};
+				var res;
+				try {
+					res = code(vm, "get");
+				} catch(e) {
+					res = "" + e;
+				}
+				
+				html.push('<span class="dicebot_container">');
+				{
+					html.push('<span class="dicebot_script_container">');
+					{
+						html.push('<span class="dicebot_script">');
+						{
+							html.push('<a ' + buttonScript + '>');
+							html.push(convHtml(src));
+							html.push("</a>");
+						}
+						html.push("</span>");
+
+						html.push('<span class="dicebot_report">');
+						{
+							var report = vm.dices.map(function(item) {
+								return "[" + item.join(", ") + "]";
+							}).join(", ");
+
+							html.push('<a ' + buttonReport + '>');
+							html.push(report);
+							html.push('</a>');
+						}
+						html.push("</span>");
+
+						html.push('<a class="dicebot_equal" ' + buttonReport + '>=</a>');
+					}
+					html.push("</span>");
+
+					html.push('<span class="dicebot_result">');
+					{
+						html.push('<a ' + buttonScript + '>');
+						html.push(convHtml(res));
+						html.push("</a>");
+					}
+					html.push("</span>");
+				}
+				html.push("</span>");
+			}
+
 		</script>
 	</head>
 	<body>

@@ -4,9 +4,8 @@
  */
 
 {
-  var dices = [];
 
-  function dice(count, faces)
+  function dice(vm, count, faces)
   {
     var t = 0, i, value, values = [];
     for (i = 0; i < count; i++) {
@@ -14,16 +13,43 @@
       t += value;
       values.push(value);
     }
-    dices.push(values);
+    vm.dices.push(values);
     return t;
   }
 
-  function createCodeOfOperator(operator, codes)
+  function createCodeFromLiteral(value)
   {
-    return function(context, args) {
+    return function(vm, context, args) {
       if (context === "get") {
-        if (operator === "operatorPlus") return codes[0]("get", []) + codes[1]("get", []);
-        return "Unknown operator: " + operator;
+        return value;
+      } else {
+        throw "Unknown context: " + context;
+      }
+    };
+  }
+
+  function createCodeFromMethod(operator, codes)
+  {
+    return function(vm, context, args) {
+      if (context === "get") {
+        if (operator === "_operatorPlus") return codes[0](vm, "get") + codes[1](vm, "get");
+        if (operator === "_operatorMinus") return codes[0](vm, "get") - codes[1](vm, "get");
+        if (operator === "_operatorAsterisk") return codes[0](vm, "get") * codes[1](vm, "get");
+        if (operator === "_operatorSlash") return codes[0](vm, "get") / codes[1](vm, "get");
+        if (operator === "_leftPlus") return codes[0](vm, "get");
+        if (operator === "_leftMinus") return -codes[0](vm, "get");
+        if (operator === "_bracketsRound") return codes[0](vm, "get");
+        if (operator === "_operatorGreater") return codes[0](vm, "get") > codes[1](vm, "get");
+        if (operator === "_operatorGreaterEqual") return codes[0](vm, "get") >= codes[1](vm, "get");
+        if (operator === "_operatorLess") return codes[0](vm, "get") < codes[1](vm, "get");
+        if (operator === "_operatorLessEqual") return codes[0](vm, "get") <= codes[1](vm, "get");
+        if (operator === "_operatorEqual2") return codes[0](vm, "get") == codes[1](vm, "get");
+        if (operator === "_operatorExclamationEqual") return codes[0](vm, "get") != codes[1](vm, "get");
+        if (operator === "_operatorPipe2") return codes[0](vm, "get") || codes[1](vm, "get");
+        if (operator === "_operatorAmpersand2") return codes[0](vm, "get") && codes[1](vm, "get");
+        if (operator === "_enumerateComma") return codes.map(function(code) { return code(vm, "get"); });
+        if (operator === "d") return dice(vm, codes[0](vm, "get"), codes[1](vm, "get"));
+        throw "Unknown operator: " + operator;
       } else {
         throw "Unknown context: " + context;
       }
@@ -34,11 +60,20 @@
 
 ExpressionPlain
   = main:Expression {
-      var strings = [main.result[0]], i;
-
-      for (i = 1; i < main.result.length; i += 2) {
-        strings.push(main.result[i][1]);
-        strings.push(main.result[i + 1]);
+      var strings = [main[0]], i;
+      var vm, res;
+ 
+      for (i = 1; i < main.length; i += 2) {
+        vm = {
+          dices: [],
+        };
+        try {
+          res = main[i][1](vm, "get");
+        } catch (e) {
+          res = e;
+        }
+        strings.push(res);
+        strings.push(main[i + 1]);
       }
 
       return strings.join("");
@@ -56,10 +91,7 @@ Message
         result.push(tail[i][5]);
       }
 
-      return {
-        result: result,
-        dices: dices,
-      };
+      return result;
     }
 
 MessageText
@@ -82,117 +114,148 @@ Vector
         result.push(tail[i][3]);
       }
 
-      return result;
+      return createCodeFromMethod("_enumerateComma", result);
     }
 
 Or
-  = head:And tail:(_ ("||") _ And)* {
+  = head:And tail:(_ (
+      "||" { return "Pipe2"; }
+    ) _ And)* {
+      if (tail.length == 0) return head;
       var result = head, i;
 
       for (i = 0; i < tail.length; i++) {
-        if (tail[i][1] === "||") { result = result || tail[i][3]; }
+        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
       }
 
       return result;
     }
 
 And
-  = head:Compare tail:(_ ("&&") _ Compare)* {
+  = head:Compare tail:(_ (
+      "&&" { return "Ampersand2"; }
+    ) _ Compare)* {
+      if (tail.length == 0) return head;
       var result = head, i;
 
       for (i = 0; i < tail.length; i++) {
-        if (tail[i][1] === "&&") { result = result && tail[i][3]; }
+        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
       }
 
       return result;
     }
 
 Compare
-  = head:Add tail:(_ (">=" / ">" / "<=" / "<" / "!=" / "==") _ Add)* {
-      var left = head, i;
+  = head:Add tail:(_ (
+      ">=" { return "GreaterEqual"; }
+    / ">" { return "Greater"; }
+    / "<=" { return "LessEqual"; }
+    / "<" { return "Less"; }
+    / "!=" { return "ExclamationEqual"; }
+    / "==" { return "Equal2"; }
+    ) _ Add)* {
       if (tail.length == 0) return head;
-
+      var codes = [], left = head, right, i;
+      
       for (i = 0; i < tail.length; i++) {
-        if (tail[i][1] === ">") if (!(left > tail[i][3])) return false;
-        if (tail[i][1] === ">=") if (!(left >= tail[i][3])) return false;
-        if (tail[i][1] === "<") if (!(left < tail[i][3])) return false;
-        if (tail[i][1] === "<=") if (!(left <= tail[i][3])) return false;
-        if (tail[i][1] === "==") if (!(left == tail[i][3])) return false;
-        if (tail[i][1] === "!=") if (!(left != tail[i][3])) return false;
-
-        left = tail[i][3];
+        right = tail[i][3];
+        codes.push(createCodeFromMethod("_operator" + tail[i][1], [left, right]));
+        left = right;
       }
+      
+      return function(vm, context, args) {
+        if (context === "get") {
+          var i;
 
-      return true;
+          for (i = 0; i < codes.length; i++) {
+            if (!codes[i](vm, "get")) return false;
+          }
+
+          return true;
+        } else {
+          throw "Unknown context: " + context;
+        }
+      };
     }
 
 Add
-  = head:Term tail:(_ ("+" / "-") _ Term)* {
+  = head:Term tail:(_ (
+      "+" { return "Plus"; }
+    / "-" { return "Minus"; }
+    ) _ Term)* {
+      if (tail.length == 0) return head;
       var result = head, i;
 
       for (i = 0; i < tail.length; i++) {
-        if (tail[i][1] === "+") { result += tail[i][3]; }
-        if (tail[i][1] === "-") { result -= tail[i][3]; }
+        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
       }
 
       return result;
     }
 
 Term
-  = head:Power tail:(_ ("*" / "/") _ Power)* {
+  = head:Power tail:(_ (
+      "*" { return "Asterisk"; }
+    / "/" { return "Slash"; }
+    ) _ Power)* {
+      if (tail.length == 0) return head;
       var result = head, i;
 
       for (i = 0; i < tail.length; i++) {
-        if (tail[i][1] === "*") { result *= tail[i][3]; }
-        if (tail[i][1] === "/") { result /= tail[i][3]; }
+        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
       }
 
       return result;
     }
 
 Power
-  = head:(Signed _ ("^") _)* tail:Signed {
+  = head:(Signed _ (
+      "^" { return "Caret"; }
+    ) _)* tail:Signed {
+      if (tail.length == 0) return head;
       var result = tail, i;
 
       for (i = head.length - 1; i >= 0; i--) {
-        if (head[i][2] === "^") { result = Math.pow(head[i][0], result); }
+        result = createCodeFromMethod("_operator" + head[i][2], [head[i][0], result]);
       }
 
       return result;
     }
 
 Signed
-  = head:(("+" / "-") _)* tail:Factor {
+  = head:((
+      "+" { return "Plus"; }
+    / "-" { return "Minus"; }
+    ) _)* tail:Factor {
       var result = tail, i;
       
       for (i = head.length - 1; i >= 0; i--) {
-        if (head[i][0] === "+") { }
-        if (head[i][0] === "-") { result = -result; }
+        result = createCodeFromMethod("_left" + head[i][0], [result]);
       }
       
       return result;
     }
 
 Factor
-  = "(" _ main:Formula _ ")" { return main; }
+  = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
   / Dice
   / Float
   / Integer
   / Identifier
 
 Dice
-  = count:Integer "d" faces:Integer { return dice(count, faces); }
-  / count:Integer "d" { return dice(count, 6); }
+  = count:Integer "d" faces:Integer { return createCodeFromMethod("d", [count, faces]); }
+  / count:Integer "d" { return createCodeFromMethod("d", [count, createCodeFromLiteral(6)]); }
 
 Float "Float"
-  = [0-9]+ ("." [0-9]+)? [eE] [+-]? [0-9]+ { return parseFloat(text()); }
-  / [0-9]+ "." [0-9]+ { return parseFloat(text()); }
+  = [0-9]+ ("." [0-9]+)? [eE] [+-]? [0-9]+ { return createCodeFromLiteral(parseFloat(text())); }
+  / [0-9]+ "." [0-9]+ { return createCodeFromLiteral(parseFloat(text())); }
 
 Integer "Integer"
-  = [0-9]+ { return parseInt(text(), 10); }
+  = [0-9]+ { return createCodeFromLiteral(parseInt(text(), 10)); }
 
 Identifier "Identifier"
-  = [a-zA-Z]+ { return text(); }
+  = [a-zA-Z]+ { return createCodeFromLiteral(text()); }
 
 _ "Blanks"
   = [ \t\n\r]*
