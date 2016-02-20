@@ -48,6 +48,7 @@
         if (operator === "_operatorPipe2") return codes[0](vm, "get") || codes[1](vm, "get");
         if (operator === "_operatorAmpersand2") return codes[0](vm, "get") && codes[1](vm, "get");
         if (operator === "_enumerateComma") return codes.map(function(code) { return code(vm, "get"); });
+        if (operator === "_operatorMinus2Greater") return codes[0](vm, "get").map(function(code) { return codes[1](vm, "get"); });
         if (operator === "d") return dice(vm, codes[0](vm, "get"), codes[1](vm, "get"));
         throw "Unknown operator: " + operator;
       } else {
@@ -103,7 +104,21 @@ MessageFormula
     }
 
 Formula
-  = Vector
+  = Arrow
+
+Arrow
+  = head:Vector tail:(_ (
+      "-->" { return "Minus2Greater"; }
+    ) _ Vector)* {
+      if (tail.length == 0) return head;
+      var result = head, i;
+
+      for (i = 0; i < tail.length; i++) {
+        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
+      }
+
+      return result;
+    }
 
 Vector
   = head:Or tail:(_ (",") _ Or)* {
