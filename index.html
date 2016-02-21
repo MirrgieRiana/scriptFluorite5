@@ -39,6 +39,9 @@
 					setStatus: function(text) {
 						return $("#status").html(text);
 					},
+					setFocus: function() {
+						$("#src").focus();
+					},
 					getSrc: function() {
 						return $("#src").val();
 					},
@@ -83,6 +86,7 @@
 							});
 							form.setStatus("");
 							form.initialize(changed);
+							form.setFocus();
 						} catch(e) {
 							form.setStatus("Parser: Syntax Error: " + e);
 						}
