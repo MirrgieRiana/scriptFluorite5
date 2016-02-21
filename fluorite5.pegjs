@@ -50,6 +50,7 @@
         if (operator === "_enumerateComma") return codes.map(function(code) { return code(vm, "get"); });
         if (operator === "_operatorMinus2Greater") return codes[0](vm, "get").map(function(code) { return codes[1](vm, "get"); });
         if (operator === "d") return dice(vm, codes[0](vm, "get"), codes[1](vm, "get"));
+        if (operator === "_leftDollar") return vm.variables[codes[0](vm, "get")];
         throw "Unknown operator: " + operator;
       } else {
         throw "Unknown context: " + context;
@@ -67,6 +68,9 @@ ExpressionPlain
       for (i = 1; i < main.length; i += 2) {
         vm = {
           dices: [],
+          variables: {
+            pi: Math.PI,
+          },
         };
         try {
           res = main[i][1](vm, "get");
@@ -241,6 +245,7 @@ Signed
   = head:((
       "+" { return "Plus"; }
     / "-" { return "Minus"; }
+    / "$" { return "Dollar"; }
     ) _)* tail:Factor {
       var result = tail, i;
       
