@@ -31,6 +31,17 @@
   function createCodeFromMethod(operator, codes)
   {
     return function(vm, context, args) {
+      return vm.callMethod(operator, codes, context, args);
+    };
+  }
+
+  function VMSimple()
+  {
+    this.dices = [];
+    this.variables = {
+      pi: Math.PI,
+    };
+    this.callMethod = function(operator, codes, context, args) {
       if (context === "get") {
         if (operator === "_operatorPlus") return codes[0](vm, "get") + codes[1](vm, "get");
         if (operator === "_operatorMinus") return codes[0](vm, "get") - codes[1](vm, "get");
@@ -66,12 +77,7 @@ ExpressionPlain
       var vm, res;
  
       for (i = 1; i < main.length; i += 2) {
-        vm = {
-          dices: [],
-          variables: {
-            pi: Math.PI,
-          },
-        };
+        vm = new VMSimple();
         try {
           res = main[i][1](vm, "get");
         } catch (e) {
