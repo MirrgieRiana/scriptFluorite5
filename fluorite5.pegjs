@@ -5,11 +5,11 @@
 
 {
 
-  function createCodeFromLiteral(value)
+  function createCodeFromLiteral(type, value)
   {
     return function(vm, context, args) {
       if (context === "get") {
-        return value;
+        return vm.createLiteral(type, value);
       } else {
         throw "Unknown context: " + context;
       }
@@ -65,6 +65,9 @@
       }
       this.dices.push(values);
       return t;
+    };
+    this.createLiteral = function(type, value) {
+      return value;
     };
   }
 
@@ -270,17 +273,17 @@ Factor
 
 Dice
   = count:Integer "d" faces:Integer { return createCodeFromMethod("d", [count, faces]); }
-  / count:Integer "d" { return createCodeFromMethod("d", [count, createCodeFromLiteral(6)]); }
+  / count:Integer "d" { return createCodeFromMethod("d", [count, createCodeFromLiteral("Integer", 6)]); }
 
 Float "Float"
-  = [0-9]+ ("." [0-9]+)? [eE] [+-]? [0-9]+ { return createCodeFromLiteral(parseFloat(text())); }
-  / [0-9]+ "." [0-9]+ { return createCodeFromLiteral(parseFloat(text())); }
+  = [0-9]+ ("." [0-9]+)? [eE] [+-]? [0-9]+ { return createCodeFromLiteral("Float", parseFloat(text())); }
+  / [0-9]+ "." [0-9]+ { return createCodeFromLiteral("Float", parseFloat(text())); }
 
 Integer "Integer"
-  = [0-9]+ { return createCodeFromLiteral(parseInt(text(), 10)); }
+  = [0-9]+ { return createCodeFromLiteral("Integer", parseInt(text(), 10)); }
 
 Identifier "Identifier"
-  = [a-zA-Z]+ { return createCodeFromLiteral(text()); }
+  = [a-zA-Z]+ { return createCodeFromLiteral("Identifier", text()); }
 
 _ "Blanks"
   = [ \t\n\r]*
