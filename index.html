@@ -36,6 +36,9 @@
 						getDestBody().empty();
 						getDestBody().text(text);
 					},
+					setStatus: function(text) {
+						return $("#status").html(text);
+					},
 					getSrc: function() {
 						return $("#src").val();
 					},
@@ -70,18 +73,22 @@
 					url: "fluorite5.pegjs",
 					dataType: "text",
 					success: function(data) {
-						parser = PEG.buildParser(data, {
-							cache: true,
-							allowedStartRules: [
-								"Expression",
-								"ExpressionPlain",
-							],
-						});
-						
-						form.initialize(changed);
+						try {
+							parser = PEG.buildParser(data, {
+								cache: true,
+								allowedStartRules: [
+									"Expression",
+									"ExpressionPlain",
+								],
+							});
+							form.setStatus("");
+							form.initialize(changed);
+						} catch(e) {
+							form.setStatus("Parser: Syntax Error: " + e);
+						}
 					},
 					error: function(XMLHttpRequest, textStatus, errorThrown) {
-						form.setSrc("Status: " + textStatus);
+						form.setStatus("Parser: Network Error: " + textStatus);
 					},
 				})
 			});
@@ -199,21 +206,28 @@
 	<body>
 		<div id="container">
 			<table>
-				<col>
-				<col>
-				<tr id="tr_textarea">
-					<td rowspan="2"><textarea id="src"></textarea></td>
-					<td><iframe id="dest"></iframe></td>
-				</tr>
-				<tr>
+				<tr id="tr_main">
 					<td>
-						<input type="radio" name="view" value="html">HTML
-						<input type="radio" name="view" value="plain">Plain
-						<input type="radio" name="view" value="dump">Dump
+						<table>
+							<tr id="tr_main">
+								<td rowspan="2"><textarea id="src"></textarea></td>
+								<td><iframe id="dest"></iframe></td>
+							</tr>
+							<tr>
+								<td>
+									<input type="radio" name="view" value="html">HTML
+									<input type="radio" name="view" value="plain">Plain
+									<input type="radio" name="view" value="dump">Dump
+								</td>
+							</tr>
+						</table>
 					</td>
 				</tr>
 				<tr>
-					<td colspan="2">
+					<td id="status"></td>
+				</tr>
+				<tr>
+					<td>
 						Browser: Mozilla Firefox 44.0
 					</td>
 				</tr>
