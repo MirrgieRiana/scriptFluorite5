@@ -42,6 +42,7 @@
       pi: Math.PI,
     };
     this.callMethod = function(operator, codes, context, args) {
+      var vm = this;
       if (context === "get") {
         if (operator === "_operatorPlus") return codes[0](vm, "get") + codes[1](vm, "get");
         if (operator === "_operatorMinus") return codes[0](vm, "get") - codes[1](vm, "get");
