@@ -128,10 +128,10 @@ Compare
           var i;
 
           for (i = 0; i < codes.length; i++) {
-            if (!codes[i](vm, "get")) return false;
+            if (!vm.toBoolean(codes[i](vm, "get"))) return vm.createBoolean(false);
           }
 
-          return true;
+          return vm.createBoolean(true);
         } else {
           throw "Unknown context: " + context;
         }

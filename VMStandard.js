@@ -43,6 +43,12 @@ vms.Standard = function() {
 		this.dices.push(values);
 		return t;
 	};
+	this.toBoolean = function(value) {
+		return value.value;
+	};
+	this.createBoolean = function(value) {
+		return this.createObject("Boolean", value);
+	};
 	this.createLiteral = function(type, value) {
 		return value;
 	};

@@ -29,6 +29,12 @@ vms.Classic = function() {
 		this.dices.push(values);
 		return t;
 	};
+	this.toBoolean = function(value) {
+		return value;
+	};
+	this.createBoolean = function(value) {
+		return value;
+	};
 	this.createLiteral = function(type, value) {
 		return value;
 	};
