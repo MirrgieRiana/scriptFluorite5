@@ -61,7 +61,12 @@ vms.Standard = function() {
 			if (operator === "_operatorPipe2") return createObject("Boolean", codes[0](vm, "get").value || codes[1](vm, "get").value);
 			if (operator === "_operatorAmpersand2") return createObject("Boolean", codes[0](vm, "get").value && codes[1](vm, "get").value);
 			if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
-			if (operator === "_operatorMinus2Greater") return packVector(unpackVector(codes[0](vm, "get")).map(function(code) { return codes[1](vm, "get"); }));
+			if (operator === "_operatorMinus2Greater") 	{
+				return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
+					variables["_"] = scalar;
+					return codes[1](vm, "get");
+				}));
+			}
 			if (operator === "d") return createObject("Number", dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
 			if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
 			if (operator === "_rightbracketsRound") {
