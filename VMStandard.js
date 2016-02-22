@@ -75,6 +75,15 @@ vms.Standard = function() {
 			if (operator === "_operatorEqual2") return createObject("Boolean", codes[0](vm, "get").value == codes[1](vm, "get").value);
 			if (operator === "_operatorExclamationEqual") return createObject("Boolean", codes[0](vm, "get").value != codes[1](vm, "get").value);
 			if (operator === "_operatorPipe2") return createObject("Boolean", codes[0](vm, "get").value || codes[1](vm, "get").value);
+			if (operator === "_operatorTilde") {
+				var left = codes[0](vm, "get").value;
+				var right = codes[1](vm, "get").value;
+				var array = [];
+				for (var i = left; i <= right; i++) {
+					array.push(createObject("Number", i));
+				}
+				return createObject("Vector", array);
+			}
 			if (operator === "_operatorAmpersand2") return createObject("Boolean", codes[0](vm, "get").value && codes[1](vm, "get").value);
 			if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
 			if (operator === "_operatorMinus2Greater") 	{

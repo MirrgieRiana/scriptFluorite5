@@ -66,7 +66,7 @@ Arrow
     }
 
 Vector
-  = head:Or tail:(_ (",") _ Or)* {
+  = head:Range tail:(_ (",") _ Range)* {
       if (tail.length == 0) return head;
       var result = [head], i;
 
@@ -75,6 +75,21 @@ Vector
       }
 
       return createCodeFromMethod("_enumerateComma", result);
+    }
+
+Range
+  = head:Or tail:(_ (
+      "~" { return "Tilde"; }
+    / ".." { return "Period2"; }
+    ) _ Or)* {
+      if (tail.length == 0) return head;
+      var result = head, i;
+
+      for (i = 0; i < tail.length; i++) {
+        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
+      }
+
+      return result;
     }
 
 Or
