@@ -9,12 +9,12 @@ body.html {
 
 body.plain {
 	font-family: MS Gothic;
-	white-space: pre;
+	white-space: pre-wrap;
 }
 
 body.dump {
 	font-family: MS Gothic;
-	white-space: pre;
+	white-space: pre-wrap;
 }
 
 .dicebot_container a {
