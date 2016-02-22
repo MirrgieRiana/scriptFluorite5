@@ -100,12 +100,14 @@
 			var src;
 			var view;
 			
-			function changed()
+			function changed(force)
 			{
 				var src2 = form.getSrc();
 				var view2 = form.getView();
 				var res;
-				if (src === src2 && view === view2) return;
+				if (force !== true) {
+					if (src === src2 && view === view2) return;
+				}
 				
 				src = src2;
 				view = view2;
@@ -222,6 +224,7 @@
 									<input type="radio" name="view" value="html">HTML
 									<input type="radio" name="view" value="plain">Plain
 									<input type="radio" name="view" value="dump">Dump
+									<input type="button" onclick="changed(true)" value="Calculate">
 								</td>
 							</tr>
 						</table>
