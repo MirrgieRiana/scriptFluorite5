@@ -220,5 +220,5 @@ ContentString
   / [^']
 
 _ "Blanks"
-  = [ \t\n\r]*
+  = [ \t\n\r　]*
 
