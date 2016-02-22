@@ -151,6 +151,7 @@ Left
       "+" { return "Plus"; }
     / "-" { return "Minus"; }
     / "$" { return "Dollar"; }
+    / "@" { return "Atsign"; }
     ) _)* tail:Right {
       var result = tail, i;
       
@@ -163,12 +164,13 @@ Left
 
 Right
   = head:Factor tail:(_ (
-      "(" _ Formula _ ")"
+      ("(" { return "Round" }) _ Formula _ ")"
+    / ("[" { return "Square" }) _ Formula _ "]"
     ))* {
       var result = head, i;
       
       for (i = 0; i < tail.length; i++) {
-        result = createCodeFromMethod("_rightbracketsRound", [result, tail[i][1][2]]);
+        result = createCodeFromMethod("_rightbrackets" + tail[i][1][0], [result, tail[i][1][2]]);
       }
       
       return result;
@@ -176,6 +178,7 @@ Right
 
 Factor
   = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
+  / "[" _ main:Formula _ "]" { return createCodeFromMethod("_bracketsSquare", [main]); }
   / Dice
   / Float
   / Integer

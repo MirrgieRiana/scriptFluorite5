@@ -86,6 +86,19 @@ vms.Standard = function() {
 			}
 			if (operator === "_operatorAmpersand2") return createObject("Boolean", codes[0](vm, "get").value && codes[1](vm, "get").value);
 			if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
+			if (operator === "_bracketsSquare") {
+				return createObject("Array", unpackVector(codes[0](vm, "get")));
+			}
+			if (operator === "_rightbracketsSquare") {
+				var value = codes[0](vm, "get");
+				if (instanceOf(value, "Array")) return value.value[codes[1](vm, "get").value] || UNDEFINED;
+				throw "Type Error: " + operator + "/" + value.type;
+			}
+			if (operator === "_leftAtsign") {
+				var value = codes[0](vm, "get");
+				if (instanceOf(value, "Array")) return createObject("Vector", value.value);
+				throw "Type Error: " + operator + "/" + value.type;
+			}
 			if (operator === "_operatorMinus2Greater") 	{
 				return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
 					variables["_"] = scalar;
