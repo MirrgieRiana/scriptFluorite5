@@ -15,7 +15,7 @@ vms.Standard = function() {
 				t += value;
 				values.push(value);
 			}
-			dices.push(values);
+			vm.dices.push(values);
 			return t;
 		}
 		function packVector(array)
