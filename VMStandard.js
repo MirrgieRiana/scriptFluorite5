@@ -7,7 +7,8 @@ vms.Standard = function() {
 		var variables = {
 			pi: Math.PI,
 		};
-		var dice = function(count, faces) {
+		function dice(count, faces)
+		{
 			var t = 0, i, value, values = [];
 			for (i = 0; i < count; i++) {
 				value = Math.floor(Math.random() * faces) + 1;
@@ -16,7 +17,7 @@ vms.Standard = function() {
 			}
 			dices.push(values);
 			return t;
-		};
+		}
 
 		if (context === "get") {
 

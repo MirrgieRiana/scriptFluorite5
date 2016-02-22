@@ -4,7 +4,8 @@ vms.Classic = function() {
 	this.callMethod = function(operator, codes, context, args) {
 		var vm = this;
 
-		var dice = function(count, faces) {
+		function dice(count, faces)
+		{
 			var t = 0, i, value, values = [];
 			for (i = 0; i < count; i++) {
 				value = Math.floor(Math.random() * faces) + 1;
@@ -13,7 +14,7 @@ vms.Classic = function() {
 			}
 			dices.push(values);
 			return t;
-		};
+		}
 
 		if (context === "get") {
 
