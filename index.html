@@ -178,6 +178,8 @@
 					initialize: function(changed) {
 						// events
 						$("#src").keyup(changed);
+						$("#src").mouseup(function() { $("#src_caret_hidden").val($("#src").caretPos()); });
+						$("#src").keyup(function() { $("#src_caret_hidden").val($("#src").caretPos()); });
 						$("#dest").load(changed);
 
 						$("#view").change(changed);
@@ -188,6 +190,7 @@
 						
 						// default values
 						if (this.getSrc() === "") this.setSrc("Damage: \\2d+4\\");
+						if ($("#src_caret_hidden").val() !== undefined) $("#src").caretPos($("#src_caret_hidden").val());
 						$("#dest").attr("src", "dest.html");
 
 						Object.keys(views).forEach(function (key) {
@@ -284,7 +287,10 @@
 					<td>
 						<table>
 							<tr id="tr_main">
-								<td rowspan="2"><textarea id="src"></textarea></td>
+								<td rowspan="2">
+									<textarea id="src"></textarea>
+									<input type="" id="src_caret_hidden">
+								</td>
 								<td><iframe id="dest"></iframe></td>
 							</tr>
 							<tr>
