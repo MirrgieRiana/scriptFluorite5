@@ -91,6 +91,7 @@ vms.Standard = function() {
 			}
 			if (operator === "_rightbracketsSquare") {
 				var value = codes[0](vm, "get");
+				if (instanceOf(value, "Keyword")) value = getVariable(value.value);
 				if (instanceOf(value, "Array")) return value.value[codes[1](vm, "get").value] || UNDEFINED;
 				throw "Type Error: " + operator + "/" + value.type;
 			}
