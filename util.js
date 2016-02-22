@@ -1,4 +1,5 @@
 
+// http://iwb.jp/jquery-javascript-html-escape/
 function convHtml(string)
 {
 	string = escapeHtml(string);
