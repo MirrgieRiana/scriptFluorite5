@@ -13,7 +13,8 @@ var escapeHtml = (function (String) {
 		'`': '&#x60;',
 		'"': '&quot;',
 		'<': '&lt;',
-		'>': '&gt;'
+		'>': '&gt;',
+		' ': '&nbsp;'
 	};
 	var escapeReg = '[';
 	var reg;
