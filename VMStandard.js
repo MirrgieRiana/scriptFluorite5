@@ -102,6 +102,7 @@ vms.Standard = function() {
 		if (type === "Integer") return createObject("Number", value);
 		if (type === "Float") return createObject("Number", value);
 		if (type === "Identifier") return createObject("Keyword", value);
+		if (type === "Underbar") return createObject("Keyword", value);
 		throw "Unknown type: " + type;
 	};
 };

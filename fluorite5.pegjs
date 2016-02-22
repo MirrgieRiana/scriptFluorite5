@@ -210,6 +210,7 @@ Factor
   / Float
   / Integer
   / Identifier
+  / Underbar
 
 Dice
   = count:Integer "d" faces:Integer { return createCodeFromMethod("d", [count, faces]); }
@@ -224,6 +225,9 @@ Integer "Integer"
 
 Identifier "Identifier"
   = [a-zA-Z][a-zA-Z_]* { return createCodeFromLiteral("Identifier", text()); }
+
+Underbar
+  = "_" { return createCodeFromLiteral("Underbar", text()); }
 
 _ "Blanks"
   = [ \t\n\r]*
