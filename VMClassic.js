@@ -29,6 +29,9 @@ vms.Classic = function() {
 		this.dices.push(values);
 		return t;
 	};
+	this.unpackBlessed = function(value) {
+		return value;
+	};
 	this.toBoolean = function(value) {
 		return value;
 	};
