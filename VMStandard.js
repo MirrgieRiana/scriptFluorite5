@@ -82,7 +82,7 @@ vms.Standard = function() {
 				for (var i = left; i <= right; i++) {
 					array.push(createObject("Number", i));
 				}
-				return createObject("Vector", array);
+				return packVector(array);
 			}
 			if (operator === "_operatorAmpersand2") return createObject("Boolean", codes[0](vm, "get").value && codes[1](vm, "get").value);
 			if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
