@@ -223,7 +223,7 @@ Integer "Integer"
   = [0-9]+ { return createCodeFromLiteral("Integer", parseInt(text(), 10)); }
 
 Identifier "Identifier"
-  = [a-zA-Z]+ { return createCodeFromLiteral("Identifier", text()); }
+  = [a-zA-Z][a-zA-Z_]* { return createCodeFromLiteral("Identifier", text()); }
 
 _ "Blanks"
   = [ \t\n\r]*
