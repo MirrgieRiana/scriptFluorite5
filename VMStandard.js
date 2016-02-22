@@ -44,7 +44,7 @@ vms.Standard = function() {
 	function unpackVector(blessed)
 	{
 		if (instanceOf(blessed, "Vector")) return blessed.value;
-		return [blessed.value];
+		return [blessed];
 	}
 	function instanceOf(blessed, type)
 	{
