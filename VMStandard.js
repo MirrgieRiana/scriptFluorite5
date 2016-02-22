@@ -118,6 +118,7 @@ vms.Standard = function() {
 	this.createLiteral = function(type, value) {
 		if (type === "Integer") return createObject("Number", value);
 		if (type === "Float") return createObject("Number", value);
+		if (type === "String") return createObject("String", value);
 		if (type === "Identifier") {
 			if (value === "true") return createObject("Boolean", true);
 			if (value === "false") return createObject("Boolean", false);

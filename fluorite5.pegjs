@@ -211,6 +211,7 @@ Factor
   / Integer
   / Identifier
   / Underbar
+  / String
 
 Dice
   = count:Integer "d" faces:Integer { return createCodeFromMethod("d", [count, faces]); }
@@ -228,6 +229,14 @@ Identifier "Identifier"
 
 Underbar
   = "_" { return createCodeFromLiteral("Underbar", text()); }
+
+String
+  = "'" main:ContentString* "'" { return createCodeFromLiteral("String", main.join("")); }
+
+ContentString
+  = "\\\\" { return "\\"; }
+  / "\\'" { return "'"; }
+  / [^']
 
 _ "Blanks"
   = [ \t\n\r]*
