@@ -78,7 +78,7 @@ Arrow
     ) _ Vector)* { return operatorLeft(head, tail); }
 
 Vector
-  = head:Range tail:(_ (",") _ Range)* {
+  = head:Entry tail:(_ (",") _ Entry)* {
       if (tail.length == 0) return head;
       var result = [head], i;
 
@@ -88,6 +88,11 @@ Vector
 
       return createCodeFromMethod("_enumerateComma", result);
     }
+
+Entry
+  = head:Range tail:(_ (
+      ":" { return "Colon"; }
+    ) _ Range)* { return operatorLeft(head, tail); }
 
 Range
   = head:Or tail:(_ (

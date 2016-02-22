@@ -112,6 +112,10 @@ vms.Standard = function() {
 					return codes[1](vm, "get");
 				}
 			}
+			if (operator === "_operatorColon") return createObject("Entry", {
+				key: codes[0](vm, "get").value,
+				value: codes[1](vm, "get").value,
+			});
 			if (operator === "d") return createObject("Number", dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
 			if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
 			if (operator === "_rightbracketsRound") {
