@@ -23,6 +23,24 @@
     };
   }
 
+  function operatorLeft(head, tail)
+  {
+    var result = head, i;
+    for (i = 0; i < tail.length; i++) {
+      result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
+    }
+    return result;
+  }
+
+  function operatorRight(head, tail)
+  {
+    var result = tail, i;
+    for (i = head.length - 1; i >= 0; i--) {
+      result = createCodeFromMethod("_operator" + head[i][2], [head[i][0], result]);
+    }
+    return result;
+  }
+
 }
 
 Expression
@@ -54,16 +72,7 @@ Formula
 Arrow
   = head:Vector tail:(_ (
       "-->" { return "Minus2Greater"; }
-    ) _ Vector)* {
-      if (tail.length == 0) return head;
-      var result = head, i;
-
-      for (i = 0; i < tail.length; i++) {
-        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
-      }
-
-      return result;
-    }
+    ) _ Vector)* { return operatorLeft(head, tail); }
 
 Vector
   = head:Range tail:(_ (",") _ Range)* {
@@ -81,44 +90,17 @@ Range
   = head:Or tail:(_ (
       "~" { return "Tilde"; }
     / ".." { return "Period2"; }
-    ) _ Or)* {
-      if (tail.length == 0) return head;
-      var result = head, i;
-
-      for (i = 0; i < tail.length; i++) {
-        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
-      }
-
-      return result;
-    }
+    ) _ Or)* { return operatorLeft(head, tail); }
 
 Or
   = head:And tail:(_ (
       "||" { return "Pipe2"; }
-    ) _ And)* {
-      if (tail.length == 0) return head;
-      var result = head, i;
-
-      for (i = 0; i < tail.length; i++) {
-        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
-      }
-
-      return result;
-    }
+    ) _ And)* { return operatorLeft(head, tail); }
 
 And
   = head:Compare tail:(_ (
       "&&" { return "Ampersand2"; }
-    ) _ Compare)* {
-      if (tail.length == 0) return head;
-      var result = head, i;
-
-      for (i = 0; i < tail.length; i++) {
-        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
-      }
-
-      return result;
-    }
+    ) _ Compare)* { return operatorLeft(head, tail); }
 
 Compare
   = head:Add tail:(_ (
@@ -151,45 +133,18 @@ Add
   = head:Term tail:(_ (
       "+" { return "Plus"; }
     / "-" { return "Minus"; }
-    ) _ Term)* {
-      if (tail.length == 0) return head;
-      var result = head, i;
-
-      for (i = 0; i < tail.length; i++) {
-        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
-      }
-
-      return result;
-    }
+    ) _ Term)* { return operatorLeft(head, tail); }
 
 Term
   = head:Power tail:(_ (
       "*" { return "Asterisk"; }
     / "/" { return "Slash"; }
-    ) _ Power)* {
-      if (tail.length == 0) return head;
-      var result = head, i;
-
-      for (i = 0; i < tail.length; i++) {
-        result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
-      }
-
-      return result;
-    }
+    ) _ Power)* { return operatorLeft(head, tail); }
 
 Power
   = head:(Left _ (
       "^" { return "Caret"; }
-    ) _)* tail:Left {
-      if (tail.length == 0) return head;
-      var result = tail, i;
-
-      for (i = head.length - 1; i >= 0; i--) {
-        result = createCodeFromMethod("_operator" + head[i][2], [head[i][0], result]);
-      }
-
-      return result;
-    }
+    ) _)* tail:Left { return operatorRight(head, tail); }
 
 Left
   = head:((
