@@ -163,9 +163,9 @@ Term
     }
 
 Power
-  = head:(Signed _ (
+  = head:(Left _ (
       "^" { return "Caret"; }
-    ) _)* tail:Signed {
+    ) _)* tail:Left {
       if (tail.length == 0) return head;
       var result = tail, i;
 
@@ -176,16 +176,29 @@ Power
       return result;
     }
 
-Signed
+Left
   = head:((
       "+" { return "Plus"; }
     / "-" { return "Minus"; }
     / "$" { return "Dollar"; }
-    ) _)* tail:Factor {
+    ) _)* tail:Right {
       var result = tail, i;
       
       for (i = head.length - 1; i >= 0; i--) {
         result = createCodeFromMethod("_left" + head[i][0], [result]);
+      }
+      
+      return result;
+    }
+
+Right
+  = head:Factor tail:(_ (
+      "(" _ Formula _ ")"
+    ))* {
+      var result = head, i;
+      
+      for (i = 0; i < tail.length; i++) {
+        result = createCodeFromMethod("_rightbracketsRound", [result, tail[i][1][2]]);
       }
       
       return result;

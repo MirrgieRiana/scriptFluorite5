@@ -6,6 +6,7 @@ vms.Standard = function() {
 
 		var variables = {
 			pi: this.createObject("Number", Math.PI),
+			sin: this.createObject("Function", function(value) { return vm.createObject("Number", Math.sin(value.value)); }),
 		};
 		function dice(count, faces)
 		{
@@ -50,6 +51,17 @@ vms.Standard = function() {
 			if (operator === "_operatorMinus2Greater") return packVector(unpackVector(codes[0](vm, "get")).map(function(code) { return codes[1](vm, "get"); }));
 			if (operator === "d") return this.createObject("Number", dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
 			if (operator === "_leftDollar") return variables[codes[0](vm, "get").value];
+			if (operator === "_rightbracketsRound") {
+				var value = codes[0](vm, "get");
+				if (value.type === "Keyword") {
+					value = variables[value.value];
+				}
+				if (value.type === "Function") {
+					return value.value(codes[1](vm, "get"));
+				} else {
+					throw "Type Error: " + operator + "/" + value.type;
+				} 
+			}
 
 			throw "Unknown operator: " + operator;
 		} else {
