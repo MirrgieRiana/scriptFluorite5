@@ -24,10 +24,22 @@ vms.Standard = function() {
 		vm.dices.push(values);
 		return t;
 	}
+	function visitScalar(array, blessed)
+	{
+		if (blessed.type === "Vector") {
+			for (var i = 0; i < blessed.value.length; i++) {
+				visitScalar(array, blessed.value[i]);
+			}
+		} else {
+			array.push(blessed);
+		}
+	}
 	function packVector(array)
 	{
-		if (array.length == 1) return array[0];
-		return createObject("Vector", array);
+		var array2 = [];
+		array.forEach(function(item) { visitScalar(array2, item); });
+		if (array2.length == 1) return array2[0];
+		return createObject("Vector", array2);
 	}
 	function unpackVector(blessed)
 	{
