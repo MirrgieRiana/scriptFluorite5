@@ -1,9 +1,6 @@
 
 vms.Classic = function() {
 	this.dices = [];
-	this.variables = {
-		pi: Math.PI,
-	};
 	this.callMethod = function(operator, codes, context, args) {
 		var vm = this;
 		if (context === "get") {
@@ -15,18 +12,7 @@ vms.Classic = function() {
 			if (operator === "_leftPlus") return codes[0](vm, "get");
 			if (operator === "_leftMinus") return -codes[0](vm, "get");
 			if (operator === "_bracketsRound") return codes[0](vm, "get");
-			if (operator === "_operatorGreater") return codes[0](vm, "get") > codes[1](vm, "get");
-			if (operator === "_operatorGreaterEqual") return codes[0](vm, "get") >= codes[1](vm, "get");
-			if (operator === "_operatorLess") return codes[0](vm, "get") < codes[1](vm, "get");
-			if (operator === "_operatorLessEqual") return codes[0](vm, "get") <= codes[1](vm, "get");
-			if (operator === "_operatorEqual2") return codes[0](vm, "get") == codes[1](vm, "get");
-			if (operator === "_operatorExclamationEqual") return codes[0](vm, "get") != codes[1](vm, "get");
-			if (operator === "_operatorPipe2") return codes[0](vm, "get") || codes[1](vm, "get");
-			if (operator === "_operatorAmpersand2") return codes[0](vm, "get") && codes[1](vm, "get");
-			if (operator === "_enumerateComma") return codes.map(function(code) { return code(vm, "get"); });
-			if (operator === "_operatorMinus2Greater") return codes[0](vm, "get").map(function(code) { return codes[1](vm, "get"); });
 			if (operator === "d") return vm.dice(codes[0](vm, "get"), codes[1](vm, "get"));
-			if (operator === "_leftDollar") return vm.variables[codes[0](vm, "get")];
 
 			throw "Unknown operator: " + operator;
 		} else {
