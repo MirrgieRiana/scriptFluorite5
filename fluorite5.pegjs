@@ -72,6 +72,9 @@ Formula
 Arrow
   = head:Vector tail:(_ (
       "-->" { return "Minus2Greater"; }
+    / "->" { return "MinusGreater"; }
+    / "==>" { return "Equal2Greater"; }
+    / "=>" { return "EqualGreater"; }
     ) _ Vector)* { return operatorLeft(head, tail); }
 
 Vector

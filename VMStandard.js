@@ -99,11 +99,18 @@ vms.Standard = function() {
 				if (instanceOf(value, "Array")) return createObject("Vector", value.value);
 				throw "Type Error: " + operator + "/" + value.type;
 			}
-			if (operator === "_operatorMinus2Greater") 	{
-				return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
-					variables["_"] = scalar;
+			if (operator === "_operatorMinus2Greater"
+				|| operator === "_operatorEqual2Greater") 	{
+				var minus = operator == "_operatorMinus2Greater" || operator == "_operatorMinusGreater";
+				if (minus) {
+					return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
+						variables["_"] = scalar;
+						return codes[1](vm, "get");
+					}));
+				} else {
+					variables["_"] = codes[0](vm, "get");
 					return codes[1](vm, "get");
-				}));
+				}
 			}
 			if (operator === "d") return createObject("Number", dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
 			if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
