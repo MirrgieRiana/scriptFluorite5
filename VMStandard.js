@@ -114,7 +114,11 @@ vms.Standard = function() {
 	this.createLiteral = function(type, value) {
 		if (type === "Integer") return createObject("Number", value);
 		if (type === "Float") return createObject("Number", value);
-		if (type === "Identifier") return createObject("Keyword", value);
+		if (type === "Identifier") {
+			if (value === "true") return createObject("Boolean", true);
+			if (value === "false") return createObject("Boolean", false);
+			return createObject("Keyword", value);
+		}
 		if (type === "Underbar") return createObject("Keyword", value);
 		throw "Unknown type: " + type;
 	};
