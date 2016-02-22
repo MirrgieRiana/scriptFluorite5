@@ -126,10 +126,23 @@ vms.Standard = function() {
 			throw "Unknown context: " + context;
 		}
 	};
-	this.unpackBlessed = function(value) {
+	this.toString = function(value) {
 		var vm = this;
 		if (instanceOf(value, "Vector")) {
-			return value.value.map(function(scalar) { return vm.unpackBlessed(scalar); });
+			return value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ");
+		}
+		if (instanceOf(value, "Array")) {
+			return "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]";
+		}
+		return "" + value.value;
+	};
+	this.toNative = function(value) {
+		var vm = this;
+		if (instanceOf(value, "Vector")) {
+			return value.value.map(function(scalar) { return vm.toNative(scalar); });
+		}
+		if (instanceOf(value, "Array")) {
+			return value.value.map(function(scalar) { return vm.toNative(scalar); });
 		}
 		return value.value;
 	};

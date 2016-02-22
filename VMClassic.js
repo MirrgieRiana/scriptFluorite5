@@ -33,7 +33,10 @@ vms.Classic = function() {
 			throw "Unknown context: " + context;
 		}
 	};
-	this.unpackBlessed = function(value) {
+	this.toString = function(value) {
+		return "" + value;
+	};
+	this.toNative = function(value) {
 		return value;
 	};
 	this.allTrue = function(array) {

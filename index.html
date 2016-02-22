@@ -21,7 +21,7 @@
 						var vm = form.createVM();
 						var res;
 						try {
-							res = vm.unpackBlessed(code(vm, "get"));
+							res = vm.toString(code(vm, "get"));
 						} catch(e) {
 							res = "" + e;
 						}
@@ -83,7 +83,7 @@
 						var vm = form.createVM();
 						var set;
 						try {
-							res = vm.unpackBlessed(code(vm, "get"));
+							res = vm.toString(code(vm, "get"));
 						} catch(e) {
 							res = "" + e;
 						}
@@ -107,7 +107,7 @@
 						var vm = form.createVM();
 						var set;
 						try {
-							res = vm.unpackBlessed(code(vm, "get"));
+							res = vm.toNative(code(vm, "get"));
 						} catch(e) {
 							res = "" + e;
 						}
