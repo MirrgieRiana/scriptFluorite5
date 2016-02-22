@@ -33,13 +33,16 @@ vms.Classic = function() {
 		}
 	};
 	this.unpackBlessed = function(value) {
-		return value;
+		if (value.type === "Vector") {
+			return value.value.map(this.unpackBlessed);
+		}
+		return value.value;
 	};
-	this.toBoolean = function(value) {
-		return value;
-	};
-	this.createBoolean = function(value) {
-		return value;
+	this.allTrue = function(array) {
+		for (var i = 0; i < array.length; i++) {
+			if (!array[i]) return false;
+		}
+		return true;
 	};
 	this.createLiteral = function(type, value) {
 		return value;

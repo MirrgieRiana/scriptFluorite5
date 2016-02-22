@@ -68,11 +68,11 @@ vms.Standard = function() {
 		}
 		return value.value;
 	};
-	this.toBoolean = function(value) {
-		return value.value;
-	};
-	this.createBoolean = function(value) {
-		return this.createObject("Boolean", value);
+	this.allTrue = function(array) {
+		for (var i = 0; i < array.length; i++) {
+			if (!array[i].value) return this.createObject("Boolean", false);
+		}
+		return this.createObject("Boolean", true);
 	};
 	this.createLiteral = function(type, value) {
 		if (type === "Integer") return this.createObject("Number", value);

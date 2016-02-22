@@ -125,13 +125,7 @@ Compare
       
       return function(vm, context, args) {
         if (context === "get") {
-          var i;
-
-          for (i = 0; i < codes.length; i++) {
-            if (!vm.toBoolean(codes[i](vm, "get"))) return vm.createBoolean(false);
-          }
-
-          return vm.createBoolean(true);
+          return vm.allTrue(codes.map(function(code) { return code(vm, "get"); }));
         } else {
           throw "Unknown context: " + context;
         }
