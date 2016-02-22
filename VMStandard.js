@@ -117,6 +117,7 @@ vms.Standard = function() {
 		if (type === "Identifier") {
 			if (value === "true") return createObject("Boolean", true);
 			if (value === "false") return createObject("Boolean", false);
+			if (value === "undefined") return UNDEFINED;
 			return createObject("Keyword", value);
 		}
 		if (type === "Underbar") return createObject("Keyword", value);
