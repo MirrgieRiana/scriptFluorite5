@@ -8,6 +8,11 @@
 		<script src="jsDump.js"></script>
 		<script src="util.js"></script>
 		<script>
+			var vms = {};
+		</script>
+		<script src="VMSimple.js"></script>
+		<script src="VMStandard.js"></script>
+		<script>
 			
 			var form = (function() {
 				
@@ -36,6 +41,12 @@
 						getDestBody().empty();
 						getDestBody().text(text);
 					},
+					getVM: function() {
+						return $("#vm").val();
+					},
+					createVM: function() {
+						return new vms[this.getVM()];
+					},
 					setStatus: function(text) {
 						return $("#status").html(text);
 					},
@@ -59,11 +70,20 @@
 						$("input[name='view']:radio").change(changed);
 						$("#src").keyup(changed);
 						$("#dest").load(changed);
+						$("#vm").change(changed);
+						$("#vm").change(function() { $("#vm_hidden").val($("#vm").val()); });
 						
 						// default values
 						if (this.getSrc() === "") this.setSrc("Damage: \\2d+4\\");
 						if (this.getView() === undefined) this.setView("html");
 						$("#dest").attr("src", "dest.html");
+						Object.keys(vms).forEach(function (key) {
+							var $option = $("<option>");
+							$option.attr("value", key);
+							$option.text(key);
+							$("#vm").append($option);
+						});
+						$("#vm").val($("#vm_hidden").val() || "Standard");
 					},
 				};
 			})();
@@ -81,7 +101,6 @@
 								cache: true,
 								allowedStartRules: [
 									"Expression",
-									"ExpressionPlain",
 								],
 							});
 							form.setStatus("");
@@ -99,33 +118,26 @@
 			
 			var src;
 			var view;
+			var vm;
 			
 			function changed(force)
 			{
 				var src2 = form.getSrc();
 				var view2 = form.getView();
+				var vm2 = form.getVM();
 				var res;
 				if (force !== true) {
-					if (src === src2 && view === view2) return;
+					if (src === src2 && view === view2 && vm === vm2) return;
 				}
 				
 				src = src2;
 				view = view2;
+				vm = vm2;
 				
 				try {
-					if (view === "html") {
-						res = parser.parse(src, {
-							startRule: "Expression",
-						});
-					} else if (view === "plain") {
-						res = parser.parse(src, {
-							startRule: "ExpressionPlain",
-						});
-					} else if (view === "dump") {
-						res = parser.parse(src, {
-							startRule: "Expression",
-						});
-					}
+					res = parser.parse(src, {
+						startRule: "Expression",
+					});
 				} catch(e) {
 					form.setDestView("plain");
 					form.setDestText(e);
@@ -134,23 +146,65 @@
 				
 				form.setDestView(view);
 				if (view === "html") {
-					form.setDestHTML(buildHTMLRes(res));
+					form.setDestHTML(buildHTML(res));
 				} else if (view === "plain") {
-					form.setDestText(res);
+					form.setDestText(buildPlain(res));
 				} else if (view === "dump") {
-					form.setDestText(jsDump.parse(res));
+					form.setDestText(buildDump(res));
 				}
 			}
 
-			function buildHTMLRes(res)
+			function buildPlain(res)
+			{
+				var text = [res[0]];
+				for (var i = 1; i < res.length; i += 2) {
+					buildPlainFormula(text, res[i][0], res[i][1]);
+					text.push(res[i + 1]);
+				}
+				return text.join("");
+			}
+
+			function buildPlainFormula(text, src, code)
+			{
+				var vm = form.createVM();
+				var set;
+				try {
+					res = code(vm, "get");
+				} catch(e) {
+					res = "" + e;
+				}
+				text.push(res);
+			}
+
+			function buildDump(res)
+			{
+				var data = [res[0]];
+				for (var i = 1; i < res.length; i += 2) {
+					buildDumpFormula(data, res[i][0], res[i][1]);
+					data.push(res[i + 1]);
+				}
+				return jsDump.parse(data);
+			}
+
+			function buildDumpFormula(data, src, code)
+			{
+				var vm = form.createVM();
+				var set;
+				try {
+					res = code(vm, "get");
+				} catch(e) {
+					res = "" + e;
+				}
+				data.push(res);
+			}
+
+			function buildHTML(res)
 			{
 				var html = [convHtml(res[0])];
-
 				for (var i = 1; i < res.length; i += 2) {
 					buildHTMLFormula(html, res[i][0], res[i][1]);
 					html.push(convHtml(res[i + 1]));
 				}
-
 				return html.join("");
 			}
 
@@ -158,9 +212,7 @@
 			{
 				var buttonScript = 'href="javascript: void(0);" onclick="dicebot_script_openclose(this)"';
 				var buttonReport = 'href="javascript: void(0);" onclick="dicebot_report_openclose(this)"';
-				var vm = {
-					dices: [],
-				};
+				var vm = form.createVM();
 				var res;
 				try {
 					res = code(vm, "get");
@@ -182,7 +234,8 @@
 
 						html.push('<span class="dicebot_report">');
 						{
-							var report = vm.dices.map(function(item) {
+							var dices = vm.dices || [];
+							var report = dices.map(function(item) {
 								return "[" + item.join(", ") + "]";
 							}).join(", ");
 
@@ -221,6 +274,8 @@
 							</tr>
 							<tr>
 								<td>
+									VM:<select id="vm"></select>
+									<input type="hidden" id="vm_hidden">
 									<input type="radio" name="view" value="html">HTML
 									<input type="radio" name="view" value="plain">Plain
 									<input type="radio" name="view" value="dump">Dump
