@@ -87,8 +87,9 @@ vms.Standard = function() {
 		}
 	};
 	this.unpackBlessed = function(value) {
+		var vm = this;
 		if (value.type === "Vector") {
-			return value.value.map(this.unpackBlessed);
+			return value.value.map(function(scalar) { return vm.unpackBlessed(scalar); });
 		}
 		return value.value;
 	};
