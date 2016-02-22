@@ -96,14 +96,9 @@ vms.Standard = function() {
 			if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
 			if (operator === "_rightbracketsRound") {
 				var value = codes[0](vm, "get");
-				if (instanceOf(value, "Keyword")) {
-					value = getVariable(value.value);
-				}
-				if (instanceOf(value, "Function")) {
-					return value.value(codes[1](vm, "get"));
-				} else {
-					throw "Type Error: " + operator + "/" + value.type;
-				} 
+				if (instanceOf(value, "Keyword")) value = getVariable(value.value);
+				if (instanceOf(value, "Function")) return value.value(codes[1](vm, "get"));
+				throw "Type Error: " + operator + "/" + value.type;
 			}
 
 			throw "Unknown operator: " + operator;
