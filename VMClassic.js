@@ -1,20 +1,21 @@
 
 vms.Classic = function() {
+	var vm = this;
+
+	function dice(count, faces)
+	{
+		var t = 0, i, value, values = [];
+		for (i = 0; i < count; i++) {
+			value = Math.floor(Math.random() * faces) + 1;
+			t += value;
+			values.push(value);
+		}
+		vm.dices.push(values);
+		return t;
+	}
+
 	this.dices = [];
 	this.callMethod = function(operator, codes, context, args) {
-		var vm = this;
-
-		function dice(count, faces)
-		{
-			var t = 0, i, value, values = [];
-			for (i = 0; i < count; i++) {
-				value = Math.floor(Math.random() * faces) + 1;
-				t += value;
-				values.push(value);
-			}
-			vm.dices.push(values);
-			return t;
-		}
 
 		if (context === "get") {
 

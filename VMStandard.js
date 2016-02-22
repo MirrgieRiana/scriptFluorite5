@@ -1,60 +1,68 @@
 
 vms.Standard = function() {
+	var vm = this;
+
+	function getVariable(name)
+	{
+		return variables[name] || UNDEFINED;
+	}
+	function createObject(type, value)
+	{
+		return {
+			type: type,
+			value: value,
+		};
+	}
+	function dice(count, faces)
+	{
+		var t = 0, i, value, values = [];
+		for (i = 0; i < count; i++) {
+			value = Math.floor(Math.random() * faces) + 1;
+			t += value;
+			values.push(value);
+		}
+		vm.dices.push(values);
+		return t;
+	}
+	function packVector(array)
+	{
+		if (array.length == 1) return array[0];
+		return createObject("Vector", array);
+	}
+	function unpackVector(blessed)
+	{
+		if (blessed.type === "Vector") return blessed.value;
+		return [blessed.value];
+	}
+
+	var variables = {
+		pi: createObject("Number", Math.PI),
+		sin: createObject("Function", function(value) { return createObject("Number", Math.sin(value.value)); }),
+	};
+	var UNDEFINED = createObject("Undefined", undefined);
+
 	this.dices = [];
 	this.callMethod = function(operator, codes, context, args) {
-		var vm = this;
-
-		var variables = {
-			pi: this.createObject("Number", Math.PI),
-			sin: this.createObject("Function", function(value) { return vm.createObject("Number", Math.sin(value.value)); }),
-		};
-		var UNDEFINED = vm.createObject("Undefined", undefined);
-		function getVariable(name)
-		{
-			return variables[name] || UNDEFINED;
-		}
-		function dice(count, faces)
-		{
-			var t = 0, i, value, values = [];
-			for (i = 0; i < count; i++) {
-				value = Math.floor(Math.random() * faces) + 1;
-				t += value;
-				values.push(value);
-			}
-			vm.dices.push(values);
-			return t;
-		}
-		function packVector(array)
-		{
-			if (array.length == 1) return array[0];
-			return vm.createObject("Vector", array);
-		}
-		function unpackVector(blessed)
-		{
-			if (blessed.type === "Vector") return blessed.value;
-			return [blessed.value];
-		}
-		
 		if (context === "get") {
 
-			if (operator === "_operatorPlus") return this.createObject("Number", codes[0](vm, "get").value + codes[1](vm, "get").value);
-			if (operator === "_operatorMinus") return this.createObject("Number", codes[0](vm, "get").value - codes[1](vm, "get").value);
-			if (operator === "_operatorAsterisk") return this.createObject("Number", codes[0](vm, "get").value * codes[1](vm, "get").value);
-			if (operator === "_operatorSlash") return this.createObject("Number", codes[0](vm, "get").value / codes[1](vm, "get").value);
-			if (operator === "_leftPlus") return this.createObject("Number", codes[0](vm, "get").value);
-			if (operator === "_leftMinus") return this.createObject("Number", -codes[0](vm, "get").value);
+			if (operator === "_operatorPlus") return createObject("Number", codes[0](vm, "get").value + codes[1](vm, "get").value);
+			if (operator === "_operatorMinus") return createObject("Number", codes[0](vm, "get").value - codes[1](vm, "get").value);
+			if (operator === "_operatorAsterisk") return createObject("Number", codes[0](vm, "get").value * codes[1](vm, "get").value);
+			if (operator === "_operatorSlash") return createObject("Number", codes[0](vm, "get").value / codes[1](vm, "get").value);
+			if (operator === "_leftPlus") return createObject("Number", codes[0](vm, "get").value);
+			if (operator === "_leftMinus") return createObject("Number", -codes[0](vm, "get").value);
 			if (operator === "_bracketsRound") return codes[0](vm, "get");
-			if (operator === "_operatorGreater") return this.createObject("Boolean", codes[0](vm, "get").value > codes[1](vm, "get").value);
-			if (operator === "_operatorGreaterEqual") return this.createObject("Boolean", codes[0](vm, "get").value >= codes[1](vm, "get").value);
-			if (operator === "_operatorLess") return this.createObject("Boolean", codes[0](vm, "get").value < codes[1](vm, "get").value);
-			if (operator === "_operatorLessEqual") return this.createObject("Boolean", codes[0](vm, "get").value <= codes[1](vm, "get").value);
-			if (operator === "_operatorEqual2") return this.createObject("Boolean", codes[0](vm, "get").value == codes[1](vm, "get").value);
-			if (operator === "_operatorExclamationEqual") return this.createObject("Boolean", codes[0](vm, "get").value != codes[1](vm, "get").value);
-			if (operator === "_operatorPipe2") return this.createObject("Boolean", codes[0](vm, "get").value || codes[1](vm, "get").value);
-			if (operator === "_operatorAmpersand2") return this.createObject("Boolean", codes[0](vm, "get").value && codes[1](vm, "get").value);
+			if (operator === "_operatorGreater") return createObject("Boolean", codes[0](vm, "get").value > codes[1](vm, "get").value);
+			if (operator === "_operatorGreaterEqual") return createObject("Boolean", codes[0](vm, "get").value >= codes[1](vm, "get").value);
+			if (operator === "_operatorLess") return createObject("Boolean", codes[0](vm, "get").value < codes[1](vm, "get").value);
+			if (operator === "_operatorLessEqual") return createObject("Boolean", codes[0](vm, "get").value <= codes[1](vm, "get").value);
+			if (operator === "_operatorEqual2") return createObject("Boolean", codes[0](vm, "get").value == codes[1](vm, "get").value);
+			if (operator === "_operatorExclamationEqual") return createObject("Boolean", codes[0](vm, "get").value != codes[1](vm, "get").value);
+			if (operator === "_operatorPipe2") return createObject("Boolean", codes[0](vm, "get").value || codes[1](vm, "get").value);
+			if (operator === "_operatorAmpersand2") return createObject("Boolean", codes[0](vm, "get").value && codes[1](vm, "get").value);
 			if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
 			if (operator === "_operatorMinus2Greater") return packVector(unpackVector(codes[0](vm, "get")).map(function(code) { return codes[1](vm, "get"); }));
-			if (operator === "d") return this.createObject("Number", dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
+			if (operator === "d") return createObject("Number", dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
 			if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
 			if (operator === "_rightbracketsRound") {
 				var value = codes[0](vm, "get");
@@ -73,12 +81,6 @@ vms.Standard = function() {
 			throw "Unknown context: " + context;
 		}
 	};
-	this.createObject = function(type, value) {
-		return {
-			type: type,
-			value: value,
-		};
-	};
 	this.unpackBlessed = function(value) {
 		if (value.type === "Vector") {
 			return value.value.map(this.unpackBlessed);
@@ -87,14 +89,14 @@ vms.Standard = function() {
 	};
 	this.allTrue = function(array) {
 		for (var i = 0; i < array.length; i++) {
-			if (!array[i].value) return this.createObject("Boolean", false);
+			if (!array[i].value) return createObject("Boolean", false);
 		}
-		return this.createObject("Boolean", true);
+		return createObject("Boolean", true);
 	};
 	this.createLiteral = function(type, value) {
-		if (type === "Integer") return this.createObject("Number", value);
-		if (type === "Float") return this.createObject("Number", value);
-		if (type === "Identifier") return this.createObject("Keyword", value);
+		if (type === "Integer") return createObject("Number", value);
+		if (type === "Float") return createObject("Number", value);
+		if (type === "Identifier") return createObject("Keyword", value);
 		throw "Unknown type: " + type;
 	};
 };
