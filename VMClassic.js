@@ -1,5 +1,5 @@
 
-vms.Simple = function() {
+vms.Classic = function() {
 	this.dices = [];
 	this.variables = {
 		pi: Math.PI,
