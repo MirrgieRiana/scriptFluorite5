@@ -8,6 +8,11 @@ vms.Standard = function() {
 			pi: this.createObject("Number", Math.PI),
 			sin: this.createObject("Function", function(value) { return vm.createObject("Number", Math.sin(value.value)); }),
 		};
+		var UNDEFINED = vm.createObject("Undefined", undefined);
+		function getVariable(name)
+		{
+			return variables[name] || UNDEFINED;
+		}
 		function dice(count, faces)
 		{
 			var t = 0, i, value, values = [];
@@ -50,11 +55,11 @@ vms.Standard = function() {
 			if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
 			if (operator === "_operatorMinus2Greater") return packVector(unpackVector(codes[0](vm, "get")).map(function(code) { return codes[1](vm, "get"); }));
 			if (operator === "d") return this.createObject("Number", dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
-			if (operator === "_leftDollar") return variables[codes[0](vm, "get").value];
+			if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
 			if (operator === "_rightbracketsRound") {
 				var value = codes[0](vm, "get");
 				if (value.type === "Keyword") {
-					value = variables[value.value];
+					value = getVariable(value.value);
 				}
 				if (value.type === "Function") {
 					return value.value(codes[1](vm, "get"));
