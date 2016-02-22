@@ -26,7 +26,7 @@ vms.Standard = function() {
 	}
 	function visitScalar(array, blessed)
 	{
-		if (blessed.type === "Vector") {
+		if (instanceOf(blessed, "Vector")) {
 			for (var i = 0; i < blessed.value.length; i++) {
 				visitScalar(array, blessed.value[i]);
 			}
@@ -43,8 +43,12 @@ vms.Standard = function() {
 	}
 	function unpackVector(blessed)
 	{
-		if (blessed.type === "Vector") return blessed.value;
+		if (instanceOf(blessed, "Vector")) return blessed.value;
 		return [blessed.value];
+	}
+	function instanceOf(blessed, type)
+	{
+		return blessed.type === type;
 	}
 
 	var variables = {
@@ -83,10 +87,10 @@ vms.Standard = function() {
 			if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
 			if (operator === "_rightbracketsRound") {
 				var value = codes[0](vm, "get");
-				if (value.type === "Keyword") {
+				if (instanceOf(value, "Keyword")) {
 					value = getVariable(value.value);
 				}
-				if (value.type === "Function") {
+				if (instanceOf(value, "Function")) {
 					return value.value(codes[1](vm, "get"));
 				} else {
 					throw "Type Error: " + operator + "/" + value.type;
@@ -100,7 +104,7 @@ vms.Standard = function() {
 	};
 	this.unpackBlessed = function(value) {
 		var vm = this;
-		if (value.type === "Vector") {
+		if (instanceOf(value, "Vector")) {
 			return value.value.map(function(scalar) { return vm.unpackBlessed(scalar); });
 		}
 		return value.value;
