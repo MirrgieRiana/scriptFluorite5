@@ -3,16 +3,16 @@ body {
 	font-size: 15px;
 }
 
-body.html {
+body.HTML {
 	font-family: Meiryo UI;
 }
 
-body.plain {
+body.Plain {
 	font-family: MS Gothic;
 	white-space: pre-wrap;
 }
 
-body.dump {
+body.Dump {
 	font-family: MS Gothic;
 	white-space: pre-wrap;
 }
