@@ -50,6 +50,15 @@ vms.Standard = function() {
 	{
 		return blessed.type === type;
 	}
+	function callFunction(blessedFunction, blessedArgs)
+	{
+		variables["_"] = blessedArgs;
+		var array = unpackVector(blessedArgs);
+		for (var i = 0; i < blessedFunction.value.args.length; i++) {
+			variables[blessedFunction.value.args[i]] = array[i] || UNDEFINED;
+		}
+		return blessedFunction.value.code(vm, "get");
+	}
 
 	var typeType = createObject(null, "Type"); typeType.type = typeType;
 	var typeUndefined = createObject(typeType, "Undefined");
@@ -125,12 +134,16 @@ vms.Standard = function() {
 				var minus = operator == "_operatorMinus2Greater";
 				if (minus) {
 					return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
-						variables["_"] = scalar;
-						return codes[1](vm, "get");
+						return callFunction(createObject(typeFunction, {
+							args: [],
+							code: codes[1],
+						}), scalar);
 					}));
 				} else {
-					variables["_"] = codes[0](vm, "get");
-					return codes[1](vm, "get");
+					return callFunction(createObject(typeFunction, {
+						args: [],
+						code: codes[1],
+					}), codes[0](vm, "get"));
 				}
 			}
 			if (operator === "_operatorMinusGreater"
@@ -141,21 +154,10 @@ vms.Standard = function() {
 				if (instanceOf(right, typeFunction)) {
 					if (minus) {
 						return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
-							variables["_"] = scalar;
-							var array = unpackVector(scalar);
-							for (var i = 0; i < right.value.args.length; i++) {
-								variables[right.value.args[i]] = array[i] || UNDEFINED;
-							}
-							return right.value.code(vm, "get");
+							return callFunction(right, scalar);
 						}));
 					} else {
-						var blessed = codes[0](vm, "get");
-						variables["_"] = blessed;
-						var array = unpackVector(blessed);
-						for (var i = 0; i < right.value.args.length; i++) {
-							variables[right.value.args[i]] = array[i] || UNDEFINED;
-						}
-						return right.value.code(vm, "get");
+						return callFunction(right, codes[0](vm, "get"));
 					}
 				}
 				throw "Type Error: " + operator + "/" + right.type.value;
@@ -169,15 +171,7 @@ vms.Standard = function() {
 			if (operator === "_rightbracketsRound") {
 				var value = codes[0](vm, "get");
 				if (instanceOf(value, typeKeyword)) value = getVariable(value.value);
-				if (instanceOf(value, typeFunction)) {
-					var blessed = codes[1](vm, "get");
-					variables["_"] = blessed;
-					var array = unpackVector(blessed);
-					for (var i = 0; i < value.value.args.length; i++) {
-						variables[value.value.args[i]] = array[i] || UNDEFINED;
-					}
-					return value.value.code(vm, "get");
-				}
+				if (instanceOf(value, typeFunction)) return callFunction(value, codes[1](vm, "get"));
 				throw "Type Error: " + operator + "/" + value.type.value;
 			}
 			if (operator === "_statement") {
