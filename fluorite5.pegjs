@@ -45,7 +45,7 @@
   {
     var result = body, i;
     for (i = 0; i < tail.length; i++) {
-      result = createCodeFromMethod("_rightbrackets" + tail[i][1][0], [result, tail[i][1][2]]);
+      result = createCodeFromMethod("_rightbrackets" + tail[i][1][0], [result, tail[i][1][1]]);
     }
     for (i = head.length - 1; i >= 0; i--) {
       result = createCodeFromMethod("_left" + head[i][0], [result]);
@@ -187,12 +187,16 @@ ContentSideLeft
   / "*" { return "Asterisk"; }
 
 ContentSideRight
-  = ("(" { return "Round" }) _ Formula _ ")"
-  / ("[" { return "Square" }) _ Formula _ "]"
+  = "(" _ main:Formula _ ")" { return ["Round", main]; }
+  / "[" _ main:Formula _ "]" { return ["Square", main]; }
+  / "(" _ ")" { return ["Round", createCodeFromLiteral("Void", "void")]; }
+  / "[" _ "]" { return ["Square", createCodeFromLiteral("Void", "void")]; }
 
 Factor
   = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
   / "[" _ main:Formula _ "]" { return createCodeFromMethod("_bracketsSquare", [main]); }
+  / "(" _ ")" { return createCodeFromMethod("_bracketsRound", [createCodeFromLiteral("Void", "void")]); }
+  / "[" _ "]" { return createCodeFromMethod("_bracketsSquare", [createCodeFromLiteral("Void", "void")]); }
   / Dice
   / Float
   / Integer

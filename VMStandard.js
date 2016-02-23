@@ -203,6 +203,7 @@ vms.Standard = function() {
 			return createObject(typeKeyword, value);
 		}
 		if (type === "Underbar") return createObject(typeKeyword, value);
+		if (type === "Void") return packVector([]);
 		throw "Unknown type: " + type;
 	};
 };
