@@ -15,7 +15,6 @@ var escapeHtml = (function (String) {
 		'"': '&quot;',
 		'<': '&lt;',
 		'>': '&gt;',
-		' ': '&nbsp;'
 	};
 	var escapeReg = '[';
 	var reg;

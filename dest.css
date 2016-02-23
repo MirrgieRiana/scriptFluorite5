@@ -5,6 +5,7 @@ body {
 
 body.HTML {
 	font-family: Meiryo UI;
+	white-space: pre-wrap;
 }
 
 body.Plain {
