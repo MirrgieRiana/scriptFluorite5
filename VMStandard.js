@@ -145,6 +145,17 @@ vms.Standard = function() {
 					var value = codes[1](vm, "get");
 					return value.type;
 				}
+				if (command.value === "length") {
+					var value = codes[1](vm, "get");
+					if (instanceOf(value, typeArray)) return createObject(typeNumber, value.value.length);
+					if (instanceOf(value, typeVector)) return createObject(typeNumber, value.value.length);
+					if (instanceOf(value, typeString)) return createObject(typeNumber, value.value.length);
+					throw "Illegal Argument: " + value.type;
+				}
+				if (command.value === "size") {
+					var value = codes[1](vm, "get");
+					return createObject(typeNumber, unpackVector(value).length);
+				}
 				throw "Unknown command: " + command.value;
 			}
 			if (operator === "_leftAmpersand") return createObject(typePointer, codes[0]);
