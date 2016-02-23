@@ -75,7 +75,13 @@ MessageFormula
     }
 
 Formula
-  = Arrow
+  = Assignment
+
+Assignment
+  = head:Arrow tail:(_ (
+    "->" _ ":" { return "MinusGreaterColon"; }
+  / ContentArrow
+  ) _ Arrow)* { return operatorLeft(head, tail); }
 
 Arrow
   = head:Vector tail:(_ ContentArrow _ Vector)* { return operatorLeft(head, tail); }

@@ -68,7 +68,12 @@ vms.Standard = function() {
 
 	var variables = {
 		pi: createObject(typeNumber, Math.PI),
-		sin: createObject(typeFunction, function(value) { return createObject(typeNumber, Math.sin(value.value)); }),
+		sin: createObject(typeFunction, {
+			args: ["x"],
+			code: function(vm, context) {
+				return createObject(typeNumber, Math.sin(getVariable("x").value));
+			},
+		}),
 	};
 
 	this.dices = [];
@@ -137,7 +142,15 @@ vms.Standard = function() {
 			if (operator === "_rightbracketsRound") {
 				var value = codes[0](vm, "get");
 				if (instanceOf(value, typeKeyword)) value = getVariable(value.value);
-				if (instanceOf(value, typeFunction)) return value.value(codes[1](vm, "get"));
+				if (instanceOf(value, typeFunction)) {
+					var blessed = codes[1](vm, "get");
+					variables["_"] = blessed;
+					var array = unpackVector(blessed);
+					for (var i = 0; i < value.value.args.length; i++) {
+						variables[value.value.args[i]] = array[i] || UNDEFINED;
+					}
+					return value.value.code(vm, "get");
+				}
 				throw "Type Error: " + operator + "/" + value.type.value;
 			}
 			if (operator === "_statement") {
@@ -180,7 +193,19 @@ vms.Standard = function() {
 				}
 				throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
 			}
+			if (operator === "_operatorMinusGreaterColon") {
+				var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
+				return createObject(typeFunction, {
+					args: array,
+					code: codes[1],
+				});
+			}
 
+			throw "Unknown operator: " + operator;
+		} else if (context === "arguments") {
+			if (operator === "_bracketsRound") return codes[0](vm, "arguments");
+			if (operator === "_leftDollar") return codes[0](vm, "arguments");
+			if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "arguments"); }));
 			throw "Unknown operator: " + operator;
 		} else {
 			throw "Unknown context: " + context;
@@ -245,10 +270,11 @@ vms.Standard = function() {
 			}
 			if (type === "Underbar") return createObject(typeKeyword, value);
 			if (type === "Void") return packVector([]);
-			throw "Unknown type: " + type;
-		} else {
-			throw "Unknown context: " + context;
+		} else if (context === "arguments") {
+			if (type === "Identifier") return createObject(typeKeyword, value);
+			if (type === "Void") return packVector([]);
 		}
+		throw "Unknown Literal Type: " + context + "/" + type;
 	};
 };
 
