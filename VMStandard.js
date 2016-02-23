@@ -125,6 +125,14 @@ vms.Standard = function() {
 				if (instanceOf(value, "Function")) return value.value(codes[1](vm, "get"));
 				throw "Type Error: " + operator + "/" + value.type;
 			}
+			if (operator === "_statement") {
+				var command = codes[0](vm, "get");
+				if (command.value === "typeof") {
+					var value = codes[1](vm, "get");
+					return createObject("String", value.type);
+				}
+				throw "Unknown command: " + command;
+			}
 
 			throw "Unknown operator: " + operator;
 		} else {
