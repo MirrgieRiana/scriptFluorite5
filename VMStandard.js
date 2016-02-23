@@ -59,6 +59,7 @@ vms.Standard = function() {
 
 	this.dices = [];
 	this.callMethod = function(operator, codes, context, args) {
+		if (operator === "_leftAsterisk") return codes[0](vm, "get").value(vm, context, args);
 		if (context === "get") {
 
 			if (operator === "_operatorPlus") return createObject("Number", codes[0](vm, "get").value + codes[1](vm, "get").value);
@@ -133,6 +134,7 @@ vms.Standard = function() {
 				}
 				throw "Unknown command: " + command;
 			}
+			if (operator === "_leftAmpersand") return createObject("Pointer", codes[0]);
 
 			throw "Unknown operator: " + operator;
 		} else {
@@ -149,6 +151,9 @@ vms.Standard = function() {
 		}
 		if (instanceOf(value, "Function")) {
 			return "<Function>";
+		}
+		if (instanceOf(value, "Pointer")) {
+			return "<Pointer>";
 		}
 		return "" + value.value;
 	};

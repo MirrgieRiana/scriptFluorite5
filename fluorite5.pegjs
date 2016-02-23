@@ -183,6 +183,8 @@ ContentSideLeft
   / "-" { return "Minus"; }
   / "$" { return "Dollar"; }
   / "@" { return "Atsign"; }
+  / "&" { return "Ampersand"; }
+  / "*" { return "Asterisk"; }
 
 ContentSideRight
   = ("(" { return "Round" }) _ Formula _ ")"
