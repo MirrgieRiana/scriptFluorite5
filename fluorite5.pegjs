@@ -189,14 +189,18 @@ ContentSideLeft
 ContentSideRight
   = "(" _ main:Formula _ ")" { return ["Round", main]; }
   / "[" _ main:Formula _ "]" { return ["Square", main]; }
+  / "{" _ main:Formula _ "}" { return ["Curly", main]; }
   / "(" _ ")" { return ["Round", createCodeFromLiteral("Void", "void")]; }
   / "[" _ "]" { return ["Square", createCodeFromLiteral("Void", "void")]; }
+  / "{" _ "}" { return ["Curly", createCodeFromLiteral("Void", "void")]; }
 
 Factor
   = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
   / "[" _ main:Formula _ "]" { return createCodeFromMethod("_bracketsSquare", [main]); }
+  / "{" _ main:Formula _ "}" { return createCodeFromMethod("_bracketsCurly", [main]); }
   / "(" _ ")" { return createCodeFromMethod("_bracketsRound", [createCodeFromLiteral("Void", "void")]); }
   / "[" _ "]" { return createCodeFromMethod("_bracketsSquare", [createCodeFromLiteral("Void", "void")]); }
+  / "{" _ "}" { return createCodeFromMethod("_bracketsCurly", [createCodeFromLiteral("Void", "void")]); }
   / Dice
   / Float
   / Integer
