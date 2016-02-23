@@ -41,9 +41,12 @@
     return result;
   }
 
-  function left(head, tail)
+  function side(head, body, tail)
   {
-    var result = tail, i;
+    var result = body, i;
+    for (i = 0; i < tail.length; i++) {
+      result = createCodeFromMethod("_rightbrackets" + tail[i][1][0], [result, tail[i][1][2]]);
+    }
     for (i = head.length - 1; i >= 0; i--) {
       result = createCodeFromMethod("_left" + head[i][0], [result]);
     }
@@ -159,35 +162,25 @@ Term
     ) _ Power)* { return operatorLeft(head, tail); }
 
 Power
-  = head:(Left _ (
+  = head:(Side _ (
       "^" { return "Caret"; }
-    ) _)* tail:Left { return operatorRight(head, tail); }
+    ) _)* tail:Side { return operatorRight(head, tail); }
 
-Left
-  = head:(ContentLeft _)* tail:Right { return left(head, tail); }
+Side
+  = head:(ContentSideLeft _)* body:Factor tail:(_ ContentSideRight)* { return side(head, body, tail); }
 
-LeftOnly
-  = head:(ContentLeft _)* tail:Factor { return left(head, tail); }
+SideLeftOnly
+  = head:(ContentSideLeft _)* body:Factor { return side(head, body, []); }
 
-ContentLeft
+ContentSideLeft
   = "+" { return "Plus"; }
   / "-" { return "Minus"; }
   / "$" { return "Dollar"; }
   / "@" { return "Atsign"; }
 
-Right
-  = head:Factor tail:(_ (
-      ("(" { return "Round" }) _ Formula _ ")"
-    / ("[" { return "Square" }) _ Formula _ "]"
-    ))* {
-      var result = head, i;
-      
-      for (i = 0; i < tail.length; i++) {
-        result = createCodeFromMethod("_rightbrackets" + tail[i][1][0], [result, tail[i][1][2]]);
-      }
-      
-      return result;
-    }
+ContentSideRight
+  = ("(" { return "Round" }) _ Formula _ ")"
+  / ("[" { return "Square" }) _ Formula _ "]"
 
 Factor
   = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
