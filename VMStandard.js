@@ -149,6 +149,9 @@ vms.Standard = function() {
 		if (instanceOf(value, "Array")) {
 			return "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]";
 		}
+		if (instanceOf(value, "Entry")) {
+			return value.value.key + ": " + value.value.value;
+		}
 		if (instanceOf(value, "Function")) {
 			return "<Function>";
 		}
