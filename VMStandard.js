@@ -62,6 +62,7 @@ vms.Standard = function() {
 	var typeArray = createObject(typeType, "Array");
 	var typeVector = createObject(typeType, "Vector");
 	var typeEntry = createObject(typeType, "Entry");
+	var typeHash = createObject(typeType, "Hash");
 	
 	var UNDEFINED = createObject(typeUndefined, undefined);
 
@@ -159,6 +160,26 @@ vms.Standard = function() {
 				throw "Unknown command: " + command.value;
 			}
 			if (operator === "_leftAmpersand") return createObject(typePointer, codes[0]);
+			if (operator === "_bracketsCurly") {
+				var hash = {};
+				unpackVector(codes[0](vm, "get")).forEach(function(item) {
+					if (instanceOf(item, typeEntry)) {
+						hash[item.value.key] = item.value;
+						return;
+					}
+					throw "Type Error: " + item.type.value + " is not a Entry";
+				});
+				return createObject(typeHash, hash);
+			}
+			if (operator === "_operatorColon2") {
+				var hash = codes[0](vm, "get");
+				var key = codes[1](vm, "get");
+				if (instanceOf(hash, typeHash)) {
+					if (instanceOf(key, typeString)) return hash.value[key.value] || UNDEFINED;
+					if (instanceOf(key, typeKeyword)) return hash.value[key.value] || UNDEFINED;
+				}
+				throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
+			}
 
 			throw "Unknown operator: " + operator;
 		} else {
@@ -175,6 +196,11 @@ vms.Standard = function() {
 		}
 		if (instanceOf(value, typeEntry)) {
 			return value.value.key + ": " + value.value.value;
+		}
+		if (instanceOf(value, typeHash)) {
+			return "{" + Object.keys(value.value).map(function(key) {
+				return key + ": " + vm.toString(value.value[key]);
+			}).join(", ") + "}";
 		}
 		if (instanceOf(value, typeFunction)) {
 			return "<Function>";

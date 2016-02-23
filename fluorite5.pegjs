@@ -162,9 +162,14 @@ Term
     ) _ Power)* { return operatorLeft(head, tail); }
 
 Power
-  = head:(Statement _ (
+  = head:(Member _ (
       "^" { return "Caret"; }
-    ) _)* tail:Statement { return operatorRight(head, tail); }
+    ) _)* tail:Member { return operatorRight(head, tail); }
+
+Member
+  = head:Statement tail:(_ (
+      "::" { return "Colon2"; }
+    ) _ Statement)* { return operatorLeft(head, tail); }
 
 Statement
   = Side
