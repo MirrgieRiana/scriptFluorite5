@@ -75,22 +75,28 @@ MessageFormula
     }
 
 Formula
-  = Assignment
+  = Arrows
 
-Assignment
-  = head:Arrow tail:(_ (
-    "->" _ ":" { return "MinusGreaterColon"; }
-  / ContentArrow
-  ) _ Arrow)* { return operatorLeft(head, tail); }
-
-Arrow
-  = head:Vector tail:(_ ContentArrow _ Vector)* { return operatorLeft(head, tail); }
-
-ContentArrow
-  = "-->" { return "Minus2Greater"; }
-  / "->" { return "MinusGreater"; }
-  / "==>" { return "Equal2Greater"; }
-  / "=>" { return "EqualGreater"; }
+Arrows
+  = head:(
+      (
+        main:Vector _ "-->" _ { return ["Minus2Greater", main]; }
+      / main:Vector _ "->" _ (! ":") { return ["MinusGreater", main]; }
+      / main:Vector _ "==>" _ { return ["Equal2Greater", main]; }
+      / main:Vector _ "=>" _ { return ["EqualGreater", main]; }
+      )+
+    / main:Vector _ "->" _ ":" _ { return [["MinusGreaterColon", main]]; }
+    )* tail:Vector {
+      var result = tail, i, j;
+      for (i = head.length - 1; i >= 0; i--) {
+        var result2 = head[i][0][1];
+        for (j = 1; j < head[i].length; j++) {
+          result2 = createCodeFromMethod("_operator" + head[i][j - 1][1], [result2, head[i][j][1]]);
+        }
+        result = createCodeFromMethod("_operator" + head[i][head[i].length - 1][0], [result2, result]);
+      }
+      return result;
+    }
 
 Vector
   = head:Entry tail:(_ (",") _ Entry)* {
