@@ -186,7 +186,7 @@ vms.Standard = function() {
 					if (instanceOf(value, typeArray)) return createObject(typeNumber, value.value.length);
 					if (instanceOf(value, typeVector)) return createObject(typeNumber, value.value.length);
 					if (instanceOf(value, typeString)) return createObject(typeNumber, value.value.length);
-					throw "Illegal Argument: " + value.type;
+					throw "Illegal Argument: " + value.type.value;
 				}
 				if (command.value === "size") {
 					var value = codes[1](vm, "get");
