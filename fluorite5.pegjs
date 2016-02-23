@@ -78,12 +78,13 @@ Formula
   = Arrow
 
 Arrow
-  = head:Vector tail:(_ (
-      "-->" { return "Minus2Greater"; }
-    / "->" { return "MinusGreater"; }
-    / "==>" { return "Equal2Greater"; }
-    / "=>" { return "EqualGreater"; }
-    ) _ Vector)* { return operatorLeft(head, tail); }
+  = head:Vector tail:(_ ContentArrow _ Vector)* { return operatorLeft(head, tail); }
+
+ContentArrow
+  = "-->" { return "Minus2Greater"; }
+  / "->" { return "MinusGreater"; }
+  / "==>" { return "Equal2Greater"; }
+  / "=>" { return "EqualGreater"; }
 
 Vector
   = head:Entry tail:(_ (",") _ Entry)* {
