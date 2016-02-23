@@ -188,6 +188,9 @@ vms.Standard = function() {
 	};
 	this.toString = function(value) {
 		var vm = this;
+		if (instanceOf(value, typeUndefined)) {
+			return "<Undefined>";
+		}
 		if (instanceOf(value, typeVector)) {
 			return value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ");
 		}
