@@ -145,7 +145,7 @@ vms.Standard = function() {
 					var value = codes[1](vm, "get");
 					return value.type;
 				}
-				throw "Unknown command: " + command;
+				throw "Unknown command: " + command.value;
 			}
 			if (operator === "_leftAmpersand") return createObject(typePointer, codes[0]);
 
