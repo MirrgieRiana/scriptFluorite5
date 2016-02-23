@@ -41,6 +41,15 @@
     return result;
   }
 
+  function left(head, tail)
+  {
+    var result = tail, i;
+    for (i = head.length - 1; i >= 0; i--) {
+      result = createCodeFromMethod("_left" + head[i][0], [result]);
+    }
+    return result;
+  }
+
 }
 
 Expression
@@ -155,20 +164,16 @@ Power
     ) _)* tail:Left { return operatorRight(head, tail); }
 
 Left
-  = head:((
-      "+" { return "Plus"; }
-    / "-" { return "Minus"; }
-    / "$" { return "Dollar"; }
-    / "@" { return "Atsign"; }
-    ) _)* tail:Right {
-      var result = tail, i;
-      
-      for (i = head.length - 1; i >= 0; i--) {
-        result = createCodeFromMethod("_left" + head[i][0], [result]);
-      }
-      
-      return result;
-    }
+  = head:(ContentLeft _)* tail:Right { return left(head, tail); }
+
+LeftOnly
+  = head:(ContentLeft _)* tail:Factor { return left(head, tail); }
+
+ContentLeft
+  = "+" { return "Plus"; }
+  / "-" { return "Minus"; }
+  / "$" { return "Dollar"; }
+  / "@" { return "Atsign"; }
 
 Right
   = head:Factor tail:(_ (
