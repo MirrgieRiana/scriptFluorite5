@@ -8,11 +8,7 @@
   function createCodeFromLiteral(type, value)
   {
     return function(vm, context, args) {
-      if (context === "get") {
-        return vm.createLiteral(type, value);
-      } else {
-        throw "Unknown context: " + context;
-      }
+      return vm.createLiteral(type, value, context, args);
     };
   }
 

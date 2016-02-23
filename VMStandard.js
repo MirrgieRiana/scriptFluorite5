@@ -232,19 +232,23 @@ vms.Standard = function() {
 		}
 		return createObject(typeBoolean, true);
 	};
-	this.createLiteral = function(type, value) {
-		if (type === "Integer") return createObject(typeNumber, value);
-		if (type === "Float") return createObject(typeNumber, value);
-		if (type === "String") return createObject(typeString, value);
-		if (type === "Identifier") {
-			if (value === "true") return createObject(typeBoolean, true);
-			if (value === "false") return createObject(typeBoolean, false);
-			if (value === "undefined") return UNDEFINED;
-			return createObject(typeKeyword, value);
+	this.createLiteral = function(type, value, context, args) {
+		if (context === "get") {
+			if (type === "Integer") return createObject(typeNumber, value);
+			if (type === "Float") return createObject(typeNumber, value);
+			if (type === "String") return createObject(typeString, value);
+			if (type === "Identifier") {
+				if (value === "true") return createObject(typeBoolean, true);
+				if (value === "false") return createObject(typeBoolean, false);
+				if (value === "undefined") return UNDEFINED;
+				return createObject(typeKeyword, value);
+			}
+			if (type === "Underbar") return createObject(typeKeyword, value);
+			if (type === "Void") return packVector([]);
+			throw "Unknown type: " + type;
+		} else {
+			throw "Unknown context: " + context;
 		}
-		if (type === "Underbar") return createObject(typeKeyword, value);
-		if (type === "Void") return packVector([]);
-		throw "Unknown type: " + type;
 	};
 };
 

@@ -45,7 +45,7 @@ vms.Classic = function() {
 		}
 		return true;
 	};
-	this.createLiteral = function(type, value) {
+	this.createLiteral = function(type, value, context, args) {
 		return value;
 	};
 };
