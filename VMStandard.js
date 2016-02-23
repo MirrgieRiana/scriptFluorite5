@@ -231,7 +231,8 @@ vms.Standard = function() {
 			}).join(", ") + "}";
 		}
 		if (instanceOf(value, typeFunction)) {
-			return "<Function>";
+			if (value.value.args.length === 0) return "<Function>";
+			return "<Function: " + value.value.args.join(", ") + ">";
 		}
 		if (instanceOf(value, typePointer)) {
 			return "<Pointer>";
