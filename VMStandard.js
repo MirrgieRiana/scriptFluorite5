@@ -50,6 +50,13 @@ vms.Standard = function() {
 	{
 		return blessed.type === type;
 	}
+	function createFunction(args, code)
+	{
+		return createObject(typeFunction, {
+			args: args,
+			code: code,
+		});
+	}
 	function callFunction(blessedFunction, blessedArgs)
 	{
 		var i;
@@ -78,11 +85,8 @@ vms.Standard = function() {
 
 	var variables = {
 		pi: createObject(typeNumber, Math.PI),
-		sin: createObject(typeFunction, {
-			args: ["x"],
-			code: function(vm, context) {
+		sin: createFunction(["x"], function(vm, context) {
 				return createObject(typeNumber, Math.sin(getVariable("x").value));
-			},
 		}),
 	};
 
@@ -135,16 +139,10 @@ vms.Standard = function() {
 				var minus = operator == "_operatorMinus2Greater";
 				if (minus) {
 					return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
-						return callFunction(createObject(typeFunction, {
-							args: [],
-							code: codes[1],
-						}), scalar);
+						return callFunction(createFunction([], codes[1]), scalar);
 					}));
 				} else {
-					return callFunction(createObject(typeFunction, {
-						args: [],
-						code: codes[1],
-					}), codes[0](vm, "get"));
+					return callFunction(createFunction([], codes[1]), codes[0](vm, "get"));
 				}
 			}
 			if (operator === "_operatorMinusGreater"
@@ -217,10 +215,7 @@ vms.Standard = function() {
 			}
 			if (operator === "_operatorMinusGreaterColon") {
 				var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
-				return createObject(typeFunction, {
-					args: array,
-					code: codes[1],
-				});
+				return createFunction(array, codes[1]);
 			}
 
 			throw "Unknown operator: " + operator;
