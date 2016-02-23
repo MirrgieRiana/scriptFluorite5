@@ -91,7 +91,7 @@ Arrows
       for (i = head.length - 1; i >= 0; i--) {
         var result2 = head[i][0][1];
         for (j = 1; j < head[i].length; j++) {
-          result2 = createCodeFromMethod("_operator" + head[i][j - 1][1], [result2, head[i][j][1]]);
+          result2 = createCodeFromMethod("_operator" + head[i][j - 1][0], [result2, head[i][j][1]]);
         }
         result = createCodeFromMethod("_operator" + head[i][head[i].length - 1][0], [result2, result]);
       }
