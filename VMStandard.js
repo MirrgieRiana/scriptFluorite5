@@ -234,6 +234,7 @@ vms.Standard = function() {
 			return "<Undefined>";
 		}
 		if (instanceOf(value, typeVector)) {
+			if (value.value.length == 0) return "<Void>";
 			return value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ");
 		}
 		if (instanceOf(value, typeArray)) {
