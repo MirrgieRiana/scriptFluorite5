@@ -147,6 +147,9 @@ vms.Standard = function() {
 		if (instanceOf(value, "Array")) {
 			return "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]";
 		}
+		if (instanceOf(value, "Function")) {
+			return "<Function>";
+		}
 		return "" + value.value;
 	};
 	this.toNative = function(value) {
