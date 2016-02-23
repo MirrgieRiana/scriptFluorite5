@@ -122,7 +122,7 @@ vms.Standard = function() {
 			}
 			if (operator === "_operatorMinus2Greater"
 				|| operator === "_operatorEqual2Greater") 	{
-				var minus = operator == "_operatorMinus2Greater" || operator == "_operatorMinusGreater";
+				var minus = operator == "_operatorMinus2Greater";
 				if (minus) {
 					return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
 						variables["_"] = scalar;
@@ -132,6 +132,33 @@ vms.Standard = function() {
 					variables["_"] = codes[0](vm, "get");
 					return codes[1](vm, "get");
 				}
+			}
+			if (operator === "_operatorMinusGreater"
+				|| operator === "_operatorEqualGreater") 	{
+				var minus = operator == "_operatorMinusGreater";
+				var right = codes[1](vm, "get");
+				if (instanceOf(right, typeKeyword)) right = getVariable(right.value);
+				if (instanceOf(right, typeFunction)) {
+					if (minus) {
+						return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
+							variables["_"] = scalar;
+							var array = unpackVector(scalar);
+							for (var i = 0; i < right.value.args.length; i++) {
+								variables[right.value.args[i]] = array[i] || UNDEFINED;
+							}
+							return right.value.code(vm, "get");
+						}));
+					} else {
+						var blessed = codes[0](vm, "get");
+						variables["_"] = blessed;
+						var array = unpackVector(blessed);
+						for (var i = 0; i < right.value.args.length; i++) {
+							variables[right.value.args[i]] = array[i] || UNDEFINED;
+						}
+						return right.value.code(vm, "get");
+					}
+				}
+				throw "Type Error: " + operator + "/" + right.type.value;
 			}
 			if (operator === "_operatorColon") return createObject(typeEntry, {
 				key: codes[0](vm, "get").value,
