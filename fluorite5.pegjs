@@ -39,12 +39,16 @@
 
   function side(head, body, tail)
   {
-    var result = body, i;
-    for (i = 0; i < tail.length; i++) {
-      result = createCodeFromMethod("_rightbrackets" + tail[i][1][0], [result, tail[i][1][1]]);
+    var result = body, l, r;
+    for (l = head.length - 1; l >= 0; l--) {
+      if (!head[l][0][1]) break;
+      result = createCodeFromMethod("_left" + head[l][0][0], [result]);
     }
-    for (i = head.length - 1; i >= 0; i--) {
-      result = createCodeFromMethod("_left" + head[i][0], [result]);
+    for (r = 0; r < tail.length; r++) {
+      result = createCodeFromMethod("_rightbrackets" + tail[r][1][0], [result, tail[r][1][1]]);
+    }
+    for (; l >= 0; l--) {
+      result = createCodeFromMethod("_left" + head[l][0][0], [result]);
     }
     return result;
   }
@@ -187,18 +191,26 @@ Statement
     }
 
 Side
-  = head:(ContentSideLeft _)* body:Factor tail:(_ ContentSideRight)* { return side(head, body, tail); }
+  = head:((
+      main:ContentSideLeft { return [main, false]; }
+    / main:ContentSideLeftVariable { return [main, true]; }
+    ) _)* body:Factor tail:(_ ContentSideRight)* { return side(head, body, tail); }
 
 SideLeftOnly
-  = head:(ContentSideLeft _)* body:Factor { return side(head, body, []); }
+  = head:((
+      main:ContentSideLeft { return [main, false]; }
+    / main:ContentSideLeftVariable { return [main, true]; }
+    ) _)* body:Factor { return side(head, body, []); }
 
 ContentSideLeft
   = "+" { return "Plus"; }
   / "-" { return "Minus"; }
-  / "$" { return "Dollar"; }
   / "@" { return "Atsign"; }
   / "&" { return "Ampersand"; }
   / "*" { return "Asterisk"; }
+
+ContentSideLeftVariable
+  = "$" { return "Dollar"; }
 
 ContentSideRight
   = "(" _ main:Formula _ ")" { return ["Round", main]; }
