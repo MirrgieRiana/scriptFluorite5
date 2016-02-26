@@ -162,8 +162,8 @@ vms.Standard = function() {
 				throw "Type Error: " + operator + "/" + right.type.value;
 			}
 			if (operator === "_operatorColon") return createObject(typeEntry, {
-				key: codes[0](vm, "get").value,
-				value: codes[1](vm, "get").value,
+				key: codes[0](vm, "get"),
+				value: codes[1](vm, "get"),
 			});
 			if (operator === "d") return createObject(typeNumber, dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
 			if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
@@ -197,7 +197,7 @@ vms.Standard = function() {
 				var hash = {};
 				unpackVector(codes[0](vm, "get")).forEach(function(item) {
 					if (instanceOf(item, typeEntry)) {
-						hash[item.value.key] = item.value;
+						hash[item.value.key.value] = item.value.value;
 						return;
 					}
 					throw "Type Error: " + item.type.value + " is not a Entry";
@@ -241,7 +241,7 @@ vms.Standard = function() {
 			return "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]";
 		}
 		if (instanceOf(value, typeEntry)) {
-			return value.value.key + ": " + value.value.value;
+			return vm.toString(value.value.key) + ": " + vm.toString(value.value.value);
 		}
 		if (instanceOf(value, typeHash)) {
 			return "{" + Object.keys(value.value).map(function(key) {
