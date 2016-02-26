@@ -37,18 +37,20 @@
     return result;
   }
 
-  function side(head, body, tail)
+  function left(head, tail)
   {
-    var result = body, l, r;
-    for (l = head.length - 1; l >= 0; l--) {
-      if (!head[l][0][1]) break;
-      result = createCodeFromMethod("_left" + head[l][0][0], [result]);
+    var result = tail, i;
+    for (i = head.length - 1; i >= 0; i--) {
+      result = createCodeFromMethod("_left" + head[i][0], [result]);
     }
-    for (r = 0; r < tail.length; r++) {
-      result = createCodeFromMethod("_rightbrackets" + tail[r][1][0], [result, tail[r][1][1]]);
-    }
-    for (; l >= 0; l--) {
-      result = createCodeFromMethod("_left" + head[l][0][0], [result]);
+    return result;
+  }
+
+  function right(head, tail)
+  {
+    var result = head, i;
+    for (i = 0; i < tail.length; i++) {
+      result = createCodeFromMethod("_rightbrackets" + tail[i][1][0], [result, tail[i][1][1]]);
     }
     return result;
   }
@@ -175,50 +177,44 @@ Term
     ) _ Power)* { return operatorLeft(head, tail); }
 
 Power
-  = head:(Member _ (
+  = head:(Statement _ (
       "^" { return "Caret"; }
-    ) _)* tail:Member { return operatorRight(head, tail); }
-
-Member
-  = head:Statement tail:(_ (
-      "::" { return "Colon2"; }
-    ) _ Statement)* { return operatorLeft(head, tail); }
+    ) _)* tail:Statement { return operatorRight(head, tail); }
 
 Statement
-  = Side
-  / "/" main:(_ SideLeftOnly)+ {
+  = Left
+  / "/" main:(_ Member)+ {
       return createCodeFromMethod("_statement", main.map(function(item) { return item[1]; }));
     }
 
-Side
+Left
   = head:((
-      main:ContentSideLeft { return [main, false]; }
-    / main:ContentSideLeftVariable { return [main, true]; }
-    ) _)* body:Factor tail:(_ ContentSideRight)* { return side(head, body, tail); }
+      "+" { return "Plus"; }
+    / "-" { return "Minus"; }
+    / "@" { return "Atsign"; }
+    / "&" { return "Ampersand"; }
+    / "*" { return "Asterisk"; }
+    ) _)* tail:Right { return left(head, tail); }
 
-SideLeftOnly
+Right
+  = head:Member tail:(_ (
+      "(" _ main:Formula _ ")" { return ["Round", main]; }
+    / "[" _ main:Formula _ "]" { return ["Square", main]; }
+    / "{" _ main:Formula _ "}" { return ["Curly", main]; }
+    / "(" _ ")" { return ["Round", createCodeFromLiteral("Void", "void")]; }
+    / "[" _ "]" { return ["Square", createCodeFromLiteral("Void", "void")]; }
+    / "{" _ "}" { return ["Curly", createCodeFromLiteral("Void", "void")]; }
+    ))* { return right(head, tail); }
+
+Member
+  = head:Variable tail:(_ (
+      "::" { return "Colon2"; }
+    ) _ Variable)* { return operatorLeft(head, tail); }
+
+Variable
   = head:((
-      main:ContentSideLeft { return [main, false]; }
-    / main:ContentSideLeftVariable { return [main, true]; }
-    ) _)* body:Factor { return side(head, body, []); }
-
-ContentSideLeft
-  = "+" { return "Plus"; }
-  / "-" { return "Minus"; }
-  / "@" { return "Atsign"; }
-  / "&" { return "Ampersand"; }
-  / "*" { return "Asterisk"; }
-
-ContentSideLeftVariable
-  = "$" { return "Dollar"; }
-
-ContentSideRight
-  = "(" _ main:Formula _ ")" { return ["Round", main]; }
-  / "[" _ main:Formula _ "]" { return ["Square", main]; }
-  / "{" _ main:Formula _ "}" { return ["Curly", main]; }
-  / "(" _ ")" { return ["Round", createCodeFromLiteral("Void", "void")]; }
-  / "[" _ "]" { return ["Square", createCodeFromLiteral("Void", "void")]; }
-  / "{" _ "}" { return ["Curly", createCodeFromLiteral("Void", "void")]; }
+      "$" { return "Dollar"; }
+    ) _)* tail:Factor { return left(head, tail); }
 
 Factor
   = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
