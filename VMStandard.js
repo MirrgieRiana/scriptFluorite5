@@ -213,7 +213,7 @@ vms.Standard = function() {
 				}
 				throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
 			}
-			if (operator === "_operatorMinusGreaterColon") {
+			if (operator === "_operatorColonGreater") {
 				var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
 				return createFunction(array, codes[1]);
 			}

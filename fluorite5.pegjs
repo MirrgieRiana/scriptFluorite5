@@ -91,7 +91,7 @@ Arrows
       / main:Vector _ "==>" _ { return ["Equal2Greater", main]; }
       / main:Vector _ "=>" _ { return ["EqualGreater", main]; }
       )+
-    / main:Vector _ "->" _ ":" _ { return [["MinusGreaterColon", main]]; }
+    / main:Vector _ ":>" _ { return [["ColonGreater", main]]; }
     )* tail:Vector {
       var result = tail, i, j;
       for (i = head.length - 1; i >= 0; i--) {
