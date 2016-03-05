@@ -504,13 +504,13 @@ Compare
     ) _ Add)* {
       if (tail.length == 0) return head;
       var codes = [], left = head, right, i;
-      
+
       for (i = 0; i < tail.length; i++) {
         right = tail[i][3];
         codes.push(createCodeFromMethod("_operator" + tail[i][1], [left, right]));
         left = right;
       }
-      
+
       return function(vm, context, args) {
         if (context === "get") {
           return vm.allTrue(codes.map(function(code) { return code(vm, "get"); }));
