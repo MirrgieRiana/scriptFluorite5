@@ -630,6 +630,13 @@ ContentString
   / "\\'" { return "'"; }
   / [^']
 
-_ "Blanks"
-  = [ \t\n\r　]*
+_ "Comments"
+  = (
+      "/*" ((! "*/") .)* "*/"
+    / "//" [^\n\r]*
+    / Blanks
+    )*
+
+Blanks
+  = [ \t\n\r　]+
 
