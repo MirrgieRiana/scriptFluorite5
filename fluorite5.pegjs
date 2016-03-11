@@ -116,6 +116,10 @@
         {
           return variables[name] || UNDEFINED;
         }
+        function setVariable(name, value)
+        {
+          variables[name] = value;
+        }
         function createObject(type, value)
         {
           return {
@@ -204,6 +208,7 @@
         this.callMethod = function(operator, codes, context, args) {
           if (operator === "_leftAsterisk") return codes[0](vm, "get").value(vm, context, args);
           if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
+          if (operator === "_bracketsRound") return codes[0](vm, context, args);
           if (context === "get") {
 
             if (operator === "_operatorPlus") {
@@ -223,7 +228,6 @@
             if (operator === "_operatorCaret") return createObject(typeNumber, Math.pow(codes[0](vm, "get").value, codes[1](vm, "get").value));
             if (operator === "_leftPlus") return createObject(typeNumber, codes[0](vm, "get").value);
             if (operator === "_leftMinus") return createObject(typeNumber, -codes[0](vm, "get").value);
-            if (operator === "_bracketsRound") return codes[0](vm, "get");
             if (operator === "_operatorGreater") return createObject(typeBoolean, codes[0](vm, "get").value > codes[1](vm, "get").value);
             if (operator === "_operatorGreaterEqual") return createObject(typeBoolean, codes[0](vm, "get").value >= codes[1](vm, "get").value);
             if (operator === "_operatorLess") return createObject(typeBoolean, codes[0](vm, "get").value < codes[1](vm, "get").value);
@@ -342,10 +346,25 @@
             if (operator === "_concatenate") {
               return createObject(typeString, codes.map(function(code) { return vm.toString(code(vm, "get")); }).join(""));
             }
+            if (operator === "_enumerateSemicolon") {
+              for (var i = 0; i < codes.length - 1; i++) {
+                codes[i](vm, "invoke");
+              }
+              return codes[codes.length - 1](vm, "get");
+            }
 
             throw "Unknown operator: " + operator;
+          } else if (context === "set") {
+            if (operator === "_leftDollar") {
+              setVariable(codes[0](vm, "get").value, args);
+              return;
+            }
+          } else if (context === "invoke") {
+            if (operator === "_operatorEqual") {
+              codes[0](vm, "set", codes[1](vm, "get"));
+              return;
+            }
           } else if (context === "arguments") {
-            if (operator === "_bracketsRound") return codes[0](vm, "arguments");
             if (operator === "_leftDollar") return codes[0](vm, "arguments");
             if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "arguments"); }));
             throw "Unknown operator: " + operator;
@@ -471,7 +490,19 @@ MessageFormula
     }
 
 Formula
-  = Arrows
+  = Line
+
+Line
+  = head:Arrows tail:(_ (";") _ Arrows)* {
+      if (tail.length == 0) return head;
+      var result = [head], i;
+
+      for (i = 0; i < tail.length; i++) {
+        result.push(tail[i][3]);
+      }
+
+      return createCodeFromMethod("_enumerateSemicolon", result);
+    }
 
 Arrows
   = head:(
@@ -482,6 +513,7 @@ Arrows
       / main:Vector _ "=>" _ { return ["EqualGreater", main]; }
       )+
     / main:Vector _ ":>" _ { return [["ColonGreater", main]]; }
+    / main:Vector _ "=" _ { return [["Equal", main]]; }
     )* tail:Vector {
       var result = tail, i, j;
       for (i = head.length - 1; i >= 0; i--) {
