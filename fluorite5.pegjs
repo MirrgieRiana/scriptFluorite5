@@ -186,9 +186,9 @@
           var i;
           var array = unpackVector(blessedArgs);
           for (i = 0; i < blessedFunction.value.args.length; i++) {
-            variables[blessedFunction.value.args[i]] = array[i] || UNDEFINED;
+            setVariable(blessedFunction.value.args[i], array[i] || UNDEFINED);
           }
-          variables["_"] = packVector(array.slice(i, array.length));
+          setVariable("_", packVector(array.slice(i, array.length)));
           return blessedFunction.value.code(vm, "get");
         }
 
