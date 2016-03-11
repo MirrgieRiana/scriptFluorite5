@@ -593,7 +593,10 @@ Message
     }
 
 MessageText
-  = [^\\]* { return text(); }
+  = main:(
+      [^\\]
+    / "\\\\" { return "\\"; }
+    )* { return main.join(""); }
 
 MessageFormula
   = main:Formula {
