@@ -319,7 +319,16 @@
 
         this.dices = [];
         this.callMethod = function(operator, codes, context, args) {
-          if (operator === "_leftAsterisk") return codes[0](vm, "get").value(vm, context, args);
+          if (operator === "_leftAsterisk") {
+            var value = codes[0](vm, "get");
+            if (instanceOf(value, typePointer)) {
+              pushStack(value.value.scope);
+              var res = value.value.code(vm, context, args);
+              popStack();
+              return res;
+            }
+            throw "Type Error: " + operator + "/" + value.type.value;
+          }
           if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
           if (operator === "_bracketsRound") return callInFrame(codes[0], vm, context, args);
           if (context === "get") {
@@ -431,7 +440,10 @@
               }
               throw "Unknown command: " + command.value;
             }
-            if (operator === "_leftAmpersand") return createObject(typePointer, codes[0]);
+            if (operator === "_leftAmpersand") return createObject(typePointer, {
+              code: codes[0],
+              scope: scope,
+            });
             if (operator === "_bracketsCurly") {
               var hash = {};
               unpackVector(callInFrame(codes[0], vm, "get")).forEach(function(item) {
