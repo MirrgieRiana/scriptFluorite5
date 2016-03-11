@@ -218,6 +218,7 @@
             if (operator === "_operatorMinus") return createObject(typeNumber, codes[0](vm, "get").value - codes[1](vm, "get").value);
             if (operator === "_operatorAsterisk") return createObject(typeNumber, codes[0](vm, "get").value * codes[1](vm, "get").value);
             if (operator === "_operatorSlash") return createObject(typeNumber, codes[0](vm, "get").value / codes[1](vm, "get").value);
+            if (operator === "_operatorCaret") return createObject(typeNumber, Math.pow(codes[0](vm, "get").value, codes[1](vm, "get").value));
             if (operator === "_leftPlus") return createObject(typeNumber, codes[0](vm, "get").value);
             if (operator === "_leftMinus") return createObject(typeNumber, -codes[0](vm, "get").value);
             if (operator === "_bracketsRound") return codes[0](vm, "get");
