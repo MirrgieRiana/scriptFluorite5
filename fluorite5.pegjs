@@ -55,6 +55,16 @@
     return result;
   }
 
+  function enumerate(head, tail, operator)
+  {
+    if (tail.length == 0) return head;
+    var result = [head], i;
+    for (i = 0; i < tail.length; i++) {
+      result.push(tail[i][3]);
+    }
+    return createCodeFromMethod("_enumerate" + operator, result);
+  }
+
   function getVM(name)
   {
     if (name === "classic") {
@@ -493,16 +503,7 @@ Formula
   = Line
 
 Line
-  = head:Arrows tail:(_ (";") _ Arrows)* (_ ";")? {
-      if (tail.length == 0) return head;
-      var result = [head], i;
-
-      for (i = 0; i < tail.length; i++) {
-        result.push(tail[i][3]);
-      }
-
-      return createCodeFromMethod("_enumerateSemicolon", result);
-    }
+  = head:Arrows tail:(_ (";") _ Arrows)* (_ ";")? { return enumerate(head, tail, "Semicolon"); }
 
 Arrows
   = head:(
@@ -527,16 +528,7 @@ Arrows
     }
 
 Vector
-  = head:Entry tail:(_ (",") _ Entry)* (_ ",")? {
-      if (tail.length == 0) return head;
-      var result = [head], i;
-
-      for (i = 0; i < tail.length; i++) {
-        result.push(tail[i][3]);
-      }
-
-      return createCodeFromMethod("_enumerateComma", result);
-    }
+  = head:Entry tail:(_ (",") _ Entry)* (_ ",")? { return enumerate(head, tail, "Comma"); }
 
 Entry
   = head:Iif tail:(_ (
