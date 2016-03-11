@@ -372,6 +372,8 @@
               codes[0](vm, "set", codes[1](vm, "get"));
               return;
             }
+            this.callMethod(operator, codes, "get", args);
+            return;
           } else if (context === "arguments") {
             if (operator === "_leftDollar") return codes[0](vm, "arguments");
             if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "arguments"); }));
