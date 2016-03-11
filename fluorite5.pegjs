@@ -465,16 +465,17 @@
               }
               return codes[codes.length - 1](vm, "get");
             }
+            if (operator === "_operatorEqual") {
+              var value = codes[1](vm, "get");
+              codes[0](vm, "set", value);
+              return value;
+            }
           } else if (context === "set") {
             if (operator === "_leftDollar") {
               setVariable(codes[0](vm, "get").value, args);
               return;
             }
           } else if (context === "invoke") {
-            if (operator === "_operatorEqual") {
-              codes[0](vm, "set", codes[1](vm, "get"));
-              return;
-            }
             this.callMethod(operator, codes, "get", args);
             return;
           } else if (context === "arguments") {
