@@ -124,11 +124,39 @@
 
         function getVariable(name)
         {
-          return variables[name] || UNDEFINED;
+          return scope.getOrUndefined(name)
         }
         function setVariable(name, value)
         {
-          variables[name] = value;
+          scope.setOrDefine(name, value);
+        }
+        function pushScope()
+        {
+          scope = new Scope(scope, false);
+        }
+        function pushFrame()
+        {
+          scope = new Scope(scope, true);
+        }
+        function popFrame()
+        {
+          scope = scope.getParentFrame();
+        }
+        function pushStack(scope2)
+        {
+          stack.push(scope);
+          scope = scope2;
+        }
+        function popStack()
+        {
+          scope = stack.pop();
+        }
+        function callInFrame(code, vm, context, args)
+        {
+          pushFrame();
+          var res = code(vm, context, args);
+          popFrame();
+          return res;
         }
         function createObject(type, value)
         {
@@ -174,23 +202,98 @@
         {
           return blessed.type === type;
         }
-        function createFunction(args, code)
+        function createFunction(args, code, scope)
         {
           return createObject(typeFunction, {
             args: args,
             code: code,
+            scope: scope,
           });
         }
         function callFunction(blessedFunction, blessedArgs)
         {
           var i;
           var array = unpackVector(blessedArgs);
+          pushStack(blessedFunction.value.scope);
+          pushFrame();
           for (i = 0; i < blessedFunction.value.args.length; i++) {
             setVariable(blessedFunction.value.args[i], array[i] || UNDEFINED);
           }
           setVariable("_", packVector(array.slice(i, array.length)));
-          return blessedFunction.value.code(vm, "get");
+          var res = blessedFunction.value.code(vm, "get");
+          popFrame();
+          popStack();
+          return res;
         }
+
+        function Scope(parent, isFrame)
+        {
+          this.variables = {};
+          this.parent = parent;
+          this.isFrame = isFrame;
+        }
+        Scope.prototype.getVariable = function(name) {
+          var variable = this.variables[name];
+          if (variable != undefined) {
+            return variable;
+          } else {
+            if (this.parent != undefined) {
+              return this.parent.getVariable(name);
+            } else {
+              return undefined;
+            }
+          }
+        };
+        Scope.prototype.define = function(name) {
+          if (this.getVariable(name) != undefined) {
+            throw "Duplicate variable definition: " + name;
+          } else {
+            this.variables[name] = {
+              value: UNDEFINED,
+            };
+          }
+        };
+        Scope.prototype.get = function(name) {
+          var variable = this.getVariable(name);
+          if (variable != undefined) {
+            return variable.value;
+          } else {
+            throw "Unknown variable: " + name;
+          }
+        };
+        Scope.prototype.getOrUndefined = function(name) {
+          var variable = this.getVariable(name);
+          if (variable != undefined) {
+            return variable.value;
+          } else {
+            return UNDEFINED;
+          }
+        };
+        Scope.prototype.set = function(name, value) {
+          var variable = this.getVariable(name);
+          if (variable != undefined) {
+            variable.value = value;
+          } else {
+            throw "Unknown variable: " + name;
+          }
+        };
+        Scope.prototype.setOrDefine = function(name, value) {
+          var variable = this.getVariable(name);
+          if (variable != undefined) {
+            variable.value = value;
+          } else {
+            this.variables[name] = {
+              value: value,
+            };
+          }
+        };
+        Scope.prototype.getParentFrame = function(name, value) {
+          if (this.parent.isFrame) {
+            return this.parent;
+          } else {
+            return this.parent.getParentFrame();
+          }
+        };
 
         var typeType = createObject(null, "Type"); typeType.type = typeType;
         var typeUndefined = createObject(typeType, "Undefined");
@@ -207,18 +310,18 @@
 
         var UNDEFINED = createObject(typeUndefined, undefined);
 
-        var variables = {
-          pi: createObject(typeNumber, Math.PI),
-          sin: createFunction(["x"], function(vm, context) {
-              return createObject(typeNumber, Math.sin(getVariable("x").value));
-          }),
-        };
+        var scope = new Scope(null, true);
+        var stack = [];
+        setVariable("pi", createObject(typeNumber, Math.PI));
+        setVariable("sin", createFunction(["x"], function(vm, context) {
+            return createObject(typeNumber, Math.sin(getVariable("x").value));
+        }, scope));
 
         this.dices = [];
         this.callMethod = function(operator, codes, context, args) {
           if (operator === "_leftAsterisk") return codes[0](vm, "get").value(vm, context, args);
           if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
-          if (operator === "_bracketsRound") return codes[0](vm, context, args);
+          if (operator === "_bracketsRound") return callInFrame(codes[0], vm, context, args);
           if (context === "get") {
 
             if (operator === "_operatorPlus") {
@@ -257,12 +360,12 @@
             if (operator === "_operatorAmpersand2") return createObject(typeBoolean, codes[0](vm, "get").value && codes[1](vm, "get").value);
             if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
             if (operator === "_bracketsSquare") {
-              return createObject(typeArray, unpackVector(codes[0](vm, "get")));
+              return createObject(typeArray, unpackVector(callInFrame(codes[0], vm, "get")));
             }
             if (operator === "_rightbracketsSquare") {
               var value = codes[0](vm, "get");
               if (instanceOf(value, typeKeyword)) value = getVariable(value.value);
-              if (instanceOf(value, typeArray)) return value.value[codes[1](vm, "get").value] || UNDEFINED;
+              if (instanceOf(value, typeArray)) return value.value[callInFrame(codes[1], vm, "get").value] || UNDEFINED;
               throw "Type Error: " + operator + "/" + value.type.value;
             }
             if (operator === "_leftAtsign") {
@@ -275,10 +378,10 @@
               var minus = operator == "_operatorMinus2Greater";
               if (minus) {
                 return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
-                  return callFunction(createFunction([], codes[1]), scalar);
+                  return callFunction(createFunction([], codes[1], scope), scalar);
                 }));
               } else {
-                return callFunction(createFunction([], codes[1]), codes[0](vm, "get"));
+                return callFunction(createFunction([], codes[1], scope), codes[0](vm, "get"));
               }
             }
             if (operator === "_operatorMinusGreater"
@@ -306,7 +409,7 @@
             if (operator === "_rightbracketsRound") {
               var value = codes[0](vm, "get");
               if (instanceOf(value, typeKeyword)) value = getVariable(value.value);
-              if (instanceOf(value, typeFunction)) return callFunction(value, codes[1](vm, "get"));
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(codes[1], vm, "get"));
               throw "Type Error: " + operator + "/" + value.type.value;
             }
             if (operator === "_statement") {
@@ -331,7 +434,7 @@
             if (operator === "_leftAmpersand") return createObject(typePointer, codes[0]);
             if (operator === "_bracketsCurly") {
               var hash = {};
-              unpackVector(codes[0](vm, "get")).forEach(function(item) {
+              unpackVector(callInFrame(codes[0], vm, "get")).forEach(function(item) {
                 if (instanceOf(item, typeEntry)) {
                   hash[item.value.key.value] = item.value.value;
                   return;
@@ -351,7 +454,7 @@
             }
             if (operator === "_operatorColonGreater") {
               var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
-              return createFunction(array, codes[1]);
+              return createFunction(array, codes[1], scope);
             }
             if (operator === "_concatenate") {
               return createObject(typeString, codes.map(function(code) { return vm.toString(code(vm, "get")); }).join(""));
