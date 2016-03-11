@@ -203,6 +203,7 @@
         this.dices = [];
         this.callMethod = function(operator, codes, context, args) {
           if (operator === "_leftAsterisk") return codes[0](vm, "get").value(vm, context, args);
+          if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
           if (context === "get") {
 
             if (operator === "_operatorPlus") {
@@ -506,9 +507,13 @@ Vector
     }
 
 Entry
-  = head:Range tail:(_ (
+  = head:Iif tail:(_ (
       ":" { return "Colon"; }
-    ) _ Range)* { return operatorLeft(head, tail); }
+    ) _ Iif)* { return operatorLeft(head, tail); }
+
+Iif
+  = head:Range _ "?" _ body:Iif _ ":" _ tail:Iif { return createCodeFromMethod("_ternaryQuestionColon", [head, body, tail]); }
+  / Range
 
 Range
   = head:Or tail:(_ (
