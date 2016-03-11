@@ -217,6 +217,7 @@
             }
             if (operator === "_operatorMinus") return createObject(typeNumber, codes[0](vm, "get").value - codes[1](vm, "get").value);
             if (operator === "_operatorAsterisk") return createObject(typeNumber, codes[0](vm, "get").value * codes[1](vm, "get").value);
+            if (operator === "_operatorPercent") return createObject(typeNumber, codes[0](vm, "get").value % codes[1](vm, "get").value);
             if (operator === "_operatorSlash") return createObject(typeNumber, codes[0](vm, "get").value / codes[1](vm, "get").value);
             if (operator === "_operatorCaret") return createObject(typeNumber, Math.pow(codes[0](vm, "get").value, codes[1](vm, "get").value));
             if (operator === "_leftPlus") return createObject(typeNumber, codes[0](vm, "get").value);
@@ -562,6 +563,7 @@ Term
   = head:Power tail:(_ (
       "*" { return "Asterisk"; }
     / "/" { return "Slash"; }
+    / "%" { return "Percent"; }
     ) _ Power)* { return operatorLeft(head, tail); }
 
 Power
