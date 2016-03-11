@@ -327,6 +327,9 @@
               var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
               return createFunction(array, codes[1]);
             }
+            if (operator === "_concatenate") {
+              return createObject(typeString, codes.map(function(code) { return vm.toString(code(vm, "get")); }).join(""));
+            }
 
             throw "Unknown operator: " + operator;
           } else if (context === "arguments") {
@@ -604,6 +607,7 @@ Factor
   / Identifier
   / Underbar
   / String
+  / StringReplaceable
 
 Dice
   = count:Integer "d" faces:Integer { return createCodeFromMethod("d", [count, faces]); }
@@ -629,6 +633,33 @@ ContentString
   = "\\\\" { return "\\"; }
   / "\\'" { return "'"; }
   / [^']
+
+StringReplaceable
+  = "\"" main:ContentStringReplaceable "\"" { return main; }
+
+ContentStringReplaceable
+  = head:ContentStringReplaceableText tail:(ContentStringReplaceableReplacement ContentStringReplaceableText)* {
+      var codes = [head];
+      var i;
+      for (i = 0; i < tail.length; i++) {
+        codes.push(tail[i][0]);
+        codes.push(tail[i][1]);
+      }
+      return createCodeFromMethod("_concatenate", codes);
+    }
+
+ContentStringReplaceableText
+  = main:(
+      "\\\\" { return "\\"; }
+    / "\\\"" { return "\""; }
+    / "\\$" { return "$"; }
+    / [^"$]
+    )* { return createCodeFromLiteral("String", main.join("")); }
+
+ContentStringReplaceableReplacement
+  = "$" "(" main:Formula ")" { return main; }
+  / "$" "{" main:Identifier "}" { return createCodeFromMethod("_leftDollar", [main]); }
+  / "$" main:Identifier { return createCodeFromMethod("_leftDollar", [main]); }
 
 _ "Comments"
   = (
