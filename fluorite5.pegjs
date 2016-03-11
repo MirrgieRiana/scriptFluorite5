@@ -205,7 +205,16 @@
           if (operator === "_leftAsterisk") return codes[0](vm, "get").value(vm, context, args);
           if (context === "get") {
 
-            if (operator === "_operatorPlus") return createObject(typeNumber, codes[0](vm, "get").value + codes[1](vm, "get").value);
+            if (operator === "_operatorPlus") {
+              var left = codes[0](vm, "get");
+              var right = codes[1](vm, "get");
+              if (instanceOf(left, typeNumber)) {
+                if (instanceOf(right, typeNumber)) {
+                  return createObject(typeNumber, left.value + right.value);
+                }
+              }
+              return createObject(typeString, vm.toString(left) + vm.toString(right));
+            }
             if (operator === "_operatorMinus") return createObject(typeNumber, codes[0](vm, "get").value - codes[1](vm, "get").value);
             if (operator === "_operatorAsterisk") return createObject(typeNumber, codes[0](vm, "get").value * codes[1](vm, "get").value);
             if (operator === "_operatorSlash") return createObject(typeNumber, codes[0](vm, "get").value / codes[1](vm, "get").value);
