@@ -607,18 +607,22 @@ Left
     / "@" { return "Atsign"; }
     / "&" { return "Ampersand"; }
     / "*" { return "Asterisk"; }
-    ) _)* tail:Statement { return left(head, tail); }
+    ) _)* tail:Right { return left(head, tail); }
+
+Right
+  = Statement
+  / RightBrackets
 
 Statement
-  = Right
-  / "/" main:(_ ContentStatement)+ {
+  = "/" main:(_ ContentStatement)+ {
       return createCodeFromMethod("_statement", main.map(function(item) { return item[1]; }));
     }
 
 ContentStatement
   = head:Member tail:(_ (",") _ Member)* { return enumerate(head, tail, "Comma"); }
+  / Statement
 
-Right
+RightBrackets
   = head:Member tail:(_ (
       "(" _ main:Formula _ ")" { return ["Round", main]; }
     / "[" _ main:Formula _ "]" { return ["Square", main]; }
