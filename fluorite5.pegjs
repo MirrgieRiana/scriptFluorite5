@@ -362,8 +362,6 @@
               }
               return codes[codes.length - 1](vm, "get");
             }
-
-            throw "Unknown operator: " + operator;
           } else if (context === "set") {
             if (operator === "_leftDollar") {
               setVariable(codes[0](vm, "get").value, args);
@@ -377,10 +375,8 @@
           } else if (context === "arguments") {
             if (operator === "_leftDollar") return codes[0](vm, "arguments");
             if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "arguments"); }));
-            throw "Unknown operator: " + operator;
-          } else {
-            throw "Unknown context: " + context;
           }
+          throw "Unknown operator: " + operator + "/" + context;
         };
         this.toString = function(value) {
           var vm = this;
