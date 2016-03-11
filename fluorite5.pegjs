@@ -596,15 +596,9 @@ Term
     ) _ Power)* { return operatorLeft(head, tail); }
 
 Power
-  = head:(Statement _ (
+  = head:(Left _ (
       "^" { return "Caret"; }
-    ) _)* tail:Statement { return operatorRight(head, tail); }
-
-Statement
-  = Left
-  / "/" main:(_ Member)+ {
-      return createCodeFromMethod("_statement", main.map(function(item) { return item[1]; }));
-    }
+    ) _)* tail:Left { return operatorRight(head, tail); }
 
 Left
   = head:((
@@ -613,7 +607,16 @@ Left
     / "@" { return "Atsign"; }
     / "&" { return "Ampersand"; }
     / "*" { return "Asterisk"; }
-    ) _)* tail:Right { return left(head, tail); }
+    ) _)* tail:Statement { return left(head, tail); }
+
+Statement
+  = Right
+  / "/" main:(_ ContentStatement)+ {
+      return createCodeFromMethod("_statement", main.map(function(item) { return item[1]; }));
+    }
+
+ContentStatement
+  = head:Member tail:(_ (",") _ Member)* { return enumerate(head, tail, "Comma"); }
 
 Right
   = head:Member tail:(_ (
