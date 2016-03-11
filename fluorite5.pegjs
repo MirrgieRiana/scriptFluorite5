@@ -493,7 +493,7 @@ Formula
   = Line
 
 Line
-  = head:Arrows tail:(_ (";") _ Arrows)* {
+  = head:Arrows tail:(_ (";") _ Arrows)* (_ ";")? {
       if (tail.length == 0) return head;
       var result = [head], i;
 
@@ -527,7 +527,7 @@ Arrows
     }
 
 Vector
-  = head:Entry tail:(_ (",") _ Entry)* {
+  = head:Entry tail:(_ (",") _ Entry)* (_ ",")? {
       if (tail.length == 0) return head;
       var result = [head], i;
 
