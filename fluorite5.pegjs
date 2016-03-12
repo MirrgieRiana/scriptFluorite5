@@ -816,6 +816,9 @@ ContentStringReplaceableText
       "\\\\" { return "\\"; }
     / "\\\"" { return "\""; }
     / "\\$" { return "$"; }
+    / "\\r" { return "\r"; }
+    / "\\n" { return "\n"; }
+    / "\\t" { return "\t"; }
     / [^"$]
     )* { return createCodeFromLiteral("String", main.join("")); }
 
