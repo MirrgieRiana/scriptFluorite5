@@ -823,7 +823,7 @@ ContentStringReplaceableText
 
 ContentStringReplaceableReplacement
   = "$" "(" main:Formula ")" { return main; }
-  / "$" "{" main:Identifier "}" { return createCodeFromMethod("_leftDollar", [main]); }
+  / "$" "{" main:Formula "}" { return createCodeFromMethod("_leftDollar", [main]); }
   / "$" main:(Integer / Identifier / Underbar) { return createCodeFromMethod("_leftDollar", [main]); }
 
 _ "Comments"
