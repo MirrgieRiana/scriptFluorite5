@@ -555,7 +555,6 @@
               if (value === "undefined") return UNDEFINED;
               return createObject(typeKeyword, value);
             }
-            if (type === "Underbar") return createObject(typeKeyword, value);
             if (type === "Void") return packVector([]);
           } else if (context === "arguments") {
             if (type === "Identifier") return createObject(typeKeyword, value);
@@ -770,7 +769,6 @@ Factor
   / Float
   / Integer
   / Identifier
-  / Underbar
   / String
   / StringReplaceable
 
@@ -786,10 +784,10 @@ Integer "Integer"
   = [0-9]+ { return createCodeFromLiteral("Integer", parseInt(text(), 10)); }
 
 Identifier "Identifier"
-  = [a-zA-Z][a-zA-Z_]* { return createCodeFromLiteral("Identifier", text()); }
+  = ContentIdentifier ([0-9] / ContentIdentifier)* { return createCodeFromLiteral("Identifier", text()); }
 
-Underbar
-  = "_" { return createCodeFromLiteral("Underbar", text()); }
+ContentIdentifier
+  = [a-zA-Z_\u3040-\u309F\u30A0-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]
 
 String
   = "'" main:ContentString* "'" { return createCodeFromLiteral("String", main.join("")); }
@@ -824,7 +822,7 @@ ContentStringReplaceableText
 ContentStringReplaceableReplacement
   = "$" "(" main:Formula ")" { return main; }
   / "$" "{" main:Formula "}" { return createCodeFromMethod("_leftDollar", [main]); }
-  / "$" main:(Integer / Identifier / Underbar) { return createCodeFromMethod("_leftDollar", [main]); }
+  / "$" main:(Integer / Identifier) { return createCodeFromMethod("_leftDollar", [main]); }
 
 _ "Comments"
   = (
