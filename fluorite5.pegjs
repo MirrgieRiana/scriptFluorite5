@@ -492,7 +492,7 @@
               return !instanceOf(res, typeUndefined) ? res : codes[1](vm, "get");
             }
             if (operator === "_hereDocumentFunction") {
-              return this.callMethod("_rightbracketsRound", codes, "get", args); // TODO
+              return this.callMethod("_rightbracketsRound", [codes[0], createCodeFromMethod("_enumerateComma", [codes[1], codes[2]])], "get", args);
             }
           } else if (context === "set") {
             if (operator === "_leftDollar") {
