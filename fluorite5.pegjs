@@ -784,10 +784,7 @@ Integer "Integer"
   = [0-9]+ { return createCodeFromLiteral("Integer", parseInt(text(), 10)); }
 
 Identifier "Identifier"
-  = ContentIdentifier ([0-9] / ContentIdentifier)* { return createCodeFromLiteral("Identifier", text()); }
-
-ContentIdentifier
-  = [a-zA-Z_\u3040-\u309F\u30A0-\u30FF\u3400-\u4DBF\u4E00-\u9FFF]
+  = CharacterIdentifier ([0-9] / CharacterIdentifier)* { return createCodeFromLiteral("Identifier", text()); }
 
 String
   = "'" main:ContentString* "'" { return createCodeFromLiteral("String", main.join("")); }
@@ -831,8 +828,27 @@ _ "Comments"
   = (
       "/*" ((! "*/") .)* "*/"
     / "//" [^\n\r]*
-    / Blanks
+    / CharacterBlank+
     )*
 
-Blanks
-  = [ \t\n\r　]+
+CharacterIdentifier
+  = [a-zA-Z_]
+  / CharacterHiragana
+  / CharacterKatakana
+  / CharacterCJKUnifiedIdeographsExtensionA
+  / CharacterCJKUnifiedIdeographs
+
+CharacterHiragana
+  = [\u3040-\u309F]
+
+CharacterKatakana
+  = [\u30A0-\u30FF]
+
+CharacterCJKUnifiedIdeographsExtensionA
+  = [\u3400-\u4DBF]
+
+CharacterCJKUnifiedIdeographs
+  = [\u4E00-\u9FFF]
+
+CharacterBlank
+  = [ \t\n\r　]
