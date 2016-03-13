@@ -483,6 +483,14 @@
               return value;
             }
             if (operator === "_left√") return createObject(typeNumber, Math.sqrt(codes[0](vm, "get").value));
+            if (operator === "_operatorQuestionColon") {
+              var res = codes[0](vm, "get");
+              return res.value ? res : codes[1](vm, "get");
+            }
+            if (operator === "_operatorQuestion2") {
+              var res = codes[0](vm, "get");
+              return !instanceOf(res, typeUndefined) ? res : codes[1](vm, "get");
+            }
           } else if (context === "set") {
             if (operator === "_leftDollar") {
               setVariable(codes[0](vm, "get").value, args);
@@ -654,6 +662,8 @@ Entry
 
 Iif
   = head:Range _ "?" _ body:Iif _ ":" _ tail:Iif { return createCodeFromMethod("_ternaryQuestionColon", [head, body, tail]); }
+  / head:Range _ "?:" _ tail:Iif { return createCodeFromMethod("_operatorQuestionColon", [head, tail]); }
+  / head:Range _ "??" _ tail:Iif { return createCodeFromMethod("_operatorQuestion2", [head, tail]); }
   / Range
 
 Range
