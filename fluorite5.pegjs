@@ -491,6 +491,9 @@
               var res = codes[0](vm, "get");
               return !instanceOf(res, typeUndefined) ? res : codes[1](vm, "get");
             }
+            if (operator === "_hereDocumentFunction") {
+              return this.callMethod("_rightbracketsRound", codes, "get", args); // TODO
+            }
           } else if (context === "set") {
             if (operator === "_leftDollar") {
               setVariable(codes[0](vm, "get").value, args);
@@ -788,6 +791,7 @@ Factor
   / Identifier
   / String
   / StringReplaceable
+  / HereDocument
 
 Dice
   = count:Integer "d" faces:Integer { return createCodeFromMethod("d", [count, faces]); }
@@ -840,6 +844,59 @@ ContentStringReplaceableReplacement
   = "$" "(" main:Formula ")" { return main; }
   / "$" "{" main:Formula "}" { return createCodeFromMethod("_leftDollar", [main]); }
   / "$" main:(Integer / Identifier) { return createCodeFromMethod("_leftDollar", [main]); }
+
+HereDocument
+  = "%" _ head:(
+      head:Identifier _ "(" _ tail:Formula _ ")" _ { return [head, tail] }
+    / head:Identifier _ "(" _ ")" _ { return [head, createCodeFromLiteral("Void", "void")] }
+    )? tail:(
+      ";" { return createCodeFromLiteral("String", ""); }
+    / (
+        begin:HereDocumentDelimiter main:(
+          "{" main:(
+
+            main:(! ("}" end:HereDocumentDelimiter & { return begin === end; }) main:(
+              "%%" { return "%"; }
+            / [^%]
+            ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
+          / HereDocument
+
+          )* "}" { return createCodeFromMethod("_concatenate", main); }
+        / "[" main:(
+
+            main:(! ("]" end:HereDocumentDelimiter & { return begin === end; }) main:(
+              .
+            ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
+
+          )* "]" { return createCodeFromMethod("_concatenate", main); }
+        ) HereDocumentDelimiter { return main; }
+      / (
+          "{" main:(
+
+            main:(! ("}") main:(
+              .
+            ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
+
+          )* "}" { return createCodeFromMethod("_concatenate", main); }
+        / "[" main:(
+
+            main:(! ("]") main:(
+              .
+            ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
+
+          )* "]" { return createCodeFromMethod("_concatenate", main); }
+        )
+      )
+    ) {
+      if (head !== null) {
+        return createCodeFromMethod("_hereDocumentFunction", [head[0], head[1], tail]);
+      } else {
+        return tail;
+      }
+    }
+
+HereDocumentDelimiter
+  = CharacterIdentifier+ { return text(); }
 
 _ "Comments"
   = (
