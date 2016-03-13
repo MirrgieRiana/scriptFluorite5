@@ -482,6 +482,7 @@
               codes[0](vm, "set", value);
               return value;
             }
+            if (operator === "_left√") return createObject(typeNumber, Math.sqrt(codes[0](vm, "get").value));
           } else if (context === "set") {
             if (operator === "_leftDollar") {
               setVariable(codes[0](vm, "get").value, args);
@@ -712,8 +713,13 @@ Term
     ) _ Power)* { return operatorLeft(head, tail); }
 
 Power
-  = head:(Left _ (
+  = head:(MultibyteOperating _ (
       "^" { return "Caret"; }
+    ) _)* tail:MultibyteOperating { return operatorRight(head, tail); }
+
+MultibyteOperating
+  = head:(Left _ (
+      CharacterMultibyteSymbol { return text(); }
     ) _)* tail:Left { return operatorRight(head, tail); }
 
 Left
@@ -723,6 +729,7 @@ Left
     / "@" { return "Atsign"; }
     / "&" { return "Ampersand"; }
     / "*" { return "Asterisk"; }
+    / CharacterMultibyteSymbol { return text(); }
     ) _)* tail:Right { return left(head, tail); }
 
 Right
@@ -831,12 +838,28 @@ _ "Comments"
     / CharacterBlank+
     )*
 
+CharacterMultibyteSymbol
+  = (! (CharacterSymbol / CharacterNumber / CharacterAlphabet / CharacterIdentifier / CharacterBlank)) .
+
+CharacterSymbol
+  = (! (CharacterNumber / CharacterAlphabet / CharacterSymbolIdentifier)) [!-~]
+
 CharacterIdentifier
-  = [a-zA-Z_]
+  = CharacterAlphabet
+  / CharacterSymbolIdentifier
   / CharacterHiragana
   / CharacterKatakana
   / CharacterCJKUnifiedIdeographsExtensionA
   / CharacterCJKUnifiedIdeographs
+
+CharacterNumber
+  = [0-9]
+
+CharacterAlphabet
+  = [a-zA-Z]
+
+CharacterSymbolIdentifier
+  = [_]
 
 CharacterHiragana
   = [\u3040-\u309F]
