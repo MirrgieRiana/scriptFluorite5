@@ -319,6 +319,45 @@
 
         this.dices = [];
         this.callMethod = function(operator, codes, context, args) {
+
+          {
+            var name = operator;
+            var func = getVariable(name);
+            if (func !== undefined) {
+              if (!instanceOf(func, typeUndefined)) {
+                if (instanceOf(func, typeFunction)) {
+                  var array = [createObject(typeString, context)];
+                  Array.prototype.push.apply(array, codes.map(function(code) { return createObject(typePointer, {
+                    code: code,
+                    scope: scope,
+                  }); }));
+                  return callFunction(func, packVector(array));
+                } else {
+                  throw "`" + name + "` is not a function";
+                }
+              }
+              }
+          }
+
+          {
+            var name = "_" + context + operator;
+            var func = getVariable(name);
+            if (func !== undefined) {
+              if (!instanceOf(func, typeUndefined)) {
+                if (instanceOf(func, typeFunction)) {
+                  var array = [];
+                  Array.prototype.push.apply(array, codes.map(function(code) { return createObject(typePointer, {
+                    code: code,
+                    scope: scope,
+                  }); }));
+                  return callFunction(func, packVector(array));
+                } else {
+                  throw "`" + name + "` is not a function";
+                }
+              }
+            }
+          }
+
           if (operator === "_leftAsterisk") {
             var value = codes[0](vm, "get");
             if (instanceOf(value, typePointer)) {
