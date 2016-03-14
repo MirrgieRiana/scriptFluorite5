@@ -913,8 +913,10 @@ HereDocument
           "{" main:(
 
             main:(! ("}") main:(
-              .
+              "%%" { return "%"; }
+            / [^%]
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
+          / HereDocument
 
           )* "}" { return createCodeFromMethod("_concatenate", main); }
         / "[" main:(
