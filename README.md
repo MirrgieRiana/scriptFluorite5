@@ -18,3 +18,13 @@ var res = parser.parse(script, {
   startRule: "ExpressionPlain",
 });
 ```
+
+## Command Line
+
+*Windows only*
+
+`fluorite5 -e "20 * 5"`
+
+`fluorite5 sample.flu5 -m`
+
+`echo 5*20 | fluorite5`
