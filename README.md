@@ -23,8 +23,10 @@ var res = parser.parse(script, {
 
 *Windows only*
 
+`fluorite5 -h`
+
 `fluorite5 -e "20 * 5"`
 
-`fluorite5 sample.flu5 -m`
+`fluorite5 sample.flu5 -g`
 
 `echo 5*20 | fluorite5`

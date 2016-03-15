@@ -1,11 +1,50 @@
-<html>
-	<head>
-		<title>Fluorite5 Sample</title>
-	</head>
-	<body>
-		<p>
-			40 * 50 = \40 * 50\
-		</p>
-	</body>
-</html>
+Content-Type: text/html; charset=utf-8
+Content-Disposition: inline
+
+%s(
+	$join = () :> (
+		$tmp = "";
+		$_ --> $tmp = $tmp + $_;
+		$tmp;
+	);
+	%END{
+		
+		<html>
+			<head>
+				<title>Fluorite5 Sample!!</title>
+			</head>
+			<style>
+				td {
+					text-align: center;
+				}
+			</style>
+			<body>
+				<p>
+					40 * 50 = %s(40 * 50);
+				</p>
+				<h2>Table</h2>
+				<table>
+			
+					<tr>
+						<th>×</th>
+						%s((1~9 -> $b :> %{
+							<td>%s($b);</td>
+						}) => join);
+					</tr>
+			
+					%s((1~9 -> $a :> %{
+						<tr>
+							<td>%s($a);</td>
+							%s((1~9 -> $b :> %{
+								<td>%s($a * $b);</td>
+							}) => join);
+						</tr>
+					}) => join);
+			
+				</table>
+			</body>
+		</html>
+		
+	}END
+);
 

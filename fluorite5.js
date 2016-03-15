@@ -23,6 +23,13 @@ function main()
 		example: "'-m'"
 	});
 	argv.option({
+		name: 'cgi',
+		short: 'g',
+		type : 'boolean',
+		description :'If true, parse as here document',
+		example: "'-g'"
+	});
+	argv.option({
 		name: 'charcode',
 		short: 'c',
 		type : 'string',
@@ -123,9 +130,21 @@ function parseAll(args, parser)
 function processSourceCode(args, parser, source)
 {
 	var message = args.options.message;
+	var cgi = args.options.cgi;
 
-	console.log(parser.parse(message ? source : "\\" + source + "\\", {
-		startRule: "ExpressionPlain",
-	}));
+	if (message) {
+		console.log(parser.parse(source, {
+			startRule: "ExpressionPlain",
+		}));
+	} else if (cgi) {
+		console.log(parser.parse("\\$s = $a :> $a;%END{" + source + "}END\\", {
+			startRule: "ExpressionPlain",
+		}));
+	} else {
+		console.log(parser.parse("\\" + source + "\\", {
+			startRule: "ExpressionPlain",
+		}));
+	}
+
 }
 
