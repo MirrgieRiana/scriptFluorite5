@@ -965,8 +965,8 @@ ContentStringReplaceableReplacement
 
 HereDocument
   = "%" _ head:(
-      head:Identifier _ "(" _ tail:Formula _ ")" _ { return [head, tail] }
-    / head:Identifier _ "(" _ ")" _ { return [head, createCodeFromLiteral("Void", "void")] }
+      head:Identifier _ "(" _ tail:Formula _ ")" _ { return [head, tail]; }
+    / head:Identifier _ "(" _ ")" _ { return [head, createCodeFromLiteral("Void", "void")]; }
     )? tail:(
       ";" { return createCodeFromLiteral("Void", "void"); }
     / (
