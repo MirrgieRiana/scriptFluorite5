@@ -316,6 +316,15 @@
         setVariable("sin", createFunction(["x"], function(vm, context) {
             return createObject(typeNumber, Math.sin(getVariable("x").value));
         }, scope));
+        setVariable("d", createFunction(["count", "faces"], function(vm, context) {
+            var count = getVariable("count");
+            var faces = getVariable("faces");
+            if (instanceOf(faces, typeUndefined)) {
+              return createObject(typeNumber, dice(count.value, 6));
+            } else {
+              return createObject(typeNumber, dice(count.value, faces.value));
+            }
+        }, scope));
 
         this.dices = [];
         this.callMethod = function(operator, codes, context, args) {
@@ -452,7 +461,6 @@
               key: codes[0](vm, "get"),
               value: codes[1](vm, "get"),
             });
-            if (operator === "d") return createObject(typeNumber, dice(codes[0](vm, "get").value, codes[1](vm, "get").value));
             if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
             if (operator === "_rightbracketsRound") {
               var value = codes[0](vm, "get");
@@ -531,6 +539,12 @@
               return !instanceOf(res, typeUndefined) ? res : codes[1](vm, "get");
             }
             if (operator === "_hereDocumentFunction") {
+              return this.callMethod("_rightbracketsRound", [codes[0], createCodeFromMethod("_enumerateComma", [codes[1], codes[2]])], "get", args);
+            }
+            if (operator === "_composite1") {
+              return this.callMethod("_rightbracketsRound", [codes[0], codes[1]], "get", args);
+            }
+            if (operator === "_composite2") {
               return this.callMethod("_rightbracketsRound", [codes[0], createCodeFromMethod("_enumerateComma", [codes[1], codes[2]])], "get", args);
             }
           } else if (context === "set") {
@@ -824,17 +838,20 @@ Factor
   / "(" _ ")" { return createCodeFromMethod("_bracketsRound", [createCodeFromLiteral("Void", "void")]); }
   / "[" _ "]" { return createCodeFromMethod("_bracketsSquare", [createCodeFromLiteral("Void", "void")]); }
   / "{" _ "}" { return createCodeFromMethod("_bracketsCurly", [createCodeFromLiteral("Void", "void")]); }
-  / Dice
-  / Float
-  / Integer
+  / Composite
   / Identifier
   / String
   / StringReplaceable
   / HereDocument
 
-Dice
-  = count:Integer "d" faces:Integer { return createCodeFromMethod("d", [count, faces]); }
-  / count:Integer "d" { return createCodeFromMethod("d", [count, createCodeFromLiteral("Integer", 6)]); }
+Composite
+  = head:Number body:BodyComposite tail:Composite { return createCodeFromMethod("_composite2", [body, head, tail]); }
+  / head:Number body:BodyComposite { return createCodeFromMethod("_composite1", [body, head]); }
+  / head:Number { return head; }
+
+Number
+  = Float
+  / Integer
 
 Float "Float"
   = [0-9]+ ("." [0-9]+)? [eE] [+-]? [0-9]+ { return createCodeFromLiteral("Float", parseFloat(text())); }
@@ -842,6 +859,9 @@ Float "Float"
 
 Integer "Integer"
   = [0-9]+ { return createCodeFromLiteral("Integer", parseInt(text(), 10)); }
+
+BodyComposite
+  = CharacterIdentifier+ { return createCodeFromLiteral("Identifier", text()); }
 
 Identifier "Identifier"
   = CharacterIdentifier ([0-9] / CharacterIdentifier)* { return createCodeFromLiteral("Identifier", text()); }
