@@ -137,7 +137,7 @@ function processSourceCode(args, parser, source)
 			startRule: "ExpressionPlain",
 		}));
 	} else if (cgi) {
-		console.log(parser.parse("\\$s = $a :> $a;%END{" + source + "}END\\", {
+		console.log(parser.parse("\\%hUTYeHOgYTD{" + source + "}hUTYeHOgYTD\\", {
 			startRule: "ExpressionPlain",
 		}));
 	} else {
