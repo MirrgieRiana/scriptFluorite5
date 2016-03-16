@@ -367,6 +367,76 @@
         setVariable("√", createFunction(["x"], function(vm, context) {
           return createObject(typeNumber, Math.sqrt(callPointer(getVariable("x"), "get").value));
         }, scope));
+        setVariable("_function_join", createFunction(["separator"], function(vm, context) {
+          var separator = getVariable("separator");
+          var vector = getVariable("_");
+          return createObject(typeString, unpackVector(vector).map(function(blessed) {
+            return vm.toString(blessed);
+          }).join(separator.value));
+        }, scope));
+        setVariable("_function_join2", createFunction([], function(vm, context) {
+          var vector = getVariable("_");
+          return createObject(typeString, unpackVector(vector).map(function(blessed) {
+            return vm.toString(blessed);
+          }).join(", "));
+        }, scope));
+        setVariable("_function_join3", createFunction([], function(vm, context) {
+          var vector = getVariable("_");
+          return createObject(typeString, unpackVector(vector).map(function(blessed) {
+            return vm.toString(blessed);
+          }).join("\n"));
+        }, scope));
+        setVariable("_function_sum", createFunction([], function(vm, context) {
+          var value = 0;
+          unpackVector(getVariable("_")).forEach(function(blessed) {
+            value += blessed.value;
+          });
+          return createObject(typeNumber, value);
+        }, scope));
+        setVariable("_function_average", createFunction([], function(vm, context) {
+          var array = unpackVector(getVariable("_"));
+          if (array.length == 0) return UNDEFINED;
+          var value = 0;
+          array.forEach(function(blessed) {
+            value += blessed.value;
+          });
+          return createObject(typeNumber, value / array.length);
+        }, scope));
+        setVariable("_function_count", createFunction([], function(vm, context) {
+          return createObject(typeNumber, unpackVector(getVariable("_")).length);
+        }, scope));
+        setVariable("_function_and", createFunction([], function(vm, context) {
+          var value = true;
+          unpackVector(getVariable("_")).forEach(function(blessed) {
+            value = value && blessed.value;
+          });
+          return createObject(typeBoolean, value);
+        }, scope));
+        setVariable("_function_or", createFunction([], function(vm, context) {
+          var value = false;
+          unpackVector(getVariable("_")).forEach(function(blessed) {
+            value = value || blessed.value;
+          });
+          return createObject(typeBoolean, value);
+        }, scope));
+        setVariable("_function_max", createFunction([], function(vm, context) {
+          var array = unpackVector(getVariable("_"));
+          if (array.length == 0) return UNDEFINED;
+          var value = array[0].value;
+          for (var i = 1; i < array.length; i++) {
+            if (value < array[i].value) value = array[i].value;
+          }
+          return createObject(typeNumber, value);
+        }, scope));
+        setVariable("_function_min", createFunction([], function(vm, context) {
+          var array = unpackVector(getVariable("_"));
+          if (array.length == 0) return UNDEFINED;
+          var value = array[0].value;
+          for (var i = 1; i < array.length; i++) {
+            if (value > array[i].value) value = array[i].value;
+          }
+          return createObject(typeNumber, value);
+        }, scope));
 
         this.dices = [];
         this.callMethod = function(operator, codes, context, args) {
