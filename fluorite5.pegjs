@@ -964,9 +964,9 @@ ContentStringReplaceableReplacement
   / "$" main:(Integer / Identifier) { return createCodeFromMethod("_leftDollar", [main]); }
 
 HereDocument
-  = "%" _ head:(
-      head:Identifier _ "(" _ tail:Formula _ ")" _ { return [head, tail]; }
-    / head:Identifier _ "(" _ ")" _ { return [head, createCodeFromLiteral("Void", "void")]; }
+  = "%" head:(
+      head:Identifier "(" _ tail:Formula _ ")" { return [head, tail]; }
+    / head:Identifier "(" _ ")" { return [head, createCodeFromLiteral("Void", "void")]; }
     )? tail:(
       ";" { return createCodeFromLiteral("Void", "void"); }
     / (
@@ -1015,8 +1015,8 @@ HereDocument
       }
     }
   / "%" _ head:(
-      "(" _ tail:Formula _ ")" _ { return tail; }
-    / "(" _ ")" _ { return createCodeFromLiteral("Void", "void"); }
+      "(" _ tail:Formula _ ")" { return tail; }
+    / "(" _ ")" { return createCodeFromLiteral("Void", "void"); }
     ) {
       return head;
     }
