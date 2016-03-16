@@ -1014,7 +1014,7 @@ HereDocument
         return tail;
       }
     }
-  / "%" _ head:(
+  / "%" head:(
       "(" _ tail:Formula _ ")" { return tail; }
     / "(" _ ")" { return createCodeFromLiteral("Void", "void"); }
     ) {
