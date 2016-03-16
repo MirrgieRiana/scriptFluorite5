@@ -374,6 +374,12 @@
             return vm.toString(blessed);
           }).join(separator.value));
         }, scope));
+        setVariable("_function_join1", createFunction([], function(vm, context) {
+          var vector = getVariable("_");
+          return createObject(typeString, unpackVector(vector).map(function(blessed) {
+            return vm.toString(blessed);
+          }).join(""));
+        }, scope));
         setVariable("_function_join2", createFunction([], function(vm, context) {
           var vector = getVariable("_");
           return createObject(typeString, unpackVector(vector).map(function(blessed) {

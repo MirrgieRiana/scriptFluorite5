@@ -1,13 +1,6 @@
 Content-Type: text/html; charset=utf-8
 Content-Disposition: inline
 
-%(
-	$join = () :> (
-		$tmp = "";
-		$_ --> $tmp = $tmp + $_;
-		$tmp;
-	);
-)
 <html>
 	<head>
 		<title>Fluorite5 Sample!!</title>
@@ -28,7 +21,7 @@ Content-Disposition: inline
 				<th>×</th>
 				%((1~9 -> $b :> %{
 					<td>%($b)</td>
-				}) => join)
+				}) => join1)
 			</tr>
 	
 			%((1~9 -> $a :> %{
@@ -36,9 +29,9 @@ Content-Disposition: inline
 					<td>%($a)</td>
 					%((1~9 -> $b :> %{
 						<td>%($a * $b)</td>
-					}) => join)
+					}) => join1)
 				</tr>
-			}) => join)
+			}) => join1)
 	
 		</table>
 	</body>
