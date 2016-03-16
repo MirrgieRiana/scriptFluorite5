@@ -32,7 +32,12 @@
   {
     var result = tail, i;
     for (i = head.length - 1; i >= 0; i--) {
-      result = createCodeFromMethod("_operator" + head[i][2], [head[i][0], result]);
+      var operator = head[i][2];
+      if ((typeof operator) === "string") {
+        result = createCodeFromMethod("_operator" + operator, [head[i][0], result]);
+      } else {
+        result = createCodeFromMethod("_operator" + operator[0], [head[i][0], operator[1], result]);
+      }
     }
     return result;
   }
@@ -41,7 +46,12 @@
   {
     var result = tail, i;
     for (i = head.length - 1; i >= 0; i--) {
-      result = createCodeFromMethod("_left" + head[i][0], [result]);
+      var operator = head[i][0];
+      if ((typeof operator) === "string") {
+        result = createCodeFromMethod("_left" + operator, [result]);
+      } else {
+        result = createCodeFromMethod("_left" + operator[0], [operator[1], result]);
+      }
     }
     return result;
   }
@@ -210,6 +220,13 @@
             scope: scope,
           });
         }
+        function createPointer(code, scope)
+        {
+          return createObject(typePointer, {
+            code: code,
+            scope: scope,
+          });
+        }
         function callFunction(blessedFunction, blessedArgs)
         {
           var i;
@@ -222,6 +239,13 @@
           setVariable("_", packVector(array.slice(i, array.length)));
           var res = blessedFunction.value.code(vm, "get");
           popFrame();
+          popStack();
+          return res;
+        }
+        function callPointer(blessedPointer, context, args)
+        {
+          pushStack(blessedPointer.value.scope);
+          var res = blessedPointer.value.code(vm, context, args);
           popStack();
           return res;
         }
@@ -314,16 +338,20 @@
         var stack = [];
         setVariable("pi", createObject(typeNumber, Math.PI));
         setVariable("sin", createFunction(["x"], function(vm, context) {
-            return createObject(typeNumber, Math.sin(getVariable("x").value));
+          return createObject(typeNumber, Math.sin(getVariable("x").value));
         }, scope));
         setVariable("d", createFunction(["count", "faces"], function(vm, context) {
-            var count = getVariable("count");
-            var faces = getVariable("faces");
-            if (instanceOf(faces, typeUndefined)) {
-              return createObject(typeNumber, dice(count.value, 6));
-            } else {
-              return createObject(typeNumber, dice(count.value, faces.value));
-            }
+          var count = callPointer(getVariable("count"), "get");
+          var faces = getVariable("faces");
+          if (instanceOf(faces, typeUndefined)) {
+            return createObject(typeNumber, dice(count.value, 6));
+          } else {
+            faces = callPointer(faces, "get");
+            return createObject(typeNumber, dice(count.value, faces.value));
+          }
+        }, scope));
+        setVariable("√", createFunction(["x"], function(vm, context) {
+          return createObject(typeNumber, Math.sqrt(callPointer(getVariable("x"), "get").value));
         }, scope));
 
         this.dices = [];
@@ -336,10 +364,7 @@
               if (!instanceOf(func, typeUndefined)) {
                 if (instanceOf(func, typeFunction)) {
                   var array = [createObject(typeString, context)];
-                  Array.prototype.push.apply(array, codes.map(function(code) { return createObject(typePointer, {
-                    code: code,
-                    scope: scope,
-                  }); }));
+                  Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, scope); }));
                   return callFunction(func, packVector(array));
                 } else {
                   throw "`" + name + "` is not a function";
@@ -355,10 +380,7 @@
               if (!instanceOf(func, typeUndefined)) {
                 if (instanceOf(func, typeFunction)) {
                   var array = [];
-                  Array.prototype.push.apply(array, codes.map(function(code) { return createObject(typePointer, {
-                    code: code,
-                    scope: scope,
-                  }); }));
+                  Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, scope); }));
                   return callFunction(func, packVector(array));
                 } else {
                   throw "`" + name + "` is not a function";
@@ -369,12 +391,7 @@
 
           if (operator === "_leftAsterisk") {
             var value = codes[0](vm, "get");
-            if (instanceOf(value, typePointer)) {
-              pushStack(value.value.scope);
-              var res = value.value.code(vm, context, args);
-              popStack();
-              return res;
-            }
+            if (instanceOf(value, typePointer)) return callPointer(value, context, args);
             throw "Type Error: " + operator + "/" + value.type.value;
           }
           if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
@@ -487,10 +504,7 @@
               }
               throw "Unknown command: " + command.value;
             }
-            if (operator === "_leftAmpersand") return createObject(typePointer, {
-              code: codes[0],
-              scope: scope,
-            });
+            if (operator === "_leftAmpersand") return createPointer(codes[0], scope);
             if (operator === "_bracketsCurly") {
               var hash = {};
               unpackVector(callInFrame(codes[0], vm, "get")).forEach(function(item) {
@@ -529,7 +543,6 @@
               codes[0](vm, "set", value);
               return value;
             }
-            if (operator === "_left√") return createObject(typeNumber, Math.sqrt(codes[0](vm, "get").value));
             if (operator === "_operatorQuestionColon") {
               var res = codes[0](vm, "get");
               return res.value ? res : codes[1](vm, "get");
@@ -539,13 +552,29 @@
               return !instanceOf(res, typeUndefined) ? res : codes[1](vm, "get");
             }
             if (operator === "_hereDocumentFunction") {
-              return this.callMethod("_rightbracketsRound", [codes[0], createCodeFromMethod("_enumerateComma", [codes[1], codes[2]])], "get", args);
+              return this.callMethod("_rightbracketsRound", [codes[0], function(vm, context, args) {
+                return packVector([createPointer(codes[1], scope), createPointer(codes[2], scope)]);
+              }], "get", args);
             }
-            if (operator === "_composite1") {
-              return this.callMethod("_rightbracketsRound", [codes[0], codes[1]], "get", args);
+            if (operator === "_leftMultibyte") {
+              return this.callMethod("_rightbracketsRound", [codes[0], function(vm, context, args) {
+                return createPointer(codes[1], scope);
+              }], "get", args);
             }
-            if (operator === "_composite2") {
-              return this.callMethod("_rightbracketsRound", [codes[0], createCodeFromMethod("_enumerateComma", [codes[1], codes[2]])], "get", args);
+            if (operator === "_operatorMultibyte") {
+              return this.callMethod("_rightbracketsRound", [codes[1], function(vm, context, args) {
+                return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
+              }], "get", args);
+            }
+            if (operator === "_rightComposite") {
+              return this.callMethod("_rightbracketsRound", [codes[1], function(vm, context, args) {
+                return createPointer(codes[0], scope);
+              }], "get", args);
+            }
+            if (operator === "_operatorComposite") {
+              return this.callMethod("_rightbracketsRound", [codes[1], function(vm, context, args) {
+                return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
+              }], "get", args);
             }
           } else if (context === "set") {
             if (operator === "_leftDollar") {
@@ -785,7 +814,7 @@ Power
 
 MultibyteOperating
   = head:(Left _ (
-      CharacterMultibyteSymbol { return text(); }
+      CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
     ) _)* tail:Left { return operatorRight(head, tail); }
 
 Left
@@ -795,7 +824,7 @@ Left
     / "@" { return "Atsign"; }
     / "&" { return "Ampersand"; }
     / "*" { return "Asterisk"; }
-    / CharacterMultibyteSymbol { return text(); }
+    / CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
     ) _)* tail:Right { return left(head, tail); }
 
 Right
@@ -845,8 +874,8 @@ Factor
   / HereDocument
 
 Composite
-  = head:Number body:BodyComposite tail:Composite { return createCodeFromMethod("_composite2", [body, head, tail]); }
-  / head:Number body:BodyComposite { return createCodeFromMethod("_composite1", [body, head]); }
+  = head:Number body:BodyComposite tail:Composite { return createCodeFromMethod("_operatorComposite", [head, body, tail]); }
+  / head:Number body:BodyComposite { return createCodeFromMethod("_rightComposite", [head, body]); }
   / head:Number { return head; }
 
 Number
@@ -909,7 +938,7 @@ HereDocument
       head:Identifier _ "(" _ tail:Formula _ ")" _ { return [head, tail] }
     / head:Identifier _ "(" _ ")" _ { return [head, createCodeFromLiteral("Void", "void")] }
     )? tail:(
-      ";" { return createCodeFromLiteral("String", ""); }
+      ";" { return createCodeFromLiteral("Void", "void"); }
     / (
         begin:HereDocumentDelimiter main:(
           "{" main:(
