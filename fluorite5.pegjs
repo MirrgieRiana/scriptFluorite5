@@ -249,6 +249,20 @@
           popStack();
           return res;
         }
+        function searchVariable(accesses, blessedKeyword)
+        {
+          var variable;
+
+          for (var i = 0; i < accesses.length; i++) {
+            variable = getVariable("_" + accesses[i] + "_" + blessedKeyword.value);
+            if (!instanceOf(variable, typeUndefined)) return variable;
+          }
+
+          variable = getVariable(blessedKeyword.value);
+          if (!instanceOf(variable, typeUndefined)) return variable;
+
+          return UNDEFINED;
+        }
 
         function Scope(parent, isFrame)
         {
@@ -438,7 +452,7 @@
             }
             if (operator === "_rightbracketsSquare") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = getVariable(value.value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["array"], value);
               if (instanceOf(value, typeArray)) return value.value[callInFrame(codes[1], vm, "get").value] || UNDEFINED;
               throw "Type Error: " + operator + "/" + value.type.value;
             }
@@ -462,7 +476,7 @@
               || operator === "_operatorEqualGreater") 	{
               var minus = operator == "_operatorMinusGreater";
               var right = codes[1](vm, "get");
-              if (instanceOf(right, typeKeyword)) right = getVariable(right.value);
+              if (instanceOf(right, typeKeyword)) right = searchVariable(["collector", "function"], right);
               if (instanceOf(right, typeFunction)) {
                 if (minus) {
                   return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
@@ -481,8 +495,8 @@
             if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
             if (operator === "_rightbracketsRound") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = getVariable(value.value);
-              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(codes[1], vm, "get"));
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["function"], value);
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(codes[1], vm, "get"));  
               throw "Type Error: " + operator + "/" + value.type.value;
             }
             if (operator === "_statement") {
@@ -518,6 +532,7 @@
             }
             if (operator === "_operatorColon2") {
               var hash = codes[0](vm, "get");
+              if (instanceOf(hash, typeKeyword)) hash = searchVariable(["hash"], hash);
               var key = codes[1](vm, "get");
               if (instanceOf(hash, typeHash)) {
                 if (instanceOf(key, typeString)) return hash.value[key.value] || UNDEFINED;
@@ -552,29 +567,44 @@
               return !instanceOf(res, typeUndefined) ? res : codes[1](vm, "get");
             }
             if (operator === "_hereDocumentFunction") {
-              return this.callMethod("_rightbracketsRound", [codes[0], function(vm, context, args) {
+              var value = codes[0](vm, "get");
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["decoration", "function"], value);
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([createPointer(codes[1], scope), createPointer(codes[2], scope)]);
-              }], "get", args);
+              }, vm, "get"));
+              throw "Type Error: " + operator + "/" + value.type.value;
             }
             if (operator === "_leftMultibyte") {
-              return this.callMethod("_rightbracketsRound", [codes[0], function(vm, context, args) {
+              var value = codes[0](vm, "get");
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["multibyte", "function"], value);
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return createPointer(codes[1], scope);
-              }], "get", args);
+              }, vm, "get"));
+              throw "Type Error: " + operator + "/" + value.type.value;
             }
             if (operator === "_operatorMultibyte") {
-              return this.callMethod("_rightbracketsRound", [codes[1], function(vm, context, args) {
+              var value = codes[1](vm, "get");
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["multibyte", "function"], value);
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
-              }], "get", args);
+              }, vm, "get"));
+              throw "Type Error: " + operator + "/" + value.type.value;
             }
             if (operator === "_rightComposite") {
-              return this.callMethod("_rightbracketsRound", [codes[1], function(vm, context, args) {
+              var value = codes[1](vm, "get");
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["composite", "function"], value);
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return createPointer(codes[0], scope);
-              }], "get", args);
+              }, vm, "get"));
+              throw "Type Error: " + operator + "/" + value.type.value;
             }
             if (operator === "_operatorComposite") {
-              return this.callMethod("_rightbracketsRound", [codes[1], function(vm, context, args) {
+              var value = codes[1](vm, "get");
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["composite", "function"], value);
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
-              }], "get", args);
+              }, vm, "get"));
+              throw "Type Error: " + operator + "/" + value.type.value;
             }
           } else if (context === "set") {
             if (operator === "_leftDollar") {
