@@ -1014,6 +1014,12 @@ HereDocument
         return tail;
       }
     }
+  / "%" _ head:(
+      "(" _ tail:Formula _ ")" _ { return tail; }
+    / "(" _ ")" _ { return createCodeFromLiteral("Void", "void"); }
+    ) {
+      return head;
+    }
 
 HereDocumentDelimiter
   = CharacterIdentifier+ { return text(); }
