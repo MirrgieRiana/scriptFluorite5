@@ -618,6 +618,20 @@
               }
               throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
             }
+            if (operator === "_operatorPeriod") {
+              var left = codes[0](vm, "get");
+              var right = codes[1](vm, "get");
+              if (instanceOf(right, typeKeyword)) right = searchVariable(["method", "function"], right);
+              if (instanceOf(right, typeFunction)) {
+                var code2 = function(vm, context, args) {
+                  var array = unpackVector(getVariable("_"));
+                  array.unshift(left);
+                  return callFunction(right, packVector(array));
+                };
+                return createFunction([], code2, scope);
+              }
+              throw "Type Error: " + left.type.value + "." + right.type.value;
+            }
             if (operator === "_operatorColonGreater") {
               var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
               return createFunction(array, codes[1], scope);
@@ -957,6 +971,7 @@ RightBrackets
     / "[" _ "]" { return ["_rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
     / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
     / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
+    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
     ))* { return right(head, tail); }
 
 Variable
