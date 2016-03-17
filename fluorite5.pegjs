@@ -60,7 +60,9 @@
   {
     var result = head, i;
     for (i = 0; i < tail.length; i++) {
-      result = createCodeFromMethod("_rightbrackets" + tail[i][1][0], [result, tail[i][1][1]]);
+      var args = [result];
+      Array.prototype.push.apply(args, tail[i][1][1]);
+      result = createCodeFromMethod(tail[i][1][0], args);
     }
     return result;
   }
@@ -943,23 +945,19 @@ Statement
     }
 
 ContentStatement
-  = head:Member tail:(_ (",") _ Member)* { return enumerate(head, tail, "Comma"); }
+  = head:Variable tail:(_ (",") _ Variable)* { return enumerate(head, tail, "Comma"); }
   / Statement
 
 RightBrackets
-  = head:Member tail:(_ (
-      "(" _ main:Formula _ ")" { return ["Round", main]; }
-    / "[" _ main:Formula _ "]" { return ["Square", main]; }
-    / "{" _ main:Formula _ "}" { return ["Curly", main]; }
-    / "(" _ ")" { return ["Round", createCodeFromLiteral("Void", "void")]; }
-    / "[" _ "]" { return ["Square", createCodeFromLiteral("Void", "void")]; }
-    / "{" _ "}" { return ["Curly", createCodeFromLiteral("Void", "void")]; }
-    ))* { return right(head, tail); }
-
-Member
   = head:Variable tail:(_ (
-      "::" { return "Colon2"; }
-    ) _ Variable)* { return operatorLeft(head, tail); }
+      "(" _ main:Formula _ ")" { return ["_rightbracketsRound", [main]]; }
+    / "[" _ main:Formula _ "]" { return ["_rightbracketsSquare", [main]]; }
+    / "{" _ main:Formula _ "}" { return ["_rightbracketsCurly", [main]]; }
+    / "(" _ ")" { return ["_rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
+    / "[" _ "]" { return ["_rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
+    / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
+    / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
+    ))* { return right(head, tail); }
 
 Variable
   = head:((
