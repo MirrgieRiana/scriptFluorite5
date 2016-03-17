@@ -1157,4 +1157,3 @@ CharacterCJKUnifiedIdeographs
 
 CharacterBlank
   = [ \t\n\r　]
-
