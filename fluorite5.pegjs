@@ -789,6 +789,8 @@
               if (value === "false") return createObject(typeBoolean, false);
               if (value === "undefined") return UNDEFINED;
               if (value === "null") return NULL;
+              if (value === "Infinity") return createObject(typeNumber, Infinity);
+              if (value === "NaN") return createObject(typeNumber, NaN);
               return createObject(typeKeyword, value);
             }
             if (type === "Void") return packVector([]);
