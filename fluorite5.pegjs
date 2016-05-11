@@ -722,6 +722,22 @@
               setVariable(codes[0](vm, "get").value, args);
               return;
             }
+            if (operator === "_operatorColon2") {
+              var hash = codes[0](vm, "get");
+              if (instanceOf(hash, typeKeyword)) hash = searchVariable(["hash"], hash);
+              var key = codes[1](vm, "get");
+              if (instanceOf(hash, typeHash)) {
+                if (instanceOf(key, typeString)) {
+                  hash.value[key.value] = args;
+                  return;
+                }
+                if (instanceOf(key, typeKeyword)) {
+                  hash.value[key.value] = args;
+                  return;
+                }
+              }
+              throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
+            }
           } else if (context === "invoke") {
             this.callMethod(operator, codes, "get", args);
             return;
