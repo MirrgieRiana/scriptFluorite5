@@ -689,7 +689,7 @@
             }
             if (operator === "_rightComposite") {
               var value = codes[1](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["composite", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return createPointer(codes[0], scope);
               }, vm, "get"));
@@ -697,7 +697,7 @@
             }
             if (operator === "_operatorComposite") {
               var value = codes[1](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["composite", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
               }, vm, "get"));
