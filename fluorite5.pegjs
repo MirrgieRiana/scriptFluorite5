@@ -358,20 +358,19 @@
         var scope = new Scope(null, true);
         var stack = [];
         setVariable("pi", createObject(typeNumber, Math.PI));
-        setVariable("sin", createFunction(["x"], function(vm, context) {
+        setVariable("_function_sin", createFunction(["x"], function(vm, context) {
           return createObject(typeNumber, Math.sin(getVariable("x").value));
         }, scope));
-        setVariable("d", createFunction(["count", "faces"], function(vm, context) {
+        setVariable("_rightComposite_d", createFunction(["count"], function(vm, context) {
           var count = callPointer(getVariable("count"), "get");
-          var faces = getVariable("faces");
-          if (instanceOf(faces, typeUndefined)) {
-            return createObject(typeNumber, dice(count.value, 6));
-          } else {
-            faces = callPointer(faces, "get");
-            return createObject(typeNumber, dice(count.value, faces.value));
-          }
+          return createObject(typeNumber, dice(count.value, 6));
         }, scope));
-        setVariable("√", createFunction(["x"], function(vm, context) {
+        setVariable("_operatorComposite_d", createFunction(["count", "faces"], function(vm, context) {
+          var count = callPointer(getVariable("count"), "get");
+          var faces = callPointer(getVariable("faces"), "get");
+          return createObject(typeNumber, dice(count.value, faces.value));
+        }, scope));
+        setVariable("_leftMultibyte_√", createFunction(["x"], function(vm, context) {
           return createObject(typeNumber, Math.sqrt(callPointer(getVariable("x"), "get").value));
         }, scope));
         setVariable("_function_join", createFunction(["separator"], function(vm, context) {
