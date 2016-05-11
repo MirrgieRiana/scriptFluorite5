@@ -927,10 +927,10 @@ Compare
           var array = codes.map(function(code) { return code(vm, "get"); });
 
           for (var i = 0; i < array.length; i++) {
-            if (!vm.toBoolean(array[i])) return vm.createLiteral("Boolean", false, "get", []);
+            if (!vm.toBoolean(array[i])) return vm.createLiteral("Boolean", false, context, args);
           }
 
-          return vm.createLiteral("Boolean", true, "get", []);
+          return vm.createLiteral("Boolean", true, context, args);
         } else {
           throw "Unknown context: " + context;
         }
