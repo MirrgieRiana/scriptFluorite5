@@ -267,6 +267,13 @@
 
           return UNDEFINED;
         }
+        function createType(name, supertype)
+        {
+          return createObject(typeType, {
+            name: name,
+            supertype: supertype,
+          });
+        }
 
         function Scope(parent, isFrame)
         {
@@ -337,19 +344,19 @@
           }
         };
 
-        var typeType = createObject(null, "Type"); typeType.type = typeType;
-        var typeUndefined = createObject(typeType, "Undefined");
-        var typeNull = createObject(typeType, "Null");
-        var typeNumber = createObject(typeType, "Number");
-        var typeString = createObject(typeType, "String");
-        var typeKeyword = createObject(typeType, "Keyword");
-        var typeBoolean = createObject(typeType, "Boolean");
-        var typeFunction = createObject(typeType, "Function");
-        var typePointer = createObject(typeType, "Pointer");
-        var typeArray = createObject(typeType, "Array");
-        var typeVector = createObject(typeType, "Vector");
-        var typeEntry = createObject(typeType, "Entry");
-        var typeHash = createObject(typeType, "Hash");
+        var typeType = createType("Type", null); typeType.type = typeType;
+        var typeUndefined = createType("Undefined", null);
+        var typeNull = createType("Null", null);
+        var typeNumber = createType("Number", null);
+        var typeString = createType("String", null);
+        var typeKeyword = createType("Keyword", typeString);
+        var typeBoolean = createType("Boolean", null);
+        var typeFunction = createType("Function", null);
+        var typePointer = createType("Pointer", null);
+        var typeArray = createType("Array", null);
+        var typeVector = createType("Vector", typeArray);
+        var typeEntry = createType("Entry", null);
+        var typeHash = createType("Hash", null);
 
         var UNDEFINED = createObject(typeUndefined, undefined);
         var NULL = createObject(typeNull, null);
@@ -778,7 +785,7 @@
             return "<Pointer>";
           }
           if (instanceOf(value, typeType)) {
-            return "<Type: " + value.value + ">";
+            return "<Type: " + value.value.name + ">";
           }
           return "" + value.value;
         };
