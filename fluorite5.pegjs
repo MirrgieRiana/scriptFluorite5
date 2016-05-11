@@ -107,7 +107,7 @@
             if (operator === "_leftPlus") return codes[0](vm, "get");
             if (operator === "_leftMinus") return -codes[0](vm, "get");
             if (operator === "_bracketsRound") return codes[0](vm, "get");
-            if (operator === "d") return dice(codes[0](vm, "get"), codes[1](vm, "get"));
+            if (operator === "_operatorComposite") return dice(codes[0](vm, "get"), codes[2](vm, "get"));
 
             throw "Unknown operator: " + operator;
           } else {
