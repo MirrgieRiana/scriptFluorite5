@@ -841,7 +841,7 @@ Arrows
   = head:(
       (
         main:Vector _ "-->" _ { return ["Minus2Greater", main]; }
-      / main:Vector _ "->" _ (! ":") { return ["MinusGreater", main]; }
+      / main:Vector _ "->" _ { return ["MinusGreater", main]; }
       / main:Vector _ "==>" _ { return ["Equal2Greater", main]; }
       / main:Vector _ "=>" _ { return ["EqualGreater", main]; }
       )+
