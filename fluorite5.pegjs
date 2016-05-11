@@ -1121,7 +1121,7 @@ _ "Comments"
     )*
 
 CharacterMultibyteSymbol
-  = (! (CharacterSymbol / CharacterNumber / CharacterAlphabet / CharacterIdentifier / CharacterBlank)) .
+  = (! (CharacterSymbol / CharacterNumber / CharacterIdentifier / CharacterBlank)) .
 
 CharacterSymbol
   = (! (CharacterNumber / CharacterAlphabet / CharacterSymbolIdentifier)) [!-~]
