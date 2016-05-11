@@ -673,7 +673,7 @@
             }
             if (operator === "_leftMultibyte") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["multibyte", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return createPointer(codes[1], scope);
               }, vm, "get"));
@@ -681,7 +681,7 @@
             }
             if (operator === "_operatorMultibyte") {
               var value = codes[1](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["multibyte", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
               }, vm, "get"));
