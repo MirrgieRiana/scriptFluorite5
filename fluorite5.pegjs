@@ -125,11 +125,8 @@
         this.toNative = function(value) {
           return value;
         };
-        this.allTrue = function(array) {
-          for (var i = 0; i < array.length; i++) {
-            if (!array[i]) return false;
-          }
-          return true;
+        this.toBoolean = function(value) {
+          return value;
         };
         this.createLiteral = function(type, value, context, args) {
           return value;
@@ -774,11 +771,8 @@
           }
           return value.value;
         };
-        this.allTrue = function(array) {
-          for (var i = 0; i < array.length; i++) {
-            if (!array[i].value) return createObject(typeBoolean, false);
-          }
-          return createObject(typeBoolean, true);
+        this.toBoolean = function(value) {
+          return !!value.value;
         };
         this.createLiteral = function(type, value, context, args) {
           if (context === "get") {
@@ -792,6 +786,7 @@
               return createObject(typeKeyword, value);
             }
             if (type === "Void") return packVector([]);
+            if (type === "Boolean") return createObject(typeBoolean, value);
           } else if (context === "arguments") {
             if (type === "Identifier") return createObject(typeKeyword, value);
             if (type === "Void") return packVector([]);
@@ -929,7 +924,13 @@ Compare
 
       return function(vm, context, args) {
         if (context === "get") {
-          return vm.allTrue(codes.map(function(code) { return code(vm, "get"); }));
+          var array = codes.map(function(code) { return code(vm, "get"); });
+
+          for (var i = 0; i < array.length; i++) {
+            if (!vm.toBoolean(array[i])) return vm.createLiteral("Boolean", false, "get", []);
+          }
+
+          return vm.createLiteral("Boolean", true, "get", []);
         } else {
           throw "Unknown context: " + context;
         }
