@@ -23,7 +23,12 @@
   {
     var result = head, i;
     for (i = 0; i < tail.length; i++) {
-      result = createCodeFromMethod("_operator" + tail[i][1], [result, tail[i][3]]);
+      var operator = tail[i][1];
+      if ((typeof operator) === "string") {
+        result = createCodeFromMethod("_operator" + operator, [result, tail[i][3]]);
+      } else {
+        result = createCodeFromMethod("_operator" + operator[0], [result, operator[1], tail[i][3]]);
+      }
     }
     return result;
   }
@@ -935,9 +940,9 @@ Power
     ) _)* tail:MultibyteOperating { return operatorRight(head, tail); }
 
 MultibyteOperating
-  = head:(Left _ (
+  = head:Left tail:(_ (
       CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
-    ) _)* tail:Left { return operatorRight(head, tail); }
+    ) _ Left)* { return operatorLeft(head, tail); }
 
 Left
   = head:((
