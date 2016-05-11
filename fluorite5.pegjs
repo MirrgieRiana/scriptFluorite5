@@ -339,6 +339,7 @@
 
         var typeType = createObject(null, "Type"); typeType.type = typeType;
         var typeUndefined = createObject(typeType, "Undefined");
+        var typeNull = createObject(typeType, "Null");
         var typeNumber = createObject(typeType, "Number");
         var typeString = createObject(typeType, "String");
         var typeKeyword = createObject(typeType, "Keyword");
@@ -351,6 +352,7 @@
         var typeHash = createObject(typeType, "Hash");
 
         var UNDEFINED = createObject(typeUndefined, undefined);
+        var NULL = createObject(typeNull, null);
 
         var scope = new Scope(null, true);
         var stack = [];
@@ -734,6 +736,9 @@
           if (instanceOf(value, typeUndefined)) {
             return "<Undefined>";
           }
+          if (instanceOf(value, typeNull)) {
+            return "<Null>";
+          }
           if (instanceOf(value, typeVector)) {
             if (value.value.length == 0) return "<Void>";
             return value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ");
@@ -783,6 +788,7 @@
               if (value === "true") return createObject(typeBoolean, true);
               if (value === "false") return createObject(typeBoolean, false);
               if (value === "undefined") return UNDEFINED;
+              if (value === "null") return NULL;
               return createObject(typeKeyword, value);
             }
             if (type === "Void") return packVector([]);
