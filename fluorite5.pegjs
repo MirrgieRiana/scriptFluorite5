@@ -212,9 +212,16 @@
           if (instanceOf(blessed, typeVector)) return blessed.value;
           return [blessed];
         }
-        function instanceOf(blessed, type)
+        function instanceOf(blessed, blessedType2)
         {
-          return blessed.type === type;
+          var blessedType = blessed.type;
+
+          while (blessedType !== null) {
+            if (blessedType == blessedType2) return true;
+            blessedType = blessedType.value.supertype;
+          }
+
+          return false;
         }
         function createFunction(args, code, scope)
         {
