@@ -686,6 +686,22 @@
               }, vm, "get"));
               throw "Type Error: " + operator + "/" + value.type.value;
             }
+            if (operator === "_leftWord") {
+              var value = codes[0](vm, "get");
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["leftWord", "word", "function"], value);
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                return codes[1](vm, "get");
+              }, vm, "get"));
+              throw "Type Error: " + operator + "/" + value.type.value;
+            }
+            if (operator === "_operatorWord") {
+              var value = codes[1](vm, "get");
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorWord", "word", "function"], value);
+              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                return packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
+              }, vm, "get"));
+              throw "Type Error: " + operator + "/" + value.type.value;
+            }
             if (operator === "_rightComposite") {
               var value = codes[1](vm, "get");
               if (instanceOf(value, typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value);
@@ -941,6 +957,7 @@ Power
 MultibyteOperating
   = head:Left tail:(_ (
       CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
+    / main:WordOperator { return ["Word", createCodeFromLiteral("Identifier", main)]; }
     ) _ Left)* { return operatorLeft(head, tail); }
 
 Left
@@ -951,7 +968,18 @@ Left
     / "&" { return "Ampersand"; }
     / "*" { return "Asterisk"; }
     / CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
+    / main:WordOperator { return ["Word", createCodeFromLiteral("Identifier", main)]; }
     ) _)* tail:Right { return left(head, tail); }
+
+WordOperator
+  = "`" main:ContentWordOperator "`" { return main; }
+
+ContentWordOperator
+  = (
+      "\\\\" { return "\\"; }
+    / "\\`" { return "`"; }
+    / [^`]
+    )+ { return text(); }
 
 Right
   = Statement
