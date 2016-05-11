@@ -363,6 +363,23 @@
 
         var scope = new Scope(null, true);
         var stack = [];
+        setVariable("fluorite", createObject(typeHash, {
+          "type": createObject(typeHash, {
+            "Type": typeType,
+            "Undefined": typeUndefined,
+            "Null": typeNull,
+            "Number": typeNumber,
+            "String": typeString,
+            "Keyword": typeKeyword,
+            "Boolean": typeBoolean,
+            "Function": typeFunction,
+            "Pointer": typePointer,
+            "Array": typeArray,
+            "Vector": typeVector,
+            "Entry": typeEntry,
+            "Hash": typeHash,
+          }),
+        }));
         setVariable("pi", createObject(typeNumber, Math.PI));
         setVariable("_function_sin", createFunction(["x"], function(vm, context) {
           return createObject(typeNumber, Math.sin(getVariable("x").value));
