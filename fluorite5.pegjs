@@ -635,6 +635,13 @@
                 var value = codes[1](vm, "get");
                 return createObject(typeNumber, unpackVector(value).length);
               }
+              if (command.value === "li") {
+                var array = [];
+                for (var i = 1; i < codes.length; i++) {
+                  array.push(codes[i](vm, "get"));
+                }
+                return packVector(array);
+              }
               throw "Unknown command: " + command.value;
             }
             if (operator === "_leftAmpersand") return createPointer(codes[0], scope);
