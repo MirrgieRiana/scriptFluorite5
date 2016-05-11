@@ -1060,8 +1060,14 @@ Statement
     }
 
 ContentStatement
-  = head:Variable tail:(_ (",") _ Variable)* { return enumerate(head, tail, "Comma"); }
+  = head:FactorStatement tail:(_ (",") _ FactorStatement)* { return enumerate(head, tail, "Comma"); }
   / Statement
+
+FactorStatement
+  = head:Variable tail:(_ (
+      "::" _ main:Variable { return ["_operatorColon2", [main]]; }
+    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
+    ))* { return right(head, tail); }
 
 RightBrackets
   = head:Variable tail:(_ (
