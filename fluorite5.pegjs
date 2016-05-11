@@ -267,11 +267,25 @@
 
           return UNDEFINED;
         }
+        function searchVariableWithType(accesses, blessedKeyword, blessedType)
+        {
+          var variable;
+
+          while (blessedType !== null) {
+            variable = blessedType.value.members[blessedKeyword.value] || UNDEFINED;
+            if (!instanceOf(variable, typeUndefined)) return variable;
+
+            blessedType = blessedType.value.supertype;
+          }
+
+          return searchVariable(accesses, blessedKeyword);
+        }
         function createType(name, supertype)
         {
           return createObject(typeType, {
             name: name,
             supertype: supertype,
+            members: {},
           });
         }
 
@@ -643,12 +657,16 @@
                 if (instanceOf(key, typeString)) return hash.value[key.value] || UNDEFINED;
                 if (instanceOf(key, typeKeyword)) return hash.value[key.value] || UNDEFINED;
               }
+              if (instanceOf(hash, typeType)) {
+                if (instanceOf(key, typeString)) return hash.value.members[key.value] || UNDEFINED;
+                if (instanceOf(key, typeKeyword)) return hash.value.members[key.value] || UNDEFINED;
+              }
               throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
             }
             if (operator === "_operatorPeriod") {
               var left = codes[0](vm, "get");
               var right = codes[1](vm, "get");
-              if (instanceOf(right, typeKeyword)) right = searchVariable(["method", "function"], right);
+              if (instanceOf(right, typeKeyword)) right = searchVariableWithType(["method", "function"], right, left.type);
               if (instanceOf(right, typeFunction)) {
                 var code2 = function(vm, context, args) {
                   var array = unpackVector(getVariable("_"));
@@ -757,6 +775,16 @@
                 }
                 if (instanceOf(key, typeKeyword)) {
                   hash.value[key.value] = args;
+                  return;
+                }
+              }
+              if (instanceOf(hash, typeType)) {
+                if (instanceOf(key, typeString)) {
+                  hash.value.members[key.value] = args;
+                  return;
+                }
+                if (instanceOf(key, typeKeyword)) {
+                  hash.value.members[key.value] = args;
                   return;
                 }
               }
