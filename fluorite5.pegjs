@@ -748,31 +748,31 @@
               }
               if (command.value === "class") {
                 var i = 1, value;
-                value = codes[i](vm, "contentStatement"); i++;
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 
                 var blessedName;
-                var isNamed = false;
-                if (value[0] === "keyword") {
-                  
+                var isNamed;
+                if (value !== undefined && !((value[0] === "keyword" && value[2] === "extends") || value[0] === "curly")) {
                   blessedName = value[1](vm, "get");
                   if (!instanceOf(blessedName, typeKeyword)) throw "Type Error: " + blessedName.type.name + " != Keyword";
-                  value = codes[i](vm, "contentStatement"); i++;
+                  value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                   
-                  isNamed= true;
+                  isNamed = true;
                 } else {
                   blessedName = createObject(typeKeyword, "Class" + Math.floor(Math.random() * 90000000 + 10000000));
+                  isNamed = false;
                 }
                 
                 var blessedExtends;
-                if (value[0] === "keyword") {
+                if (value !== undefined && value[0] === "keyword" && value[2] === "extends") {
                   
                   // dummy
-                  value = codes[i](vm, "contentStatement"); i++;
+                  value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                   
                   blessedExtends = value[1](vm, "get");
                   if (instanceOf(blessedExtends, typeKeyword)) blessedExtends = searchVariable(["class"], blessedExtends.value);
                   if (!instanceOf(blessedExtends, typeType)) throw "Type Error: " + blessedExtends.type.name + " != Type";
-                  value = codes[i](vm, "contentStatement"); i++;
+                  value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                   
                 } else {
                   blessedExtends = typeHash;
@@ -780,25 +780,37 @@
                 
                 var blessedResult = createType(blessedName.value, blessedExtends);
                 
-                pushFrame();
-                setVariable("class", blessedResult);
-                setVariable("super", blessedExtends);
-                value[1](vm, "invoke")
-                popFrame();
+                if (value !== undefined && value[0] === "curly") {
+                  pushFrame();
+                  setVariable("class", blessedResult);
+                  setVariable("super", blessedExtends);
+                  value[1](vm, "invoke")
+                  popFrame();
+                  value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                }
+                
+                if (value !== undefined) throw "Illegal command argument: " + value[0];
+                
+                // parse end
                 
                 if (isNamed) setVariable("_class_" + blessedName.value, blessedResult);
                 return blessedResult;
               }
               if (command.value === "new") {
                 var i = 1, value;
-                value = codes[i](vm, "contentStatement"); i++;
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 
                 var blessedType = value[1](vm, "get");
                 if (instanceOf(blessedType, typeKeyword)) blessedType = searchVariable(["class"], blessedType.value);
                 if (!instanceOf(blessedType, typeType)) throw "Type Error: " + blessedType.type.name + " != Type";
-                value = codes[i](vm, "contentStatement"); i++;
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 
                 var blessedArguments = value[1](vm, "get");
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                
+                if (value !== undefined) throw "Illegal command argument: " + value[0];
+                
+                // parse end
                 
                 var blessedsNew = getMethodsOfTypeTree(["constructor", "method", "function"], "new", blessedType);
                
@@ -1040,7 +1052,7 @@
           } else if (context === "invoke") {
             return this.createLiteral(type, value, "get", []);
           } else if (context === "contentStatement") {
-            if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value)];
+            if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value), value];
             return ["normal", createCodeFromLiteral(type, value)];
           } else if (context === "arguments") {
             if (type === "Identifier") return createObject(typeKeyword, value);
