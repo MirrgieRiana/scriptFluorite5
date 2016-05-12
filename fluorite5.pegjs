@@ -453,10 +453,45 @@
             "Hash": typeHash,
           }),
         }));
-        setVariable("pi", createObject(typeNumber, Math.PI));
-        setVariable("_function_sin", createFunction(["x"], function(vm, context) {
-          return createObject(typeNumber, Math.sin(getVariable("x").value));
-        }, scope));
+        function createNativeBridge(func, argumentCount)
+        {
+          if (argumentCount == 0) {
+            return createFunction([], function(vm, context) {
+              return createObject(typeNumber, func());
+            }, scope);
+          } else if (argumentCount == 1) {
+            return createFunction(["x"], function(vm, context) {
+              return createObject(typeNumber, func(getVariable("x").value));
+            }, scope);
+          } else if (argumentCount == 2) {
+            return createFunction(["x", "y"], function(vm, context) {
+              return createObject(typeNumber, func(getVariable("x").value, getVariable("y").value));
+            }, scope);
+          } else {
+            throw "TODO"; // TODO
+          }
+        }
+        setVariable("Math", createObject(typeHash, {
+          "PI": createObject(typeNumber, Math.PI),
+          "E": createObject(typeNumber, Math.E),
+          "abs": createNativeBridge(Math.abs, 1),
+          "sin": createNativeBridge(Math.sin, 1),
+          "cos": createNativeBridge(Math.cos, 1),
+          "tan": createNativeBridge(Math.tan, 1),
+          "asin": createNativeBridge(Math.asin, 1),
+          "acos": createNativeBridge(Math.acos, 1),
+          "atan": createNativeBridge(Math.atan, 1),
+          "atan2": createNativeBridge(Math.atan2, 2),
+          "log": createNativeBridge(Math.log, 1),
+          "ceil": createNativeBridge(Math.ceil, 1),
+          "floor": createNativeBridge(Math.floor, 1),
+          "exp": createNativeBridge(Math.exp, 1),
+          "pow": createNativeBridge(Math.pow, 2),
+          "log": createNativeBridge(Math.log, 1),
+          "random": createNativeBridge(Math.random, 0),
+          "randomBetween": createNativeBridge(function(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }, 2),
+          "sqrt": createNativeBridge(Math.sqrt, 1),
+        }));
         setVariable("_rightComposite_d", createFunction(["count"], function(vm, context) {
           var count = callPointer(getVariable("count"), "get");
           return createObject(typeNumber, dice(count.value, 6));
