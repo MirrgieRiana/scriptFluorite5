@@ -136,6 +136,8 @@
       return function() {
         var vm = this;
 
+        var listenersInitializeFinished = [];
+
         function getVariable(name)
         {
           return scope.getOrUndefined(name)
@@ -287,13 +289,59 @@
 
           return searchVariable(accesses, keyword);
         }
+        function getMethodsOfTypeTree(accesses, keyword, blessedType)
+        {
+          var f;
+          var functions = [];
+
+          while (blessedType !== null) {
+            
+            A:
+            {
+              for (var i = 0; i < accesses.length; i++) {
+                f = blessedType.value.members["_" + accesses[i] + "_" + keyword];
+                if (f !== undefined) {
+                  functions.push(f);
+                  break A;
+                } 
+              }
+
+              f = blessedType.value.members[keyword];
+              if (f !== undefined) {
+                functions.push(f);
+                break A;
+              }
+            }
+
+            blessedType = blessedType.value.supertype;
+          }
+
+          return functions;
+        }
         function createType(name, supertype)
         {
-          return createObject(typeType, {
+          var blessedType = createObject(typeType, {
             name: name,
             supertype: supertype,
             members: {},
           });
+
+          if (supertype === null) {
+            var f = function() {
+              blessedType.value.members["_constructor_new"] = createFunction(["type"], function(vm, context) {
+                var blessedValue = getVariable("type");
+                if (instanceOf(blessedValue, blessedType)) return blessedValue;
+                throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
+              }, scope);
+            };
+            if (listenersInitializeFinished === null) {
+              f();
+            } else {
+              listenersInitializeFinished.push(f);
+            }
+          }
+
+          return blessedType;
         }
 
         function Scope(parent, isFrame)
@@ -384,6 +432,10 @@
 
         var scope = new Scope(null, true);
         var stack = [];
+
+        listenersInitializeFinished.map(function(a) { a(); })
+        listenersInitializeFinished = null;
+
         setVariable("fluorite", createObject(typeHash, {
           "type": createObject(typeHash, {
             "Type": typeType,
@@ -654,6 +706,7 @@
                 value = codes[i](vm, "contentStatement"); i++;
                 
                 var blessedName = value[1](vm, "get");
+                if (!instanceOf(blessedName, typeKeyword)) throw "Type Error: " + blessedName.type.name + " != Keyword";
                 value = codes[i](vm, "contentStatement"); i++;
                 
                 var blessedExtends;
@@ -663,6 +716,8 @@
                   value = codes[i](vm, "contentStatement"); i++;
                   
                   blessedExtends = value[1](vm, "get");
+                  if (instanceOf(blessedExtends, typeKeyword)) blessedExtends = searchVariable(["class"], blessedExtends.value);
+                  if (!instanceOf(blessedExtends, typeType)) throw "Type Error: " + blessedExtends.type.name + " != Type";
                   value = codes[i](vm, "contentStatement"); i++;
                   
                 } else {
@@ -671,16 +726,13 @@
                 
                 var blessedResult = createType(blessedName.value, blessedExtends);
                 
-                pushFrame(); // TODO
+                pushFrame();
                 setVariable("class", blessedResult);
                 setVariable("super", blessedExtends);
-                var blessedHash = this.callMethod("_bracketsCurly", [value[1]], "get", []);
+                value[1](vm, "invoke")
                 popFrame();
                 
-                Object.keys(blessedHash.value).map(function(key) {
-                  blessedResult.value.members[key] = blessedHash.value[key];
-                });
-                setVariable(blessedName.value, blessedResult);
+                setVariable("_class_" + blessedName.value, blessedResult);
                 return blessedResult;
               }
               if (command.value === "new") {
@@ -688,15 +740,26 @@
                 value = codes[i](vm, "contentStatement"); i++;
                 
                 var blessedType = value[1](vm, "get");
+                if (instanceOf(blessedType, typeKeyword)) blessedType = searchVariable(["class"], blessedType.value);
+                if (!instanceOf(blessedType, typeType)) throw "Type Error: " + blessedType.type.name + " != Type";
                 value = codes[i](vm, "contentStatement"); i++;
                 
                 var blessedArguments = value[1](vm, "get");
                 
-                var constructor = searchVariableWithType(["constructor", "method", "function"], "new", blessedType);
-                if (instanceOf(constructor, typeFunction)) {
-                  return callFunction(constructor, blessedArguments);
+                var blessedsNew = getMethodsOfTypeTree(["constructor", "method", "function"], "new", blessedType);
+               
+                for (i = 0; i < blessedsNew.length; i++) {
+                   blessedArguments = callFunction(blessedsNew[i], blessedArguments);
                 }
-                throw "Constructor Error: " + blessedType.value.name + ": " + constructor.type.value;
+                
+                blessedArguments.type = blessedType;
+                
+                var blessedsInit = getMethodsOfTypeTree(["constructor", "method", "function"], "init", blessedType);
+                for (i = blessedsInit.length - 1; i >= 0; i--) {
+                  callFunction(blessedsInit[i], blessedArguments);
+                }
+                
+                return blessedArguments;
               }
               throw "Unknown command: " + command.value;
             }
@@ -920,6 +983,8 @@
             }
             if (type === "Void") return packVector([]);
             if (type === "Boolean") return createObject(typeBoolean, value);
+          } else if (context === "invoke") {
+            return this.createLiteral(type, value, "get", []);
           } else if (context === "contentStatement") {
             if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value)];
             return ["normal", createCodeFromLiteral(type, value)];
