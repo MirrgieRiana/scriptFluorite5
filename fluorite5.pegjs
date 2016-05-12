@@ -690,6 +690,16 @@
                 if (instanceOf(value, typeString)) return createObject(typeNumber, value.value.length);
                 throw "Illegal Argument: " + value.type.value;
               }
+              if (command.value === "entry_key") {
+                var value = codes[1](vm, "get");
+                if (!instanceOf(value, typeEntry)) throw "Type Error: " + value.type.name + " != Entry";
+                return value.value.key;
+              }
+              if (command.value === "entry_value") {
+                var value = codes[1](vm, "get");
+                if (!instanceOf(value, typeEntry)) throw "Type Error: " + value.type.name + " != Entry";
+                return value.value.value;
+              }
               if (command.value === "size") {
                 var value = codes[1](vm, "get");
                 return createObject(typeNumber, unpackVector(value).length);
