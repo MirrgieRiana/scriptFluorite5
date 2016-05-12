@@ -839,6 +839,10 @@
               throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
             }
           } else if (context === "invoke") {
+            if (operator === "_bracketsCurly") {
+              codes[0](vm, "invoke");
+              return;
+            }
             this.callMethod(operator, codes, "get", args);
             return;
           } else if (context === "contentStatement") {
