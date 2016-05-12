@@ -780,7 +780,9 @@
                 
                 var blessedResult;
                 try {
+                  pushFrame();
                   blessedResult = codeTry(vm, "get");
+                  popFrame();
                 } catch (e) {
                   pushFrame();
                   setVariable(blessedKeyword.value, createObject(typeString, "" + e));
