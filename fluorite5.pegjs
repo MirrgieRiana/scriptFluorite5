@@ -260,32 +260,32 @@
           popStack();
           return res;
         }
-        function searchVariable(accesses, blessedKeyword)
+        function searchVariable(accesses, keyword)
         {
           var variable;
 
           for (var i = 0; i < accesses.length; i++) {
-            variable = getVariable("_" + accesses[i] + "_" + blessedKeyword.value);
+            variable = getVariable("_" + accesses[i] + "_" + keyword);
             if (!instanceOf(variable, typeUndefined)) return variable;
           }
 
-          variable = getVariable(blessedKeyword.value);
+          variable = getVariable(keyword);
           if (!instanceOf(variable, typeUndefined)) return variable;
 
           return UNDEFINED;
         }
-        function searchVariableWithType(accesses, blessedKeyword, blessedType)
+        function searchVariableWithType(accesses, keyword, blessedType)
         {
           var variable;
 
           while (blessedType !== null) {
-            variable = blessedType.value.members[blessedKeyword.value] || UNDEFINED;
+            variable = blessedType.value.members[keyword] || UNDEFINED;
             if (!instanceOf(variable, typeUndefined)) return variable;
 
             blessedType = blessedType.value.supertype;
           }
 
-          return searchVariable(accesses, blessedKeyword);
+          return searchVariable(accesses, keyword);
         }
         function createType(name, supertype)
         {
@@ -578,7 +578,7 @@
             }
             if (operator === "_rightbracketsSquare") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["array"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["array"], value.value);
               if (instanceOf(value, typeArray)) return value.value[callInFrame(codes[1], vm, "get").value] || UNDEFINED;
               throw "Type Error: " + operator + "/" + value.type.value;
             }
@@ -602,7 +602,7 @@
               || operator === "_operatorEqualGreater") 	{
               var minus = operator == "_operatorMinusGreater";
               var right = codes[1](vm, "get");
-              if (instanceOf(right, typeKeyword)) right = searchVariable(["collector", "function"], right);
+              if (instanceOf(right, typeKeyword)) right = searchVariable(["collector", "function"], right.value);
               if (instanceOf(right, typeFunction)) {
                 if (minus) {
                   return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
@@ -621,7 +621,7 @@
             if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
             if (operator === "_rightbracketsRound") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(codes[1], vm, "get"));  
               throw "Type Error: " + operator + "/" + value.type.value;
             }
@@ -649,6 +649,55 @@
                 }
                 return packVector(array);
               }
+              if (command.value === "class") {
+                var i = 1, value;
+                value = codes[i](vm, "contentStatement"); i++;
+                
+                var blessedName = value[1](vm, "get");
+                value = codes[i](vm, "contentStatement"); i++;
+                
+                var blessedExtends;
+                if (value[0] === "keyword") {
+                  
+                  // dummy
+                  value = codes[i](vm, "contentStatement"); i++;
+                  
+                  blessedExtends = value[1](vm, "get");
+                  value = codes[i](vm, "contentStatement"); i++;
+                  
+                } else {
+                  blessedExtends = typeHash;
+                }
+                
+                var blessedResult = createType(blessedName.value, blessedExtends);
+                
+                pushFrame(); // TODO
+                setVariable("class", blessedResult);
+                setVariable("super", blessedExtends);
+                var blessedHash = this.callMethod("_bracketsCurly", [value[1]], "get", []);
+                popFrame();
+                
+                Object.keys(blessedHash.value).map(function(key) {
+                  blessedResult.value.members[key] = blessedHash.value[key];
+                });
+                setVariable(blessedName.value, blessedResult);
+                return blessedResult;
+              }
+              if (command.value === "new") {
+                var i = 1, value;
+                value = codes[i](vm, "contentStatement"); i++;
+                
+                var blessedType = value[1](vm, "get");
+                value = codes[i](vm, "contentStatement"); i++;
+                
+                var blessedArguments = value[1](vm, "get");
+                
+                var constructor = searchVariableWithType(["constructor", "method", "function"], "new", blessedType);
+                if (instanceOf(constructor, typeFunction)) {
+                  return callFunction(constructor, blessedArguments);
+                }
+                throw "Constructor Error: " + blessedType.value.name + ": " + constructor.type.value;
+              }
               throw "Unknown command: " + command.value;
             }
             if (operator === "_leftAmpersand") return createPointer(codes[0], scope);
@@ -665,7 +714,7 @@
             }
             if (operator === "_operatorColon2") {
               var hash = codes[0](vm, "get");
-              if (instanceOf(hash, typeKeyword)) hash = searchVariable(["hash"], hash);
+              if (instanceOf(hash, typeKeyword)) hash = searchVariable(["hash"], hash.value);
               var key = codes[1](vm, "get");
               if (instanceOf(hash, typeHash)) {
                 if (instanceOf(key, typeString)) return hash.value[key.value] || UNDEFINED;
@@ -680,7 +729,7 @@
             if (operator === "_operatorPeriod") {
               var left = codes[0](vm, "get");
               var right = codes[1](vm, "get");
-              if (instanceOf(right, typeKeyword)) right = searchVariableWithType(["method", "function"], right, left.type);
+              if (instanceOf(right, typeKeyword)) right = searchVariableWithType(["method", "function"], right.value, left.type);
               if (instanceOf(right, typeFunction)) {
                 var code2 = function(vm, context, args) {
                   var array = unpackVector(getVariable("_"));
@@ -715,7 +764,7 @@
             }
             if (operator === "_hereDocumentFunction") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["decoration", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["decoration", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([createPointer(codes[1], scope), createPointer(codes[2], scope)]);
               }, vm, "get"));
@@ -723,7 +772,7 @@
             }
             if (operator === "_leftMultibyte") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return createPointer(codes[1], scope);
               }, vm, "get"));
@@ -731,7 +780,7 @@
             }
             if (operator === "_operatorMultibyte") {
               var value = codes[1](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
               }, vm, "get"));
@@ -739,7 +788,7 @@
             }
             if (operator === "_leftWord") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["leftWord", "word", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["leftWord", "word", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return codes[1](vm, "get");
               }, vm, "get"));
@@ -747,7 +796,7 @@
             }
             if (operator === "_operatorWord") {
               var value = codes[1](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorWord", "word", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorWord", "word", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
               }, vm, "get"));
@@ -755,7 +804,7 @@
             }
             if (operator === "_rightComposite") {
               var value = codes[1](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return createPointer(codes[0], scope);
               }, vm, "get"));
@@ -763,7 +812,7 @@
             }
             if (operator === "_operatorComposite") {
               var value = codes[1](vm, "get");
-              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value);
+              if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                 return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
               }, vm, "get"));
@@ -777,7 +826,7 @@
             }
             if (operator === "_operatorColon2") {
               var hash = codes[0](vm, "get");
-              if (instanceOf(hash, typeKeyword)) hash = searchVariable(["hash"], hash);
+              if (instanceOf(hash, typeKeyword)) hash = searchVariable(["hash"], hash.value);
               var key = codes[1](vm, "get");
               if (instanceOf(hash, typeHash)) {
                 if (instanceOf(key, typeString)) return hash.value[key.value] = args[0](vm, "get");
@@ -792,6 +841,11 @@
           } else if (context === "invoke") {
             this.callMethod(operator, codes, "get", args);
             return;
+          } else if (context === "contentStatement") {
+            if (operator === "_bracketsRound") return ["round", codes[0]];
+            if (operator === "_bracketsSquare") return ["square", codes[0]];
+            if (operator === "_bracketsCurly") return ["curly", codes[0]];
+            return ["normal", createCodeFromMethod(operator, codes)];
           } else if (context === "arguments") {
             if (operator === "_leftDollar") return codes[0](vm, "arguments");
             if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "arguments"); }));
@@ -862,6 +916,9 @@
             }
             if (type === "Void") return packVector([]);
             if (type === "Boolean") return createObject(typeBoolean, value);
+          } else if (context === "contentStatement") {
+            if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value)];
+            return ["normal", createCodeFromLiteral(type, value)];
           } else if (context === "arguments") {
             if (type === "Identifier") return createObject(typeKeyword, value);
             if (type === "Void") return packVector([]);
