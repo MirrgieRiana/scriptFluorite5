@@ -616,13 +616,6 @@
             }
           }
 
-          if (operator === "_leftAsterisk") {
-            var value = codes[0](vm, "get");
-            if (instanceOf(value, typePointer)) return callPointer(value, context, args);
-            throw "Type Error: " + operator + "/" + value.type.value;
-          }
-          if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
-          if (operator === "_bracketsRound") return callInFrame(codes[0], vm, context, args);
           if (context === "get") {
 
             if (operator === "_operatorPlus") {
@@ -745,6 +738,57 @@
                   array.push(codes[i](vm, "get"));
                 }
                 return packVector(array);
+              }
+              if (command.value === "throw") {
+                var i = 1, value;
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                
+                if (!(value !== undefined)) throw "Illegal command argument";
+                var blessedValue = value[3](vm, "get");
+                if (!instanceOf(blessedValue, typeString)) throw "Type Error: " + blessedValue.type.name + " != String";
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                
+                if (value !== undefined) throw "Illegal command argument: " + value[0];
+                
+                // parse end
+                
+                throw blessedValue.value;
+              }
+              if (command.value === "try") {
+                var i = 1, value;
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                
+                if (!(value !== undefined && value[0] === "curly")) throw "Illegal command argument";
+                var codeTry = value[1];
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                
+                if (!(value !== undefined && value[0] === "keyword" && value[2] === "catch")) throw "Illegal command argument";
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                
+                if (!(value !== undefined && value[0] === "round")) throw "Illegal command argument";
+                var blessedKeyword = value[1](vm, "get");
+                if (!instanceOf(blessedKeyword, typeKeyword)) throw "Type Error: " + blessedKeyword.type.name + " != Keyword";
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                
+                if (!(value !== undefined && value[0] === "curly")) throw "Illegal command argument";
+                var codeCatch = value[1];
+                value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
+                
+                if (value !== undefined) throw "Illegal command argument: " + value[0];
+                
+                // parse end
+                
+                var blessedResult;
+                try {
+                  blessedResult = codeTry(vm, "get");
+                } catch (e) {
+                  pushFrame();
+                  setVariable(blessedKeyword.value, createObject(typeString, "" + e));
+                  blessedResult = codeCatch(vm, "get")
+                  popFrame();
+                }
+                
+                return blessedResult;
               }
               if (command.value === "class") {
                 var i = 1, value;
@@ -975,14 +1019,23 @@
             this.callMethod(operator, codes, "get", args);
             return;
           } else if (context === "contentStatement") {
-            if (operator === "_bracketsRound") return ["round", codes[0]];
-            if (operator === "_bracketsSquare") return ["square", codes[0]];
-            if (operator === "_bracketsCurly") return ["curly", codes[0]];
-            return ["normal", createCodeFromMethod(operator, codes)];
+            if (operator === "_bracketsRound") return ["round", codes[0], undefined, createCodeFromMethod(operator, codes)];
+            if (operator === "_bracketsSquare") return ["square", codes[0], undefined, createCodeFromMethod(operator, codes)];
+            if (operator === "_bracketsCurly") return ["curly", codes[0], undefined, createCodeFromMethod(operator, codes)];
+            return ["normal", createCodeFromMethod(operator, codes), undefined, createCodeFromMethod(operator, codes)];
           } else if (context === "arguments") {
             if (operator === "_leftDollar") return codes[0](vm, "arguments");
             if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "arguments"); }));
           }
+
+          if (operator === "_leftAsterisk") {
+            var value = codes[0](vm, "get");
+            if (instanceOf(value, typePointer)) return callPointer(value, context, args);
+            throw "Type Error: " + operator + "/" + value.type.value;
+          }
+          if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
+          if (operator === "_bracketsRound") return callInFrame(codes[0], vm, context, args);
+
           throw "Unknown operator: " + operator + "/" + context;
         };
         this.toString = function(value) {
@@ -1052,8 +1105,8 @@
           } else if (context === "invoke") {
             return this.createLiteral(type, value, "get", []);
           } else if (context === "contentStatement") {
-            if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value), value];
-            return ["normal", createCodeFromLiteral(type, value)];
+            if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value), value, createCodeFromLiteral(type, value)];
+            return ["normal", createCodeFromLiteral(type, value), undefined, createCodeFromLiteral(type, value)];
           } else if (context === "arguments") {
             if (type === "Identifier") return createObject(typeKeyword, value);
             if (type === "Void") return packVector([]);
