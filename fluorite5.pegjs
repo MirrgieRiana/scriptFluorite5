@@ -750,9 +750,18 @@
                 var i = 1, value;
                 value = codes[i](vm, "contentStatement"); i++;
                 
-                var blessedName = value[1](vm, "get");
-                if (!instanceOf(blessedName, typeKeyword)) throw "Type Error: " + blessedName.type.name + " != Keyword";
-                value = codes[i](vm, "contentStatement"); i++;
+                var blessedName;
+                var isNamed = false;
+                if (value[0] === "keyword") {
+                  
+                  blessedName = value[1](vm, "get");
+                  if (!instanceOf(blessedName, typeKeyword)) throw "Type Error: " + blessedName.type.name + " != Keyword";
+                  value = codes[i](vm, "contentStatement"); i++;
+                  
+                  isNamed= true;
+                } else {
+                  blessedName = createObject(typeKeyword, "Class" + Math.floor(Math.random() * 90000000 + 10000000));
+                }
                 
                 var blessedExtends;
                 if (value[0] === "keyword") {
@@ -777,7 +786,7 @@
                 value[1](vm, "invoke")
                 popFrame();
                 
-                setVariable("_class_" + blessedName.value, blessedResult);
+                if (isNamed) setVariable("_class_" + blessedName.value, blessedResult);
                 return blessedResult;
               }
               if (command.value === "new") {
