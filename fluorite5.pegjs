@@ -1172,7 +1172,7 @@ Message
     }
 
 MessageText
-  = main:(
+  = ("#!" [^\n\r]* ([\r\n] / "\r\n"))? main:(
       [^\\]
     / "\\\\" { return "\\"; }
     )* { return main.join(""); }
@@ -1508,6 +1508,7 @@ _ "Comments"
   = (
       "/*" ((! "*/") .)* "*/"
     / "//" [^\n\r]*
+    / "#!" [^\n\r]*
     / CharacterBlank+
     )*
 
