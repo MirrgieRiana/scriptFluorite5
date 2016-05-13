@@ -1312,32 +1312,14 @@ ContentWordOperator
     )+ { return text(); }
 
 Right
-  = head:Statement tail:(_ (
+  = head:Variable tail:(_ (
       "(" _ main:Formula _ ")" { return ["_rightbracketsRound", [main]]; }
     / "[" _ main:Formula _ "]" { return ["_rightbracketsSquare", [main]]; }
     / "{" _ main:Formula _ "}" { return ["_rightbracketsCurly", [main]]; }
     / "(" _ ")" { return ["_rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
     / "[" _ "]" { return ["_rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
     / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
-    / "::" _ main:Statement { return ["_operatorColon2", [main]]; }
-    / "." _ main:Statement { return ["_operatorPeriod", [main]]; }
-    ))* { return right(head, tail); }
-
-Statement
-  = "/" head:Identifier main:(_ ContentStatement)+ (_ "/" (! Identifier))? {
-      var array = [head];
-      main.map(function(item) { array.push(item[1]); })
-      return createCodeFromMethod("_statement", array);
-    }
-  / Variable
-
-ContentStatement
-  = head:FactorStatement tail:(_ (",") _ FactorStatement)* { return enumerate(head, tail, "Comma"); }
-  / Statement
-
-FactorStatement
-  = head:Variable tail:(_ (
-      "::" _ main:Variable { return ["_operatorColon2", [main]]; }
+    / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
     / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
     ))* { return right(head, tail); }
 
@@ -1358,6 +1340,24 @@ Factor
   / String
   / StringReplaceable
   / HereDocument
+  / Statement
+
+Statement
+  = "/" head:Identifier main:(_ ContentStatement)* (_ "/" (! Identifier))? {
+      var array = [head];
+      main.map(function(item) { array.push(item[1]); })
+      return createCodeFromMethod("_statement", array);
+    }
+
+ContentStatement
+  = head:FactorStatement tail:(_ (",") _ FactorStatement)* { return enumerate(head, tail, "Comma"); }
+  / Statement
+
+FactorStatement
+  = head:Variable tail:(_ (
+      "::" _ main:Variable { return ["_operatorColon2", [main]]; }
+    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
+    ))* { return right(head, tail); }
 
 Composite
   = head:Number body:BodyComposite tail:Composite { return createCodeFromMethod("_operatorComposite", [head, body, tail]); }
