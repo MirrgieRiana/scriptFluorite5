@@ -216,6 +216,9 @@
         }
         function instanceOf(blessed, blessedType2)
         {
+          if ((typeof blessed) !== "object") return false;
+          if (blessed.type === undefined) return false;
+
           var blessedType = blessed.type;
 
           while (blessedType !== null) {
@@ -318,7 +321,7 @@
 
           return functions;
         }
-        function createType(name, supertype)
+        function createType(name, supertype, providesPrimitiveConstructor)
         {
           var blessedType = createObject(typeType, {
             name: name,
@@ -326,7 +329,7 @@
             members: {},
           });
 
-          if (supertype === null) {
+          if (providesPrimitiveConstructor) {
             var f = function() {
               blessedType.value.members["_constructor_new"] = createFunction(["type"], function(vm, context) {
                 var blessedValue = getVariable("type");
@@ -413,24 +416,29 @@
           }
         };
 
-        var typeType = createType("Type", null); typeType.type = typeType;
-        var typeUndefined = createType("Undefined", null);
-        var typeNull = createType("Null", null);
-        var typeNumber = createType("Number", null);
-        var typeString = createType("String", null);
-        var typeKeyword = createType("Keyword", typeString);
-        var typeBoolean = createType("Boolean", null);
-        var typeFunction = createType("Function", null);
-        var typePointer = createType("Pointer", null);
-        var typeArray = createType("Array", null);
-        var typeVector = createType("Vector", typeArray);
-        var typeEntry = createType("Entry", null);
-        var typeHash = createType("Hash", null);
-        var typeException = createType("Exception", null);
+        var typeType = createType("Type", null, false); typeType.type = typeType;
+        var typeValue = createType("Value", null, false);
+          var typeUndefined = createType("Undefined", typeValue, false);
+          var typeDefined = createType("Defined", typeValue, false);
+            var typeNull = createType("Null", typeDefined, false);
+            var typeNumber = createType("Number", typeDefined, true);
+            var typeString = createType("String", typeDefined, true);
+              var typeKeyword = createType("Keyword", typeString, false);
+            var typeBoolean = createType("Boolean", typeDefined, true);
+            var typeFunction = createType("Function", typeDefined, true);
+            var typePointer = createType("Pointer", typeDefined, true);
+            var typeArray = createType("Array", typeDefined, true);
+              var typeVector = createType("Vector", typeArray, false);
+            var typeObject = createType("Object", typeDefined, true);
+              var typeHash = createType("Hash", typeObject, false);
+              var typeEntry = createType("Entry", typeObject, false);
+              var typeException = createType("Exception", typeObject, false);
 
         var types = [
           typeType,
+          typeValue,
           typeUndefined,
+          typeDefined,
           typeNull,
           typeNumber,
           typeString,
@@ -440,8 +448,9 @@
           typePointer,
           typeArray,
           typeVector,
-          typeEntry,
+          typeObject,
           typeHash,
+          typeEntry,
           typeException,
         ];
 
@@ -815,10 +824,14 @@
                   blessedResult = codeTry(vm, "get");
                   popFrame();
                 } catch (e) {
-                  pushFrame();
-                  setVariable(blessedKeyword.value, createObject(typeString, "" + e));
-                  blessedResult = codeCatch(vm, "get")
-                  popFrame();
+                  if (instanceOf(e, typeException)) {
+                    pushFrame();
+                    setVariable(blessedKeyword.value, createObject(typeString, "" + e));
+                    blessedResult = codeCatch(vm, "get")
+                    popFrame();
+                  } else {
+                    throw e;
+                  }
                 }
                 
                 return blessedResult;
@@ -855,7 +868,7 @@
                   blessedExtends = typeHash;
                 }
                 
-                var blessedResult = createType(blessedName.value, blessedExtends);
+                var blessedResult = createType(blessedName.value, blessedExtends, false);
                 
                 if (value !== undefined && value[0] === "curly") {
                   pushFrame();
