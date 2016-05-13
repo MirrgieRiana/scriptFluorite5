@@ -426,6 +426,24 @@
         var typeVector = createType("Vector", typeArray);
         var typeEntry = createType("Entry", null);
         var typeHash = createType("Hash", null);
+        var typeException = createType("Exception", null);
+
+        var types = [
+          typeType,
+          typeUndefined,
+          typeNull,
+          typeNumber,
+          typeString,
+          typeKeyword,
+          typeBoolean,
+          typeFunction,
+          typePointer,
+          typeArray,
+          typeVector,
+          typeEntry,
+          typeHash,
+          typeException,
+        ];
 
         var UNDEFINED = createObject(typeUndefined, undefined);
         var NULL = createObject(typeNull, null);
@@ -436,23 +454,15 @@
         listenersInitializeFinished.map(function(a) { a(); })
         listenersInitializeFinished = null;
 
-        setVariable("fluorite", createObject(typeHash, {
-          "type": createObject(typeHash, {
-            "Type": typeType,
-            "Undefined": typeUndefined,
-            "Null": typeNull,
-            "Number": typeNumber,
-            "String": typeString,
-            "Keyword": typeKeyword,
-            "Boolean": typeBoolean,
-            "Function": typeFunction,
-            "Pointer": typePointer,
-            "Array": typeArray,
-            "Vector": typeVector,
-            "Entry": typeEntry,
-            "Hash": typeHash,
-          }),
-        }));
+        {
+          var hash = {};
+          types.forEach(function(type) {
+            hash[type.value.name] = type;
+          });
+          setVariable("fluorite", createObject(typeHash, {
+            "type": createObject(typeHash, hash),
+          }));
+        }
         function createNativeBridge(func, argumentCount)
         {
           if (argumentCount == 0) {
