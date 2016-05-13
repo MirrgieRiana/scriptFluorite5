@@ -1437,6 +1437,13 @@ HereDocument
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
           )* "]" { return createCodeFromMethod("_concatenate", main); }
+        / begin2:HereDocumentDelimiter2 main:(
+
+            main:(! (end2:HereDocumentDelimiter2 end:HereDocumentDelimiter & { return begin2 === end2 && begin === end; }) main:(
+              .
+            ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
+
+          )* HereDocumentDelimiter2 { return createCodeFromMethod("_concatenate", main); }
         ) HereDocumentDelimiter { return main; }
       / (
           "{" main:(
@@ -1455,6 +1462,13 @@ HereDocument
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
           )* "]" { return createCodeFromMethod("_concatenate", main); }
+        / begin2:HereDocumentDelimiter2 main:(
+
+            main:(! (end2:HereDocumentDelimiter2 & { return begin2 === end2; }) main:(
+              .
+            ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
+
+          )* HereDocumentDelimiter2 { return createCodeFromMethod("_concatenate", main); }
         )
       )
     ) {
@@ -1473,6 +1487,9 @@ HereDocument
 
 HereDocumentDelimiter
   = CharacterIdentifier+ { return text(); }
+
+HereDocumentDelimiter2
+  = [!"#$%&'*+,\-./:;=?@\\^_`|~] { return text(); }
 
 _ "Comments"
   = (
