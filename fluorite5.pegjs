@@ -1160,7 +1160,7 @@ Expression
   = Message
 
 Message
-  = head:MessageText tail:("\\" _ MessageFormula _ "\\" MessageText)* {
+  = ("#!" [^\n\r]* ([\r\n] / "\r\n"))? head:MessageText tail:("\\" _ MessageFormula _ "\\" MessageText)* {
       var result = [head], i;
 
       for (i = 0; i < tail.length; i++) {
@@ -1172,7 +1172,7 @@ Message
     }
 
 MessageText
-  = ("#!" [^\n\r]* ([\r\n] / "\r\n"))? main:(
+  = main:(
       [^\\]
     / "\\\\" { return "\\"; }
     )* { return main.join(""); }
