@@ -739,6 +739,13 @@
                 }
                 return packVector(array);
               }
+              if (command.value === "array") {
+                var array = [];
+                for (var i = 1; i < codes.length; i++) {
+                  array.push(codes[i](vm, "get"));
+                }
+                return createObject(typeArray, unpackVector(packVector(array)));
+              }
               if (command.value === "throw") {
                 var i = 1, value;
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
