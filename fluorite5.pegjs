@@ -718,6 +718,13 @@
                 if (instanceOf(value, typeString)) return createObject(typeNumber, value.value.length);
                 throw "Illegal Argument: " + value.type.value;
               }
+              if (command.value === "keys") {
+                var value = codes[1](vm, "get");
+                if (!instanceOf(value, typeHash)) throw "Type Error: " + value.type.name + " != Hash";
+                return packVector(Object.keys(value.value).map(function(key) {
+                  return createObject(typeKeyword, key);
+                }));
+              }
               if (command.value === "entry_key") {
                 var value = codes[1](vm, "get");
                 if (!instanceOf(value, typeEntry)) throw "Type Error: " + value.type.name + " != Entry";
