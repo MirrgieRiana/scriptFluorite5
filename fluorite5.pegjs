@@ -721,6 +721,13 @@
                 var value = codes[1](vm, "get");
                 return value.type;
               }
+              if (command.value === "instanceof") {
+                if (codes.length != 3) throw "Illegal command argument: " + command.value;
+                var value = codes[1](vm, "get");
+                var type = codes[2](vm, "get");
+                if (!instanceOf(type, typeType)) throw "Type Error: " + type.type.value.name + " != Type";
+                return createObject(typeBoolean, instanceOf(value, type));
+              }
               if (command.value === "length") {
                 var value = codes[1](vm, "get");
                 if (instanceOf(value, typeArray)) return createObject(typeNumber, value.value.length);
