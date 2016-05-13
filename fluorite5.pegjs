@@ -1305,13 +1305,24 @@ ContentWordOperator
     )+ { return text(); }
 
 Right
-  = Statement
-  / RightBrackets
+  = head:Statement tail:(_ (
+      "(" _ main:Formula _ ")" { return ["_rightbracketsRound", [main]]; }
+    / "[" _ main:Formula _ "]" { return ["_rightbracketsSquare", [main]]; }
+    / "{" _ main:Formula _ "}" { return ["_rightbracketsCurly", [main]]; }
+    / "(" _ ")" { return ["_rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
+    / "[" _ "]" { return ["_rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
+    / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
+    / "::" _ main:Statement { return ["_operatorColon2", [main]]; }
+    / "." _ main:Statement { return ["_operatorPeriod", [main]]; }
+    ))* { return right(head, tail); }
 
 Statement
-  = "/" main:(_ ContentStatement)+ {
-      return createCodeFromMethod("_statement", main.map(function(item) { return item[1]; }));
+  = "/" head:Identifier main:(_ ContentStatement)+ (_ "/" (! Identifier))? {
+      var array = [head];
+      main.map(function(item) { array.push(item[1]); })
+      return createCodeFromMethod("_statement", array);
     }
+  / Variable
 
 ContentStatement
   = head:FactorStatement tail:(_ (",") _ FactorStatement)* { return enumerate(head, tail, "Comma"); }
@@ -1320,18 +1331,6 @@ ContentStatement
 FactorStatement
   = head:Variable tail:(_ (
       "::" _ main:Variable { return ["_operatorColon2", [main]]; }
-    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
-    ))* { return right(head, tail); }
-
-RightBrackets
-  = head:Variable tail:(_ (
-      "(" _ main:Formula _ ")" { return ["_rightbracketsRound", [main]]; }
-    / "[" _ main:Formula _ "]" { return ["_rightbracketsSquare", [main]]; }
-    / "{" _ main:Formula _ "}" { return ["_rightbracketsCurly", [main]]; }
-    / "(" _ ")" { return ["_rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
-    / "[" _ "]" { return ["_rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
-    / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
-    / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
     / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
     ))* { return right(head, tail); }
 
