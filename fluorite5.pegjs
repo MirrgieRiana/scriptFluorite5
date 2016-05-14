@@ -1031,7 +1031,7 @@
                   var value;
                   while (hash != null) {
                     value = getPropertyBlessed(hash.value.members, key.value);
-                    if (!instanceOf(value, typeIndefined)) return value;
+                    if (!instanceOf(value, typeUndefined)) return value;
                     hash = hash.value.supertype;
                   }
                   return UNDEFINED;
