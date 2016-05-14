@@ -419,7 +419,7 @@
         var typeType = createType("Type", null, false); typeType.type = typeType;
         var typeValue = createType("Value", null, false);
           var typeUndefined = createType("Undefined", typeValue, false);
-          var typeDefined = createType("Defined", typeValue, false);
+          var typeDefined = createType("Defined", typeValue, false); typeType.value.supertype = typeDefined;
             var typeNull = createType("Null", typeDefined, false);
             var typeNumber = createType("Number", typeDefined, true);
             var typeString = createType("String", typeDefined, true);
