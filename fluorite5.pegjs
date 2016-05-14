@@ -546,6 +546,9 @@
             "type": createObject(typeHash, hash),
           }));
         }
+        types.forEach(function(type) {
+          setVariable("_class_" + type.value.name, type);
+        });
         function createNativeBridge(func, argumentCount)
         {
           if (argumentCount == 0) {
