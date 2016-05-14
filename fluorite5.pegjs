@@ -284,7 +284,13 @@
           var variable;
 
           while (blessedType !== null) {
-            variable = blessedType.value.members[keyword] || UNDEFINED;
+
+            for (var i = 0; i < accesses.length; i++) {
+              variable = getPropertyBlessed(blessedType.value.members, "_" + accesses[i] + "_" + keyword);
+              if (!instanceOf(variable, typeUndefined)) return variable;
+            }
+
+            variable = getPropertyBlessed(blessedType.value.members, keyword);
             if (!instanceOf(variable, typeUndefined)) return variable;
 
             blessedType = blessedType.value.supertype;
@@ -302,15 +308,15 @@
             A:
             {
               for (var i = 0; i < accesses.length; i++) {
-                f = blessedType.value.members["_" + accesses[i] + "_" + keyword];
-                if (f !== undefined) {
+                f = getPropertyBlessed(blessedType.value.members, "_" + accesses[i] + "_" + keyword);
+                if (!instanceOf(f, typeUndefined)) {
                   functions.push(f);
                   break A;
                 } 
               }
 
-              f = blessedType.value.members[keyword];
-              if (f !== undefined) {
+              f = getPropertyBlessed(blessedType.value.members, keyword);
+              if (!instanceOf(f, typeUndefined)) {
                 functions.push(f);
                 break A;
               }
@@ -346,6 +352,32 @@
 
           return blessedType;
         }
+        function getMethodOfBlessed(blessed, blessedName)
+        {
+          if (instanceOf(blessedName, typeKeyword)) blessedName = searchVariableWithType(["method", "function"], blessedName.value, blessed.type);
+          if (instanceOf(blessedName, typeFunction)) {
+            var code2 = function(vm, context, args) {
+              var array = unpackVector(getVariable("_"));
+              array.unshift(blessed);
+              return callFunction(blessedName, packVector(array));
+            };
+            return createFunction([], code2, scope);
+          }
+          throw "Type Error: " + blessed.type.value.name + "." + blessedName.type.value.name;
+        }
+        function getProperty(hash, name)
+        {
+          var variable = Object.getOwnPropertyDescriptor(hash, name);
+          if (variable != undefined) variable = variable.value;
+          return variable;
+        }
+        function getPropertyBlessed(hash, name)
+        {
+          var variable = Object.getOwnPropertyDescriptor(hash, name);
+          if (variable != undefined) variable = variable.value;
+          variable = variable || UNDEFINED;
+          return variable;
+        }
 
         function Scope(parent, isFrame)
         {
@@ -354,7 +386,7 @@
           this.isFrame = isFrame;
         }
         Scope.prototype.getVariable = function(name) {
-          var variable = this.variables[name];
+          var variable = getProperty(this.variables, name);
           if (variable != undefined) {
             return variable;
           } else {
@@ -456,6 +488,7 @@
 
         var UNDEFINED = createObject(typeUndefined, undefined);
         var NULL = createObject(typeNull, null);
+        var VOID = packVector([]);
 
         var scope = new Scope(null, true);
         var stack = [];
@@ -463,6 +496,47 @@
         listenersInitializeFinished.map(function(a) { a(); })
         listenersInitializeFinished = null;
 
+        typeValue.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getVariable("this");
+          return createObject(typeString, "<" + value.type.value.name + ">");
+        }, scope);
+        typeNumber.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getVariable("this");
+          return createObject(typeString, "" + value.value);
+        }, scope);
+        typeString.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getVariable("this");
+          return createObject(typeString, value.value);
+        }, scope);
+        typeArray.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getVariable("this");
+          return createObject(typeString, "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
+        }, scope);
+        typeHash.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getVariable("this");
+          return createObject(typeString, "{" + Object.keys(value.value).map(function(key) {
+            return key + ": " + vm.toString(value.value[key]);
+          }).join(", ") + "}");
+        }, scope);
+        typeEntry.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getVariable("this");
+          return createObject(typeString, vm.toString(value.value.key) + ": " + vm.toString(value.value.value));
+        }, scope);
+        typeVector.value.members["_method_toString"] = createFunction([], function(vm, context) {
+          var value = getVariable("_");
+          if (value.value.length == 0) return createObject(typeString, "<Void>");
+          return createObject(typeString, value.value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
+        }, scope);
+        typeType.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getVariable("this");
+          return createObject(typeString, "<Type: " + value.value.name + ">");
+        }, scope);
+        typeFunction.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getVariable("this");
+          if (value.value.args.length === 0) return createObject(typeString, "<Function>");
+          return createObject(typeString, "<Function: " + value.value.args.join(", ") + ">");
+        }, scope);
+        
         {
           var hash = {};
           types.forEach(function(type) {
@@ -936,28 +1010,19 @@
               if (instanceOf(hash, typeKeyword)) hash = searchVariable(["hash"], hash.value);
               var key = codes[1](vm, "get");
               if (instanceOf(hash, typeHash)) {
-                if (instanceOf(key, typeString)) return hash.value[key.value] || UNDEFINED;
-                if (instanceOf(key, typeKeyword)) return hash.value[key.value] || UNDEFINED;
+                if (instanceOf(key, typeString)) return getPropertyBlessed(hash.value, key.value);
+                if (instanceOf(key, typeKeyword)) return getPropertyBlessed(hash.value, key.value);
               }
               if (instanceOf(hash, typeType)) {
-                if (instanceOf(key, typeString)) return hash.value.members[key.value] || UNDEFINED;
-                if (instanceOf(key, typeKeyword)) return hash.value.members[key.value] || UNDEFINED;
+                if (instanceOf(key, typeString)) return getPropertyBlessed(hash.value.members, key.value);
+                if (instanceOf(key, typeKeyword)) return getPropertyBlessed(hash.value.members, key.value);
               }
               throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
             }
             if (operator === "_operatorPeriod") {
               var left = codes[0](vm, "get");
               var right = codes[1](vm, "get");
-              if (instanceOf(right, typeKeyword)) right = searchVariableWithType(["method", "function"], right.value, left.type);
-              if (instanceOf(right, typeFunction)) {
-                var code2 = function(vm, context, args) {
-                  var array = unpackVector(getVariable("_"));
-                  array.unshift(left);
-                  return callFunction(right, packVector(array));
-                };
-                return createFunction([], code2, scope);
-              }
-              throw "Type Error: " + left.type.value + "." + right.type.value;
+              return getMethodOfBlessed(left, right);
             }
             if (operator === "_operatorColonGreater") {
               var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
@@ -1085,39 +1150,7 @@
           throw "Unknown operator: " + operator + "/" + context;
         };
         this.toString = function(value) {
-          var vm = this;
-          if (instanceOf(value, typeUndefined)) {
-            return "<Undefined>";
-          }
-          if (instanceOf(value, typeNull)) {
-            return "<Null>";
-          }
-          if (instanceOf(value, typeVector)) {
-            if (value.value.length == 0) return "<Void>";
-            return value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ");
-          }
-          if (instanceOf(value, typeArray)) {
-            return "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]";
-          }
-          if (instanceOf(value, typeEntry)) {
-            return vm.toString(value.value.key) + ": " + vm.toString(value.value.value);
-          }
-          if (instanceOf(value, typeHash)) {
-            return "{" + Object.keys(value.value).map(function(key) {
-              return key + ": " + vm.toString(value.value[key]);
-            }).join(", ") + "}";
-          }
-          if (instanceOf(value, typeFunction)) {
-            if (value.value.args.length === 0) return "<Function>";
-            return "<Function: " + value.value.args.join(", ") + ">";
-          }
-          if (instanceOf(value, typePointer)) {
-            return "<Pointer>";
-          }
-          if (instanceOf(value, typeType)) {
-            return "<Type: " + value.value.name + ">";
-          }
-          return "" + value.value;
+          return "" + callFunction(getMethodOfBlessed(value, createObject(typeKeyword, "toString")), VOID).value;
         };
         this.toNative = function(value) {
           var vm = this;
