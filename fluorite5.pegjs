@@ -1022,6 +1022,23 @@
               }
               throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
             }
+            if (operator === "_operatorHash") {
+              var hash = codes[0](vm, "get");
+              if (instanceOf(hash, typeKeyword)) hash = searchVariable(["class"], hash.value);
+              var key = codes[1](vm, "get");
+              if (instanceOf(hash, typeType)) {
+                if (instanceOf(key, typeString)) {
+                  var value;
+                  while (hash != null) {
+                    value = getPropertyBlessed(hash.value.members, key.value);
+                    if (!instanceOf(value, typeIndefined)) return value;
+                    hash = hash.value.supertype;
+                  }
+                  return UNDEFINED;
+                }
+              }
+              throw "Type Error: " + hash.type.value + "[" + key.type.value + "]";
+            }
             if (operator === "_operatorPeriod") {
               var left = codes[0](vm, "get");
               var right = codes[1](vm, "get");
@@ -1394,6 +1411,7 @@ Right
     / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
     / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
     / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
+    / "#" _ main:Variable { return ["_operatorHash", [main]]; }
     ))* { return right(head, tail); }
 
 Variable
@@ -1430,6 +1448,7 @@ FactorStatement
   = head:Variable tail:(_ (
       "::" _ main:Variable { return ["_operatorColon2", [main]]; }
     / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
+    / "#" _ main:Variable { return ["_operatorHash", [main]]; }
     ))* { return right(head, tail); }
 
 Composite
