@@ -1401,22 +1401,24 @@ Range
 Or
   = head:And tail:(_ (
       "||" { return "Pipe2"; }
+    / "|" { return "Pipe"; }
     ) _ And)* { return operatorLeft(head, tail); }
 
 And
   = head:Compare tail:(_ (
       "&&" { return "Ampersand2"; }
+    / "&" { return "Ampersand"; }
     ) _ Compare)* { return operatorLeft(head, tail); }
 
 Compare
-  = head:Add tail:(_ (
+  = head:Shift tail:(_ (
       ">=" { return "GreaterEqual"; }
     / ">" { return "Greater"; }
     / "<=" { return "LessEqual"; }
     / "<" { return "Less"; }
     / "!=" { return "ExclamationEqual"; }
     / "==" { return "Equal2"; }
-    ) _ Add)* {
+    ) _ Shift)* {
       if (tail.length == 0) return head;
       var codes = [], left = head, right, i;
 
@@ -1440,6 +1442,12 @@ Compare
         }
       };
     }
+
+Shift
+  = head:Add tail:(_ (
+      "<<" { return "Less2"; }
+    / ">>" { return "Grater2"; }
+    ) _ Term)* { return operatorLeft(head, tail); }
 
 Add
   = head:Term tail:(_ (
@@ -1473,6 +1481,7 @@ Left
     / "&" { return "Ampersand"; }
     / "*" { return "Asterisk"; }
     / "!" { return "Exclamation"; }
+    / "~" { return "Tilde"; }
     / CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
     / main:WordOperator { return ["Word", createCodeFromLiteral("Identifier", main)]; }
     ) _)* tail:Right { return left(head, tail); }
