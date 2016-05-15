@@ -1563,6 +1563,7 @@ Composite
 
 Number
   = Float
+  / Hex
   / Integer
 
 Float "Float"
@@ -1571,6 +1572,9 @@ Float "Float"
 
 Integer "Integer"
   = [0-9]+ { return createCodeFromLiteral("Integer", parseInt(text(), 10)); }
+
+Hex "Hex"
+  = "0x" main:([0-9a-zA-Z]+ { return text(); }) { return createCodeFromLiteral("Integer", parseInt(main, 16)); }
 
 BodyComposite
   = CharacterIdentifier+ { return createCodeFromLiteral("Identifier", text()); }
