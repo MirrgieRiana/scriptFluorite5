@@ -856,6 +856,14 @@
                 var value = codes[1](vm, "get");
                 return value.type;
               }
+              if (command.value === "var") {
+                var array = unpackVector(codes[1](vm, "arguments"));
+                array.map(function(item) {
+                  if (!instanceOf(item, typeKeyword)) throw "Type Error: " + item.type.value.name + " != Keyword";
+                  defineVariable(item.value, UNDEFINED);
+                });
+                return UNDEFINED;
+              }
               if (command.value === "console_scope") {
                 console.log(scope);
                 return UNDEFINED;
