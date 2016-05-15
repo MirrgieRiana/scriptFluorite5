@@ -873,6 +873,18 @@
                 console.log(value);
                 return UNDEFINED;
               }
+              if (command.value === "call") {
+                var blessedOperator = codes[1](vm, "get");
+                if (!instanceOf(blessedOperator, typeString)) throw "Type Error: " + blessedOperator.type.value.name + " != String";
+                var array = codes.slice(2, codes.length).map(function(item) {
+                  return createPointer(item, scope);
+                })
+                return vm.callMethod(blessedOperator.value, array.map(function(item) {
+                  return function(vm, context, args) {
+                    return callPointer(item, context, args);
+                  };
+                }), "get", []);
+              }
               if (command.value === "instanceof") {
                 if (codes.length != 3) throw "Illegal command argument: " + command.value;
                 var value = codes[1](vm, "get");
