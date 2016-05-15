@@ -146,6 +146,10 @@
         {
           scope.setOrDefine(name, value);
         }
+        function defineVariable(name, value)
+        {
+          scope.defineOrSet(name, value);
+        }
         function pushScope()
         {
           scope = new Scope(scope, false);
@@ -250,9 +254,9 @@
           pushStack(blessedFunction.value.scope);
           pushFrame();
           for (i = 0; i < blessedFunction.value.args.length; i++) {
-            setVariable(blessedFunction.value.args[i], array[i] || UNDEFINED);
+            defineVariable(blessedFunction.value.args[i], array[i] || UNDEFINED);
           }
-          setVariable("_", packVector(array.slice(i, array.length)));
+          defineVariable("_", packVector(array.slice(i, array.length)));
           var res = blessedFunction.value.code(vm, "get");
           popFrame();
           popStack();
@@ -433,6 +437,16 @@
         };
         Scope.prototype.setOrDefine = function(name, value) {
           var variable = this.getVariable(name);
+          if (variable != undefined) {
+            variable.value = value;
+          } else {
+            this.variables[name] = {
+              value: value,
+            };
+          }
+        };
+        Scope.prototype.defineOrSet = function(name, value) {
+          var variable = getProperty(this.variables, name);
           if (variable != undefined) {
             variable.value = value;
           } else {
@@ -904,7 +918,7 @@
                 } catch (e) {
                   if (instanceOf(e, typeException)) {
                     pushFrame();
-                    setVariable(blessedKeyword.value, createObject(typeString, "" + e));
+                    defineVariable(blessedKeyword.value, createObject(typeString, "" + e));
                     blessedResult = codeCatch(vm, "get")
                     popFrame();
                   } else {
@@ -950,8 +964,8 @@
                 
                 if (value !== undefined && value[0] === "curly") {
                   pushFrame();
-                  setVariable("class", blessedResult);
-                  setVariable("super", blessedExtends);
+                  defineVariable("class", blessedResult);
+                  defineVariable("super", blessedExtends);
                   value[1](vm, "invoke")
                   popFrame();
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
@@ -961,7 +975,7 @@
                 
                 // parse end
                 
-                if (isNamed) setVariable("_class_" + blessedName.value, blessedResult);
+                if (isNamed) defineVariable("_class_" + blessedName.value, blessedResult);
                 return blessedResult;
               }
               if (command.value === "new") {
