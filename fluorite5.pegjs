@@ -703,7 +703,9 @@
                 if (instanceOf(func, typeFunction)) {
                   var array = [createObject(typeString, context)];
                   Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, scope); }));
-                  return callFunction(func, packVector(array));
+                  var pointer = callFunction(func, packVector(array));
+                  if (!instanceOf(pointer, typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
+                  return callPointer(pointer, context, args);
                 } else {
                   throw "`" + name + "` is not a function";
                 }
@@ -719,7 +721,9 @@
                 if (instanceOf(func, typeFunction)) {
                   var array = [createObject(typeString, context)];
                   Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, scope); }));
-                  return callFunction(func, packVector(array));
+                  var pointer = callFunction(func, packVector(array));
+                  if (!instanceOf(pointer, typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
+                  return callPointer(pointer, context, args);
                 } else {
                   throw "`" + name + "` is not a function";
                 }
