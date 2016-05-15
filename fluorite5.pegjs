@@ -822,6 +822,15 @@
                 var value = codes[1](vm, "get");
                 return value.type;
               }
+              if (command.value === "console_scope") {
+                console.log(scope);
+                return UNDEFINED;
+              }
+              if (command.value === "console_log") {
+                var value = codes[1](vm, "get");
+                console.log(value);
+                return UNDEFINED;
+              }
               if (command.value === "instanceof") {
                 if (codes.length != 3) throw "Illegal command argument: " + command.value;
                 var value = codes[1](vm, "get");
