@@ -1488,10 +1488,16 @@ Power
     ) _)* tail:MultibyteOperating { return operatorRight(head, tail); }
 
 MultibyteOperating
-  = head:Left tail:(_ (
+  = head:LeftMultibyteOperating tail:(_ (
       CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
-    / "`" _ main:Formula _ "`" { return ["Word", main]; }
-    ) _ Left)* { return operatorLeft(head, tail); }
+    / "`" _ main:Left _ "`" { return ["Word", main]; }
+    ) _ LeftMultibyteOperating)* { return operatorLeft(head, tail); }
+
+LeftMultibyteOperating
+  = head:((
+      CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
+    / "`" _ main:Left _ "`" { return ["Word", main]; }
+    ) _)* tail:Left { return left(head, tail); }
 
 Left
   = head:((
@@ -1502,29 +1508,23 @@ Left
     / "*" { return "Asterisk"; }
     / "!" { return "Exclamation"; }
     / "~" { return "Tilde"; }
-    / CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
-    / "`" _ main:Formula _ "`" { return ["Word", main]; }
+    / "$" { return "Dollar"; }
     ) _)* tail:Right { return left(head, tail); }
 
 Right
-  = head:Variable tail:(_ (
+  = head:Factor tail:(_ (
       "(" _ main:Formula _ ")" { return ["_rightbracketsRound", [main]]; }
     / "[" _ main:Formula _ "]" { return ["_rightbracketsSquare", [main]]; }
     / "{" _ main:Formula _ "}" { return ["_rightbracketsCurly", [main]]; }
     / "(" _ ")" { return ["_rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
     / "[" _ "]" { return ["_rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
     / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
-    / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
-    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
-    / "#" _ main:Variable { return ["_operatorHash", [main]]; }
+    / "::" _ main:Factor { return ["_operatorColon2", [main]]; }
+    / "." _ main:Factor { return ["_operatorPeriod", [main]]; }
+    / "#" _ main:Factor { return ["_operatorHash", [main]]; }
     / "++" { return ["_rightPlus2", []]; }
     / "--" (! ">") { return ["_rightMinus2", []]; }
     ))* { return right(head, tail); }
-
-Variable
-  = head:((
-      "$" { return "Dollar"; }
-    ) _)* tail:Factor { return left(head, tail); }
 
 Factor
   = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
@@ -1552,10 +1552,10 @@ ContentStatement
   / Statement
 
 FactorStatement
-  = head:Variable tail:(_ (
-      "::" _ main:Variable { return ["_operatorColon2", [main]]; }
-    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
-    / "#" _ main:Variable { return ["_operatorHash", [main]]; }
+  = head:Factor tail:(_ (
+      "::" _ main:Factor { return ["_operatorColon2", [main]]; }
+    / "." _ main:Factor { return ["_operatorPeriod", [main]]; }
+    / "#" _ main:Factor { return ["_operatorHash", [main]]; }
     ))* { return right(head, tail); }
 
 Composite
