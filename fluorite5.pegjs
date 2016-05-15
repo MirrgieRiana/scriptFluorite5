@@ -1081,7 +1081,7 @@
               }
               return codes[codes.length - 1](vm, "get");
             }
-            if (operator === "_operatorEqual") return codes[0](vm, "set", [codes[1]]);
+            if (operator === "_operatorEqual") return codes[0](vm, "set", [codes[1](vm, "get", [])]);
             if (operator === "_operatorQuestionColon") {
               var res = codes[0](vm, "get");
               return res.value ? res : codes[1](vm, "get");
@@ -1148,7 +1148,7 @@
             }
           } else if (context === "set") {
             if (operator === "_leftDollar") {
-              var value = args[0](vm, "get");
+              var value = args[0];
               setVariable(codes[0](vm, "get").value, value);
               return value;
             }
@@ -1157,12 +1157,12 @@
               if (instanceOf(hash, typeKeyword)) hash = searchVariable(["hash"], hash.value);
               var key = codes[1](vm, "get");
               if (instanceOf(hash, typeHash)) {
-                if (instanceOf(key, typeString)) return hash.value[key.value] = args[0](vm, "get");
-                if (instanceOf(key, typeKeyword)) return hash.value[key.value] = args[0](vm, "get");
+                if (instanceOf(key, typeString)) return hash.value[key.value] = args[0];
+                if (instanceOf(key, typeKeyword)) return hash.value[key.value] = args[0];
               }
               if (instanceOf(hash, typeType)) {
-                if (instanceOf(key, typeString)) return hash.value.members[key.value] = args[0](vm, "get");
-                if (instanceOf(key, typeKeyword)) return hash.value.members[key.value] = args[0](vm, "get");
+                if (instanceOf(key, typeString)) return hash.value.members[key.value] = args[0];
+                if (instanceOf(key, typeKeyword)) return hash.value.members[key.value] = args[0];
               }
               throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
             }
