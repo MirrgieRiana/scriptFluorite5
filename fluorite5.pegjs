@@ -1490,7 +1490,7 @@ Power
 MultibyteOperating
   = head:Left tail:(_ (
       CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
-    / main:WordOperator { return ["Word", createCodeFromLiteral("Identifier", main)]; }
+    / "`" _ main:Formula _ "`" { return ["Word", main]; }
     ) _ Left)* { return operatorLeft(head, tail); }
 
 Left
@@ -1503,18 +1503,8 @@ Left
     / "!" { return "Exclamation"; }
     / "~" { return "Tilde"; }
     / CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
-    / main:WordOperator { return ["Word", createCodeFromLiteral("Identifier", main)]; }
+    / "`" _ main:Formula _ "`" { return ["Word", main]; }
     ) _)* tail:Right { return left(head, tail); }
-
-WordOperator
-  = "`" main:ContentWordOperator "`" { return main; }
-
-ContentWordOperator
-  = (
-      "\\\\" { return "\\"; }
-    / "\\`" { return "`"; }
-    / [^`]
-    )+ { return text(); }
 
 Right
   = head:Variable tail:(_ (
