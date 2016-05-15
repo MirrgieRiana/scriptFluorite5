@@ -779,6 +779,7 @@
             if (operator === "_operatorCaret") return createObject(typeNumber, Math.pow(codes[0](vm, "get").value, codes[1](vm, "get").value));
             if (operator === "_leftPlus") return createObject(typeNumber, codes[0](vm, "get").value);
             if (operator === "_leftMinus") return createObject(typeNumber, -codes[0](vm, "get").value);
+            if (operator === "_leftExclamation") return createObject(typeBoolean, !codes[0](vm, "get").value);
             if (operator === "_operatorGreater") return createObject(typeBoolean, codes[0](vm, "get").value > codes[1](vm, "get").value);
             if (operator === "_operatorGreaterEqual") return createObject(typeBoolean, codes[0](vm, "get").value >= codes[1](vm, "get").value);
             if (operator === "_operatorLess") return createObject(typeBoolean, codes[0](vm, "get").value < codes[1](vm, "get").value);
@@ -1471,6 +1472,7 @@ Left
     / "@" { return "Atsign"; }
     / "&" { return "Ampersand"; }
     / "*" { return "Asterisk"; }
+    / "!" { return "Exclamation"; }
     / CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
     / main:WordOperator { return ["Word", createCodeFromLiteral("Identifier", main)]; }
     ) _)* tail:Right { return left(head, tail); }
