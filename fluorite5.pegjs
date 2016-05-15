@@ -138,7 +138,7 @@
 
         var listenersInitializeFinished = [];
 
-        function getVariable(name)
+        function getBlessedVariable(name)
         {
           return scope.getOrUndefined(name)
         }
@@ -274,11 +274,11 @@
           var variable;
 
           for (var i = 0; i < accesses.length; i++) {
-            variable = getVariable("_" + accesses[i] + "_" + keyword);
+            variable = getBlessedVariable("_" + accesses[i] + "_" + keyword);
             if (!instanceOf(variable, typeUndefined)) return variable;
           }
 
-          variable = getVariable(keyword);
+          variable = getBlessedVariable(keyword);
           if (!instanceOf(variable, typeUndefined)) return variable;
 
           return UNDEFINED;
@@ -342,7 +342,7 @@
           if (providesPrimitiveConstructor) {
             var f = function() {
               blessedType.value.members["_constructor_new"] = createFunction(["type"], function(vm, context) {
-                var blessedValue = getVariable("type");
+                var blessedValue = getBlessedVariable("type");
                 if (instanceOf(blessedValue, blessedType)) return blessedValue;
                 throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
               }, scope);
@@ -361,7 +361,7 @@
           if (instanceOf(blessedName, typeKeyword)) blessedName = searchVariableWithType(["method", "function"], blessedName.value, blessed.type);
           if (instanceOf(blessedName, typeFunction)) {
             var code2 = function(vm, context, args) {
-              var array = unpackVector(getVariable("_"));
+              var array = unpackVector(getBlessedVariable("_"));
               array.unshift(blessed);
               return callFunction(blessedName, packVector(array));
             };
@@ -512,42 +512,42 @@
         listenersInitializeFinished = null;
 
         typeValue.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
-          var value = getVariable("this");
+          var value = getBlessedVariable("this");
           return createObject(typeString, "<" + value.type.value.name + ">");
         }, scope);
         typeNumber.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
-          var value = getVariable("this");
+          var value = getBlessedVariable("this");
           return createObject(typeString, "" + value.value);
         }, scope);
         typeString.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
-          var value = getVariable("this");
+          var value = getBlessedVariable("this");
           return createObject(typeString, value.value);
         }, scope);
         typeArray.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
-          var value = getVariable("this");
+          var value = getBlessedVariable("this");
           return createObject(typeString, "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
         }, scope);
         typeHash.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
-          var value = getVariable("this");
+          var value = getBlessedVariable("this");
           return createObject(typeString, "{" + Object.keys(value.value).map(function(key) {
             return key + ": " + vm.toString(value.value[key]);
           }).join(", ") + "}");
         }, scope);
         typeEntry.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
-          var value = getVariable("this");
+          var value = getBlessedVariable("this");
           return createObject(typeString, vm.toString(value.value.key) + ": " + vm.toString(value.value.value));
         }, scope);
         typeVector.value.members["_method_toString"] = createFunction([], function(vm, context) {
-          var value = getVariable("_");
+          var value = getBlessedVariable("_");
           if (value.value.length == 0) return createObject(typeString, "<Void>");
           return createObject(typeString, value.value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
         }, scope);
         typeType.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
-          var value = getVariable("this");
+          var value = getBlessedVariable("this");
           return createObject(typeString, "<Type: " + value.value.name + ">");
         }, scope);
         typeFunction.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
-          var value = getVariable("this");
+          var value = getBlessedVariable("this");
           if (value.value.args.length === 0) return createObject(typeString, "<Function>");
           return createObject(typeString, "<Function: " + value.value.args.join(", ") + ">");
         }, scope);
@@ -572,11 +572,11 @@
             }, scope);
           } else if (argumentCount == 1) {
             return createFunction(["x"], function(vm, context) {
-              return createObject(typeNumber, func(getVariable("x").value));
+              return createObject(typeNumber, func(getBlessedVariable("x").value));
             }, scope);
           } else if (argumentCount == 2) {
             return createFunction(["x", "y"], function(vm, context) {
-              return createObject(typeNumber, func(getVariable("x").value, getVariable("y").value));
+              return createObject(typeNumber, func(getBlessedVariable("x").value, getBlessedVariable("y").value));
             }, scope);
           } else {
             throw "TODO"; // TODO
@@ -604,51 +604,51 @@
           "sqrt": createNativeBridge(Math.sqrt, 1),
         }));
         setVariable("_rightComposite_d", createFunction(["count"], function(vm, context) {
-          var count = callPointer(getVariable("count"), "get");
+          var count = callPointer(getBlessedVariable("count"), "get");
           return createObject(typeNumber, dice(count.value, 6));
         }, scope));
         setVariable("_operatorComposite_d", createFunction(["count", "faces"], function(vm, context) {
-          var count = callPointer(getVariable("count"), "get");
-          var faces = callPointer(getVariable("faces"), "get");
+          var count = callPointer(getBlessedVariable("count"), "get");
+          var faces = callPointer(getBlessedVariable("faces"), "get");
           return createObject(typeNumber, dice(count.value, faces.value));
         }, scope));
         setVariable("_leftMultibyte_√", createFunction(["x"], function(vm, context) {
-          return createObject(typeNumber, Math.sqrt(callPointer(getVariable("x"), "get").value));
+          return createObject(typeNumber, Math.sqrt(callPointer(getBlessedVariable("x"), "get").value));
         }, scope));
         setVariable("_function_join", createFunction(["separator"], function(vm, context) {
-          var separator = getVariable("separator");
-          var vector = getVariable("_");
+          var separator = getBlessedVariable("separator");
+          var vector = getBlessedVariable("_");
           return createObject(typeString, unpackVector(vector).map(function(blessed) {
             return vm.toString(blessed);
           }).join(separator.value));
         }, scope));
         setVariable("_function_join1", createFunction([], function(vm, context) {
-          var vector = getVariable("_");
+          var vector = getBlessedVariable("_");
           return createObject(typeString, unpackVector(vector).map(function(blessed) {
             return vm.toString(blessed);
           }).join(""));
         }, scope));
         setVariable("_function_join2", createFunction([], function(vm, context) {
-          var vector = getVariable("_");
+          var vector = getBlessedVariable("_");
           return createObject(typeString, unpackVector(vector).map(function(blessed) {
             return vm.toString(blessed);
           }).join(", "));
         }, scope));
         setVariable("_function_join3", createFunction([], function(vm, context) {
-          var vector = getVariable("_");
+          var vector = getBlessedVariable("_");
           return createObject(typeString, unpackVector(vector).map(function(blessed) {
             return vm.toString(blessed);
           }).join("\n"));
         }, scope));
         setVariable("_function_sum", createFunction([], function(vm, context) {
           var value = 0;
-          unpackVector(getVariable("_")).forEach(function(blessed) {
+          unpackVector(getBlessedVariable("_")).forEach(function(blessed) {
             value += blessed.value;
           });
           return createObject(typeNumber, value);
         }, scope));
         setVariable("_function_average", createFunction([], function(vm, context) {
-          var array = unpackVector(getVariable("_"));
+          var array = unpackVector(getBlessedVariable("_"));
           if (array.length == 0) return UNDEFINED;
           var value = 0;
           array.forEach(function(blessed) {
@@ -657,24 +657,24 @@
           return createObject(typeNumber, value / array.length);
         }, scope));
         setVariable("_function_count", createFunction([], function(vm, context) {
-          return createObject(typeNumber, unpackVector(getVariable("_")).length);
+          return createObject(typeNumber, unpackVector(getBlessedVariable("_")).length);
         }, scope));
         setVariable("_function_and", createFunction([], function(vm, context) {
           var value = true;
-          unpackVector(getVariable("_")).forEach(function(blessed) {
+          unpackVector(getBlessedVariable("_")).forEach(function(blessed) {
             value = value && blessed.value;
           });
           return createObject(typeBoolean, value);
         }, scope));
         setVariable("_function_or", createFunction([], function(vm, context) {
           var value = false;
-          unpackVector(getVariable("_")).forEach(function(blessed) {
+          unpackVector(getBlessedVariable("_")).forEach(function(blessed) {
             value = value || blessed.value;
           });
           return createObject(typeBoolean, value);
         }, scope));
         setVariable("_function_max", createFunction([], function(vm, context) {
-          var array = unpackVector(getVariable("_"));
+          var array = unpackVector(getBlessedVariable("_"));
           if (array.length == 0) return UNDEFINED;
           var value = array[0].value;
           for (var i = 1; i < array.length; i++) {
@@ -683,7 +683,7 @@
           return createObject(typeNumber, value);
         }, scope));
         setVariable("_function_min", createFunction([], function(vm, context) {
-          var array = unpackVector(getVariable("_"));
+          var array = unpackVector(getBlessedVariable("_"));
           if (array.length == 0) return UNDEFINED;
           var value = array[0].value;
           for (var i = 1; i < array.length; i++) {
@@ -697,7 +697,7 @@
 
           {
             var name = "_" + context + operator;
-            var func = getVariable(name);
+            var func = getBlessedVariable(name);
             if (!instanceOf(func, typeUndefined)) {
               if (instanceOf(func, typeFunction)) {
                 var array = [createObject(typeString, context)];
@@ -713,7 +713,7 @@
 
           {
             var name = operator;
-            var func = getVariable(name);
+            var func = getBlessedVariable(name);
             if (!instanceOf(func, typeUndefined)) {
               if (instanceOf(func, typeFunction)) {
                 var array = [createObject(typeString, context)];
@@ -809,7 +809,7 @@
               key: codes[0](vm, "get"),
               value: codes[1](vm, "get"),
             });
-            if (operator === "_leftDollar") return getVariable(codes[0](vm, "get").value);
+            if (operator === "_leftDollar") return getBlessedVariable(codes[0](vm, "get").value);
             if (operator === "_rightbracketsRound") {
               var value = codes[0](vm, "get");
               if (instanceOf(value, typeKeyword)) value = searchVariable(["function"], value.value);
