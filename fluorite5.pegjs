@@ -615,17 +615,21 @@
         }));
         setVariable("_rightComposite_d", createFunction(["count"], function(vm, context) {
           var count = getBlessedVariable("count");
+          if (!instanceOf(count, typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
           if (count.value > 20) throw createException("Illegal argument[0]: " + count.value + " > 20");
           return createObject(typeNumber, dice(count.value, 6));
         }, scope));
         setVariable("_function_d", createFunction(["count", "faces"], function(vm, context) {
           var count = getBlessedVariable("count");
           var faces = getBlessedVariable("faces");
+          if (!instanceOf(count, typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
           if (count.value > 20) throw createException("Illegal argument[0]: " + count.value + " > 20");
+          if (!instanceOf(faces, typeNumber)) throw "Illegal argument[1]: " + faces.type.value.name + " != Number";
           return createObject(typeNumber, dice(count.value, faces.value));
         }, scope));
         setVariable("_leftMultibyte_√", createFunction(["x"], function(vm, context) {
           var x = getBlessedVariable("x");
+          if (!instanceOf(x, typeNumber)) throw "Illegal argument[0]: " + x.type.value.name + " != Number";
           return createObject(typeNumber, Math.sqrt(x.value));
         }, scope));
         setVariable("_function_join", createFunction(["separator"], function(vm, context) {
