@@ -382,6 +382,12 @@
           variable = variable || UNDEFINED;
           return variable;
         }
+        function createException(message)
+        {
+          return createObject(typeException, {
+            message: message,
+          });
+        }
 
         function Scope(parent, isFrame)
         {
@@ -551,6 +557,10 @@
           if (value.value.args.length === 0) return createObject(typeString, "<Function>");
           return createObject(typeString, "<Function: " + value.value.args.join(", ") + ">");
         }, scope);
+        typeException.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getBlessedVariable("this");
+          return createObject(typeString, "<Exception: '" + value.value.message + "'>");
+        }, scope);
         
         {
           var hash = {};
@@ -604,16 +614,19 @@
           "sqrt": createNativeBridge(Math.sqrt, 1),
         }));
         setVariable("_rightComposite_d", createFunction(["count"], function(vm, context) {
-          var count = callPointer(getBlessedVariable("count"), "get");
+          var count = getBlessedVariable("count");
+          if (count.value > 20) throw createException("Illegal argument[0]: " + count.value + " > 20");
           return createObject(typeNumber, dice(count.value, 6));
         }, scope));
-        setVariable("_operatorComposite_d", createFunction(["count", "faces"], function(vm, context) {
-          var count = callPointer(getBlessedVariable("count"), "get");
-          var faces = callPointer(getBlessedVariable("faces"), "get");
+        setVariable("_function_d", createFunction(["count", "faces"], function(vm, context) {
+          var count = getBlessedVariable("count");
+          var faces = getBlessedVariable("faces");
+          if (count.value > 20) throw createException("Illegal argument[0]: " + count.value + " > 20");
           return createObject(typeNumber, dice(count.value, faces.value));
         }, scope));
         setVariable("_leftMultibyte_√", createFunction(["x"], function(vm, context) {
-          return createObject(typeNumber, Math.sqrt(callPointer(getBlessedVariable("x"), "get").value));
+          var x = getBlessedVariable("x");
+          return createObject(typeNumber, Math.sqrt(x.value));
         }, scope));
         setVariable("_function_join", createFunction(["separator"], function(vm, context) {
           var separator = getBlessedVariable("separator");
@@ -927,7 +940,7 @@
                 } catch (e) {
                   if (instanceOf(e, typeException)) {
                     pushFrame();
-                    defineVariable(blessedKeyword.value, createObject(typeString, "" + e));
+                    defineVariable(blessedKeyword.value, e);
                     blessedResult = codeCatch(vm, "get")
                     popFrame();
                   } else {
@@ -1102,7 +1115,7 @@
               var value = codes[0](vm, "get");
               if (instanceOf(value, typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                return createPointer(codes[1], scope);
+                return codes[1](vm, "get");
               }, vm, "get"));
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
@@ -1110,7 +1123,7 @@
               var value = codes[1](vm, "get");
               if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
+                return packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
               }, vm, "get"));
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
@@ -1134,7 +1147,7 @@
               var value = codes[1](vm, "get");
               if (instanceOf(value, typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                return createPointer(codes[0], scope);
+                return codes[0](vm, "get");
               }, vm, "get"));
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
@@ -1142,7 +1155,7 @@
               var value = codes[1](vm, "get");
               if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value.value);
               if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                return packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)]);
+                return packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
               }, vm, "get"));
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
@@ -1194,7 +1207,11 @@
           throw "Unknown operator: " + operator + "/" + context;
         };
         this.toString = function(value) {
-          return "" + callFunction(getMethodOfBlessed(value, createObject(typeKeyword, "toString")), VOID).value;
+          if (instanceOf(value, typeValue)) {
+            return "" + callFunction(getMethodOfBlessed(value, createObject(typeKeyword, "toString")), VOID).value;
+          } else {
+            return "" + value;
+          }
         };
         this.toNative = function(value) {
           var vm = this;
@@ -1253,7 +1270,11 @@ ExpressionPlain
         try {
           texts.push(vm.toString(main[i][1](vm, "get")));
         } catch (e) {
-          texts.push("[Error: " + e + "][" + main[i][0] + "]");
+          try {
+            texts.push("[Error: " + vm.toString(e) + "][" + main[i][0] + "]");
+          } catch (e) {
+            texts.push("[Error: " + e + "][" + main[i][0] + "]");
+          }
         }
         texts.push(main[i + 1]);
       }
