@@ -682,7 +682,7 @@
         this.callMethod = function(operator, codes, context, args) {
 
           {
-            var name = operator;
+            var name = "_" + context + operator;
             var func = getVariable(name);
             if (func !== undefined) {
               if (!instanceOf(func, typeUndefined)) {
@@ -698,7 +698,7 @@
           }
 
           {
-            var name = "_" + context + operator;
+            var name = operator;
             var func = getVariable(name);
             if (func !== undefined) {
               if (!instanceOf(func, typeUndefined)) {
