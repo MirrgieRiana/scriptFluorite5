@@ -174,8 +174,12 @@
         function callInFrame(code, vm, context, args)
         {
           pushFrame();
-          var res = code(vm, context, args);
-          popFrame();
+          var res;
+          try {
+            res = code(vm, context, args);
+          } finally {
+            popFrame();
+          }
           return res;
         }
         function createObject(type, value)
@@ -257,16 +261,24 @@
             defineVariable(blessedFunction.value.args[i], array[i] || UNDEFINED);
           }
           defineVariable("_", packVector(array.slice(i, array.length)));
-          var res = blessedFunction.value.code(vm, "get");
-          popFrame();
-          popStack();
+          var res;
+          try {
+            res = blessedFunction.value.code(vm, "get");
+          } finally {
+            popFrame();
+            popStack();
+          }
           return res;
         }
         function callPointer(blessedPointer, context, args)
         {
           pushStack(blessedPointer.value.scope);
-          var res = blessedPointer.value.code(vm, context, args);
-          popStack();
+          var res;
+          try {
+            res = blessedPointer.value.code(vm, context, args);
+          } finally {
+            popStack();
+          }
           return res;
         }
         function searchVariable(accesses, keyword)
@@ -939,14 +951,20 @@
                 var blessedResult;
                 try {
                   pushFrame();
-                  blessedResult = codeTry(vm, "get");
-                  popFrame();
+                  try {
+                    blessedResult = codeTry(vm, "get");
+                  } finally {
+                    popFrame();
+                  }
                 } catch (e) {
                   if (instanceOf(e, typeException)) {
                     pushFrame();
                     defineVariable(blessedKeyword.value, e);
-                    blessedResult = codeCatch(vm, "get")
-                    popFrame();
+                    try {
+                      blessedResult = codeCatch(vm, "get")
+                    } finally {
+                      popFrame();
+                    }
                   } else {
                     throw e;
                   }
@@ -992,8 +1010,11 @@
                   pushFrame();
                   defineVariable("class", blessedResult);
                   defineVariable("super", blessedExtends);
-                  value[1](vm, "invoke")
-                  popFrame();
+                  try {
+                    value[1](vm, "invoke")
+                  } finally {
+                    popFrame();
+                  }
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 }
                 
