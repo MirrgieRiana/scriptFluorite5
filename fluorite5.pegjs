@@ -949,7 +949,7 @@
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 
                 if (!(value !== undefined && value[0] === "round")) throw "Illegal command argument";
-                var blessedKeyword = value[1](vm, "get");
+                var blessedKeyword = value[1](vm, "arguments");
                 if (!instanceOf(blessedKeyword, typeKeyword)) throw "Type Error: " + blessedKeyword.type.name + " != Keyword";
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 
