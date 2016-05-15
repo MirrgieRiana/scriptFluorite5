@@ -703,7 +703,7 @@
             if (func !== undefined) {
               if (!instanceOf(func, typeUndefined)) {
                 if (instanceOf(func, typeFunction)) {
-                  var array = [];
+                  var array = [createObject(typeString, context)];
                   Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, scope); }));
                   return callFunction(func, packVector(array));
                 } else {
