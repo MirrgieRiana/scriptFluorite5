@@ -1162,17 +1162,17 @@
             if (operator === "_leftMultibyte") {
               var value = codes[0](vm, "get");
               if (instanceOf(value, typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
-              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                return codes[1](vm, "get");
-              }, vm, "get"));
+              if (instanceOf(value, typeFunction)) {
+                return callPointer(callFunction(value, createPointer(codes[1], scope)), context, args);
+              }
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
             if (operator === "_operatorMultibyte") {
               var value = codes[1](vm, "get");
               if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
-              if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                return packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
-              }, vm, "get"));
+              if (instanceOf(value, typeFunction)) {
+                return callPointer(callFunction(value, packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)])), context, args);
+              }
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
             if (operator === "_leftWord") {
