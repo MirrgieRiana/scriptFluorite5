@@ -1488,16 +1488,10 @@ Power
     ) _)* tail:MultibyteOperating { return operatorRight(head, tail); }
 
 MultibyteOperating
-  = head:LeftMultibyteOperating tail:(_ (
+  = head:Left tail:(_ (
       CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
-    / "`" _ main:Left _ "`" { return ["Word", main]; }
-    ) _ LeftMultibyteOperating)* { return operatorLeft(head, tail); }
-
-LeftMultibyteOperating
-  = head:((
-      CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
-    / "`" _ main:Left _ "`" { return ["Word", main]; }
-    ) _)* tail:Left { return left(head, tail); }
+    / "`" _ main:Formula _ "`" { return ["Word", main]; }
+    ) _ Left)* { return operatorLeft(head, tail); }
 
 Left
   = head:((
@@ -1509,6 +1503,8 @@ Left
     / "!" { return "Exclamation"; }
     / "~" { return "Tilde"; }
     / "$" { return "Dollar"; }
+    / CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
+    / "`" _ main:Formula _ "`" { return ["Word", main]; }
     ) _)* tail:Right { return left(head, tail); }
 
 Right
