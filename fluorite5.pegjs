@@ -1707,10 +1707,17 @@ HereDocumentDelimiter2
 _ "Comments"
   = (
       "/*" ((! "*/") .)* "*/"
+    / CommentBlockNested
     / "//" [^\n\r]*
     / "#!" [^\n\r]*
     / CharacterBlank+
     )*
+
+CommentBlockNested
+  = "/+" (
+      (! ("/+" / "+/")) .
+    / CommentBlockNested
+    )* "+/"
 
 CharacterMultibyteSymbol
   = (! (CharacterSymbol / CharacterNumber / CharacterIdentifier / CharacterBlank)) .
