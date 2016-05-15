@@ -1575,8 +1575,15 @@ String
 
 ContentString
   = "\\\\" { return "\\"; }
+  / "\\\"" { return "\""; }
   / "\\'" { return "'"; }
-  / [^']
+  / "\\$" { return "$"; }
+  / "\\r" { return "\r"; }
+  / "\\n" { return "\n"; }
+  / "\\t" { return "\t"; }
+  / "\\x" main:([a-zA-Z0-9][a-zA-Z0-9] { return text(); }) { return String.fromCharCode(parseInt(main, 16)); }
+  / "\\u" main:([a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9] { return text(); }) { return String.fromCharCode(parseInt(main, 16)); }
+  / [^'\\]
 
 StringReplaceable
   = "\"" main:ContentStringReplaceable "\"" { return main; }
@@ -1596,11 +1603,14 @@ ContentStringReplaceableText
   = main:(
       "\\\\" { return "\\"; }
     / "\\\"" { return "\""; }
+    / "\\'" { return "'"; }
     / "\\$" { return "$"; }
     / "\\r" { return "\r"; }
     / "\\n" { return "\n"; }
     / "\\t" { return "\t"; }
-    / [^"$]
+    / "\\x" main:([a-zA-Z0-9][a-zA-Z0-9] { return text(); }) { return String.fromCharCode(parseInt(main, 16)); }
+    / "\\u" main:([a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9] { return text(); }) { return String.fromCharCode(parseInt(main, 16)); }
+    / [^"$\\]
     )* { return createCodeFromLiteral("String", main.join("")); }
 
 ContentStringReplaceableReplacement
