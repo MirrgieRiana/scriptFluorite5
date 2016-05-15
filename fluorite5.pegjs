@@ -541,6 +541,10 @@
           var value = getBlessedVariable("this");
           return createObject(typeString, value.value);
         }, scope);
+        typeBoolean.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+          var value = getBlessedVariable("this");
+          return createObject(typeString, "" + value.value);
+        }, scope);
         typeArray.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
