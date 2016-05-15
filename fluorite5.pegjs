@@ -1516,7 +1516,7 @@ Right
     / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
     / "#" _ main:Variable { return ["_operatorHash", [main]]; }
     / "++" { return ["_rightPlus2", []]; }
-    / "--" { return ["_rightMinus2", []]; }
+    / "--" (! ">") { return ["_rightMinus2", []]; }
     ))* { return right(head, tail); }
 
 Variable
