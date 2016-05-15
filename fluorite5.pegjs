@@ -1120,6 +1120,16 @@
               return codes[codes.length - 1](vm, "get");
             }
             if (operator === "_operatorEqual") return codes[0](vm, "set", [codes[1](vm, "get", [])]);
+            if (operator === "_rightPlus2") {
+              var res = codes[0](vm, "get", []);
+              codes[0](vm, "set", [createObject(typeNumber, res.value + 1)]);
+              return res;
+            }
+            if (operator === "_rightMinus2") {
+              var res = codes[0](vm, "get", []);
+              codes[0](vm, "set", [createObject(typeNumber, res.value - 1)]);
+              return res;
+            }
             if (operator === "_operatorQuestionColon") {
               var res = codes[0](vm, "get");
               return res.value ? res : codes[1](vm, "get");
@@ -1482,6 +1492,8 @@ Right
     / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
     / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
     / "#" _ main:Variable { return ["_operatorHash", [main]]; }
+    / "++" { return ["_rightPlus2", []]; }
+    / "--" { return ["_rightMinus2", []]; }
     ))* { return right(head, tail); }
 
 Variable
