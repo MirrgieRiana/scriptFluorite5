@@ -1283,7 +1283,7 @@
               if (value === "NaN") return createObject(typeNumber, NaN);
               return createObject(typeKeyword, value);
             }
-            if (type === "Void") return packVector([]);
+            if (type === "Void") return VOID;
             if (type === "Boolean") return createObject(typeBoolean, value);
           } else if (context === "invoke") {
             return this.createLiteral(type, value, "get", []);
@@ -1292,7 +1292,7 @@
             return ["normal", createCodeFromLiteral(type, value), undefined, createCodeFromLiteral(type, value)];
           } else if (context === "arguments") {
             if (type === "Identifier") return createObject(typeKeyword, value);
-            if (type === "Void") return packVector([]);
+            if (type === "Void") return VOID;
           }
           throw "Unknown Literal Type: " + context + "/" + type;
         };
