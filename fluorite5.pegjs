@@ -1502,25 +1502,29 @@ Left
     / "*" { return "Asterisk"; }
     / "!" { return "Exclamation"; }
     / "~" { return "Tilde"; }
-    / "$" { return "Dollar"; }
     / CharacterMultibyteSymbol { return ["Multibyte", createCodeFromLiteral("Identifier", text())]; }
     / "`" _ main:Formula _ "`" { return ["Word", main]; }
     ) _)* tail:Right { return left(head, tail); }
 
 Right
-  = head:Factor tail:(_ (
+  = head:Variable tail:(_ (
       "(" _ main:Formula _ ")" { return ["_rightbracketsRound", [main]]; }
     / "[" _ main:Formula _ "]" { return ["_rightbracketsSquare", [main]]; }
     / "{" _ main:Formula _ "}" { return ["_rightbracketsCurly", [main]]; }
     / "(" _ ")" { return ["_rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
     / "[" _ "]" { return ["_rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
     / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
-    / "::" _ main:Factor { return ["_operatorColon2", [main]]; }
-    / "." _ main:Factor { return ["_operatorPeriod", [main]]; }
-    / "#" _ main:Factor { return ["_operatorHash", [main]]; }
+    / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
+    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
+    / "#" _ main:Variable { return ["_operatorHash", [main]]; }
     / "++" { return ["_rightPlus2", []]; }
     / "--" (! ">") { return ["_rightMinus2", []]; }
     ))* { return right(head, tail); }
+
+Variable
+  = head:((
+      "$" { return "Dollar"; }
+    ) _)* tail:Factor { return left(head, tail); }
 
 Factor
   = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
@@ -1548,10 +1552,10 @@ ContentStatement
   / Statement
 
 FactorStatement
-  = head:Factor tail:(_ (
-      "::" _ main:Factor { return ["_operatorColon2", [main]]; }
-    / "." _ main:Factor { return ["_operatorPeriod", [main]]; }
-    / "#" _ main:Factor { return ["_operatorHash", [main]]; }
+  = head:Variable tail:(_ (
+      "::" _ main:Variable { return ["_operatorColon2", [main]]; }
+    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
+    / "#" _ main:Variable { return ["_operatorHash", [main]]; }
     ))* { return right(head, tail); }
 
 Composite
