@@ -372,12 +372,11 @@
         {
           if (instanceOf(blessedName, typeKeyword)) blessedName = searchVariableWithType(["method", "function"], blessedName.value, blessed.type);
           if (instanceOf(blessedName, typeFunction)) {
-            var code2 = function(vm, context, args) {
+            return createFunction([], function(vm, context, args) {
               var array = unpackVector(getBlessedVariable("_"));
               array.unshift(blessed);
               return callFunction(blessedName, packVector(array));
-            };
-            return createFunction([], code2, scope);
+            }, scope);
           }
           throw "Type Error: " + blessed.type.value.name + "." + blessedName.type.value.name;
         }
