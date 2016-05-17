@@ -708,7 +708,10 @@
         }, scope));
 
         this.dices = [];
+        this.loopCount = 0;
         this.callMethod = function(operator, codes, context, args) {
+          this.loopCount++;
+          if (this.loopCount >= 1000) throw "Internal Fluorite Error: Too many calculation(>= 1000 steps)";
 
           {
             var name = "_" + context + operator;
