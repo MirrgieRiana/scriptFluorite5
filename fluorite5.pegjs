@@ -708,10 +708,19 @@
         }, scope));
 
         this.dices = [];
-        this.loopCount = 0;
+        this.loopCapacity = 0;
+        this.loopCount = 1000;
+        
+        function consumeLoopCapacity()
+        {
+          vm.loopCount++;
+          if (vm.loopCount >= vm.loopCapacity) {
+            throw "Internal Fluorite Error: Too many calculation(>= " + vm.loopCapacity + " steps)";
+          }
+        }
+        
         this.callMethod = function(operator, codes, context, args) {
-          this.loopCount++;
-          if (this.loopCount >= 1000) throw "Internal Fluorite Error: Too many calculation(>= 1000 steps)";
+          consumeLoopCapacity();
 
           {
             var name = "_" + context + operator;
@@ -1253,6 +1262,7 @@
           throw "Unknown operator: " + operator + "/" + context;
         };
         this.toString = function(value) {
+          consumeLoopCapacity();
           if (instanceOf(value, typeValue)) {
             return "" + callFunction(getMethodOfBlessed(value, createObject(typeKeyword, "toString")), VOID).value;
           } else {
@@ -1260,6 +1270,7 @@
           }
         };
         this.toNative = function(value) {
+          consumeLoopCapacity();
           var vm = this;
           if (instanceOf(value, typeVector)) {
             return value.value.map(function(scalar) { return vm.toNative(scalar); });
@@ -1270,9 +1281,11 @@
           return value.value;
         };
         this.toBoolean = function(value) {
+          consumeLoopCapacity();
           return !!value.value;
         };
         this.createLiteral = function(type, value, context, args) {
+          consumeLoopCapacity();
           if (context === "get") {
             if (type === "Integer") return createObject(typeNumber, value);
             if (type === "Float") return createObject(typeNumber, value);
