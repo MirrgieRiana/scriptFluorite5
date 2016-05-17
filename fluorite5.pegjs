@@ -295,16 +295,11 @@
 
           return UNDEFINED;
         }
-        function searchVariableWithType(accesses, keyword, blessedType)
+        function searchVariableWithType(keyword, blessedType)
         {
           var variable;
 
           while (blessedType !== null) {
-
-            for (var i = 0; i < accesses.length; i++) {
-              variable = getPropertyBlessed(blessedType.value.members, "_" + accesses[i] + "_" + keyword);
-              if (!instanceOf(variable, typeUndefined)) return variable;
-            }
 
             variable = getPropertyBlessed(blessedType.value.members, keyword);
             if (!instanceOf(variable, typeUndefined)) return variable;
@@ -312,30 +307,18 @@
             blessedType = blessedType.value.supertype;
           }
 
-          return searchVariable(accesses, keyword);
+          return searchVariable(["method", "function"], keyword);
         }
-        function getMethodsOfTypeTree(accesses, keyword, blessedType)
+        function getMethodsOfTypeTree(keyword, blessedType)
         {
           var f;
           var functions = [];
 
           while (blessedType !== null) {
             
-            A:
-            {
-              for (var i = 0; i < accesses.length; i++) {
-                f = getPropertyBlessed(blessedType.value.members, "_" + accesses[i] + "_" + keyword);
-                if (!instanceOf(f, typeUndefined)) {
-                  functions.push(f);
-                  break A;
-                } 
-              }
-
-              f = getPropertyBlessed(blessedType.value.members, keyword);
-              if (!instanceOf(f, typeUndefined)) {
-                functions.push(f);
-                break A;
-              }
+            f = getPropertyBlessed(blessedType.value.members, keyword);
+            if (!instanceOf(f, typeUndefined)) {
+              functions.push(f);
             }
 
             blessedType = blessedType.value.supertype;
@@ -353,7 +336,7 @@
 
           if (providesPrimitiveConstructor) {
             var f = function() {
-              blessedType.value.members["_constructor_new"] = createFunction(["type"], function(vm, context) {
+              blessedType.value.members["new"] = createFunction(["type"], function(vm, context) {
                 var blessedValue = getBlessedVariable("type");
                 if (instanceOf(blessedValue, blessedType)) return blessedValue;
                 throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
@@ -370,7 +353,7 @@
         }
         function getMethodOfBlessed(blessed, blessedName)
         {
-          if (instanceOf(blessedName, typeKeyword)) blessedName = searchVariableWithType(["method", "function"], blessedName.value, blessed.type);
+          if (instanceOf(blessedName, typeKeyword)) blessedName = searchVariableWithType(blessedName.value, blessed.type);
           if (instanceOf(blessedName, typeFunction)) {
             return createFunction([], function(vm, context, args) {
               var array = unpackVector(getBlessedVariable("_"));
@@ -528,51 +511,51 @@
         listenersInitializeFinished.map(function(a) { a(); })
         listenersInitializeFinished = null;
 
-        typeValue.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeValue.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, "<" + value.type.value.name + ">");
         }, scope);
-        typeNumber.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeNumber.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, "" + value.value);
         }, scope);
-        typeString.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeString.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, value.value);
         }, scope);
-        typeBoolean.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeBoolean.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, "" + value.value);
         }, scope);
-        typeArray.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeArray.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
         }, scope);
-        typeHash.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeHash.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, "{" + Object.keys(value.value).map(function(key) {
             return key + ": " + vm.toString(value.value[key]);
           }).join(", ") + "}");
         }, scope);
-        typeEntry.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeEntry.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, vm.toString(value.value.key) + ": " + vm.toString(value.value.value));
         }, scope);
-        typeVector.value.members["_method_toString"] = createFunction([], function(vm, context) {
+        typeVector.value.members["toString"] = createFunction([], function(vm, context) {
           var value = getBlessedVariable("_");
           if (value.value.length == 0) return createObject(typeString, "<Void>");
           return createObject(typeString, value.value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
         }, scope);
-        typeType.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeType.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, "<Type: " + value.value.name + ">");
         }, scope);
-        typeFunction.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeFunction.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           if (value.value.args.length === 0) return createObject(typeString, "<Function>");
           return createObject(typeString, "<Function: " + value.value.args.join(", ") + ">");
         }, scope);
-        typeException.value.members["_method_toString"] = createFunction(["this"], function(vm, context) {
+        typeException.value.members["toString"] = createFunction(["this"], function(vm, context) {
           var value = getBlessedVariable("this");
           return createObject(typeString, "<Exception: '" + value.value.message + "'>");
         }, scope);
@@ -1066,7 +1049,7 @@
                 
                 // parse end
                 
-                var blessedsNew = getMethodsOfTypeTree(["constructor", "method", "function"], "new", blessedType);
+                var blessedsNew = getMethodsOfTypeTree("new", blessedType);
                
                 for (i = 0; i < blessedsNew.length; i++) {
                    blessedArguments = callFunction(blessedsNew[i], blessedArguments);
@@ -1074,7 +1057,7 @@
                 
                 blessedArguments.type = blessedType;
                 
-                var blessedsInit = getMethodsOfTypeTree(["constructor", "method", "function"], "init", blessedType);
+                var blessedsInit = getMethodsOfTypeTree("init", blessedType);
                 for (i = blessedsInit.length - 1; i >= 0; i--) {
                   callFunction(blessedsInit[i], blessedArguments);
                 }
