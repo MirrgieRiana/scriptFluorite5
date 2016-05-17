@@ -900,19 +900,19 @@
               }
               if (command.value === "keys") {
                 var value = codes[1](vm, "get");
-                if (!instanceOf(value, typeHash)) throw "Type Error: " + value.type.name + " != Hash";
+                if (!instanceOf(value, typeHash)) throw "Type Error: " + value.type.value.name + " != Hash";
                 return packVector(Object.keys(value.value).map(function(key) {
                   return createObject(typeKeyword, key);
                 }));
               }
               if (command.value === "entry_key") {
                 var value = codes[1](vm, "get");
-                if (!instanceOf(value, typeEntry)) throw "Type Error: " + value.type.name + " != Entry";
+                if (!instanceOf(value, typeEntry)) throw "Type Error: " + value.type.value.name + " != Entry";
                 return value.value.key;
               }
               if (command.value === "entry_value") {
                 var value = codes[1](vm, "get");
-                if (!instanceOf(value, typeEntry)) throw "Type Error: " + value.type.name + " != Entry";
+                if (!instanceOf(value, typeEntry)) throw "Type Error: " + value.type.value.name + " != Entry";
                 return value.value.value;
               }
               if (command.value === "size") {
@@ -939,7 +939,7 @@
                 
                 if (!(value !== undefined)) throw "Illegal command argument";
                 var blessedValue = value[3](vm, "get");
-                if (!instanceOf(blessedValue, typeString)) throw "Type Error: " + blessedValue.type.name + " != String";
+                if (!instanceOf(blessedValue, typeString)) throw "Type Error: " + blessedValue.type.value.name + " != String";
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 
                 if (value !== undefined) throw "Illegal command argument: " + value[0];
@@ -961,7 +961,7 @@
                 
                 if (!(value !== undefined && value[0] === "round")) throw "Illegal command argument";
                 var blessedKeyword = value[1](vm, "arguments");
-                if (!instanceOf(blessedKeyword, typeKeyword)) throw "Type Error: " + blessedKeyword.type.name + " != Keyword";
+                if (!instanceOf(blessedKeyword, typeKeyword)) throw "Type Error: " + blessedKeyword.type.value.name + " != Keyword";
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 
                 if (!(value !== undefined && value[0] === "curly")) throw "Illegal command argument";
@@ -1004,7 +1004,7 @@
                 var isNamed;
                 if (value !== undefined && !((value[0] === "keyword" && value[2] === "extends") || value[0] === "curly")) {
                   blessedName = value[1](vm, "get");
-                  if (!instanceOf(blessedName, typeKeyword)) throw "Type Error: " + blessedName.type.name + " != Keyword";
+                  if (!instanceOf(blessedName, typeKeyword)) throw "Type Error: " + blessedName.type.value.name + " != Keyword";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                   
                   isNamed = true;
@@ -1021,7 +1021,7 @@
                   
                   blessedExtends = value[1](vm, "get");
                   if (instanceOf(blessedExtends, typeKeyword)) blessedExtends = searchVariable(["class"], blessedExtends.value);
-                  if (!instanceOf(blessedExtends, typeType)) throw "Type Error: " + blessedExtends.type.name + " != Type";
+                  if (!instanceOf(blessedExtends, typeType)) throw "Type Error: " + blessedExtends.type.value.name + " != Type";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                   
                 } else {
@@ -1055,7 +1055,7 @@
                 
                 var blessedType = value[1](vm, "get");
                 if (instanceOf(blessedType, typeKeyword)) blessedType = searchVariable(["class"], blessedType.value);
-                if (!instanceOf(blessedType, typeType)) throw "Type Error: " + blessedType.type.name + " != Type";
+                if (!instanceOf(blessedType, typeType)) throw "Type Error: " + blessedType.type.value.name + " != Type";
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                 
                 var blessedArguments = value[1](vm, "get");
