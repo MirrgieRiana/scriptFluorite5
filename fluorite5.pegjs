@@ -851,6 +851,7 @@
             }
             if (operator === "_statement") {
               var command = codes[0](vm, "get");
+              if (!instanceOf(command, typeKeyword)) throw "Type Error: " + command.type.value.name + " != String";
               if (command.value === "typeof") {
                 var value = codes[1](vm, "get");
                 return value.type;
