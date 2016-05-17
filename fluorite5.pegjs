@@ -708,8 +708,8 @@
         }, scope));
 
         this.dices = [];
-        this.loopCapacity = 0;
-        this.loopCount = 1000;
+        this.loopCapacity = 1000;
+        this.loopCount = 0;
         
         function consumeLoopCapacity()
         {
