@@ -1726,7 +1726,8 @@ CommentBlockNested
     )* "+/"
 
 CharacterMultibyteSymbol
-  = (! (CharacterSymbol / CharacterNumber / CharacterIdentifier / CharacterBlank)) .
+  = CharacterSurrogates
+  / (! (CharacterSymbol / CharacterNumber / CharacterIdentifier / CharacterBlank / CharacterContectSurrogates)) .
 
 CharacterSymbol
   = (! (CharacterNumber / CharacterAlphabet / CharacterSymbolIdentifier)) [!-~]
@@ -1759,6 +1760,12 @@ CharacterCJKUnifiedIdeographsExtensionA
 
 CharacterCJKUnifiedIdeographs
   = [\u4E00-\u9FFF]
+
+CharacterSurrogates
+  = CharacterContectSurrogates CharacterContectSurrogates { return text(); }
+
+CharacterContectSurrogates
+  = [\uD800-\uDBFF\uDC00-\uDFFF]
 
 CharacterBlank
   = [ \t\n\r　]
