@@ -825,15 +825,12 @@
               || operator === "_operatorEqualGreater") 	{
               var minus = operator == "_operatorMinusGreater";
               var right = codes[1](vm, "get");
-              if (instanceOf(right, typeKeyword)) right = searchVariable(["collector", "function"], right.value);
-              if (instanceOf(right, typeFunction)) {
-                if (minus) {
-                  return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
-                    return callFunction(right, scalar);
-                  }));
-                } else {
-                  return callFunction(right, codes[0](vm, "get"));
-                }
+              if (minus) {
+                return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
+                  return callMethodOfBlessed(scalar, right, VOID);
+                }));
+              } else {
+                return callMethodOfBlessed(codes[0](vm, "get"), right, VOID);
               }
               throw "Type Error: " + operator + "/" + right.type.value.name;
             }
@@ -1268,7 +1265,7 @@
         this.toString = function(value) {
           consumeLoopCapacity();
           if (instanceOf(value, typeValue)) {
-            return "" + callFunction(getMethodOfBlessed(value, createObject(typeKeyword, "toString")), VOID).value;
+            return "" + callMethodOfBlessed(value, createObject(typeKeyword, "toString"), VOID).value;
           } else {
             return "" + value;
           }
