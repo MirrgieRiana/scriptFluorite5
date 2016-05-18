@@ -363,6 +363,10 @@
           }
           throw "Type Error: " + blessed.type.value.name + "." + blessedName.type.value.name;
         }
+        function callMethodOfBlessed(blessed, blessedName, blessedArgs)
+        {
+          return callFunction(getMethodOfBlessed(blessed, blessedName), blessedArgs);
+        }
         function getProperty(hash, name)
         {
           var variable = Object.getOwnPropertyDescriptor(hash, name);
