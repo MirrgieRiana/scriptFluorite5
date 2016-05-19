@@ -610,7 +610,6 @@
           "floor": createNativeBridge(Math.floor, 1),
           "exp": createNativeBridge(Math.exp, 1),
           "pow": createNativeBridge(Math.pow, 2),
-          "log": createNativeBridge(Math.log, 1),
           "random": createNativeBridge(Math.random, 0),
           "randomBetween": createNativeBridge(function(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }, 2),
           "sqrt": createNativeBridge(Math.sqrt, 1),
@@ -982,7 +981,7 @@
                     pushFrame();
                     defineVariable(blessedKeyword.value, e);
                     try {
-                      blessedResult = codeCatch(vm, "get")
+                      blessedResult = codeCatch(vm, "get");
                     } finally {
                       popFrame();
                     }
@@ -1708,7 +1707,7 @@ HereDocumentDelimiter
   = CharacterIdentifier+ { return text(); }
 
 HereDocumentDelimiter2
-  = [!"#$%&'*+,\-./:;=?@\\^_`|~] { return text(); }
+  = [!"#$%&'*+,\-./:=?@\\^_`|~] { return text(); }
 
 _ "Comments"
   = (
