@@ -377,14 +377,15 @@
               if (operator === "_operatorCaret") return vm.createObject(vm.types.typeNumber, Math.pow(codes[0](vm, "get").value, codes[1](vm, "get").value));
               if (operator === "_leftPlus") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get").value);
               if (operator === "_leftMinus") return vm.createObject(vm.types.typeNumber, -codes[0](vm, "get").value);
-              if (operator === "_leftExclamation") return vm.getBoolean(!codes[0](vm, "get").value);
+              if (operator === "_leftExclamation") return vm.getBoolean(!vm.toBoolean(codes[0](vm, "get")));
               if (operator === "_operatorGreater") return vm.getBoolean(codes[0](vm, "get").value > codes[1](vm, "get").value);
               if (operator === "_operatorGreaterEqual") return vm.getBoolean(codes[0](vm, "get").value >= codes[1](vm, "get").value);
               if (operator === "_operatorLess") return vm.getBoolean(codes[0](vm, "get").value < codes[1](vm, "get").value);
               if (operator === "_operatorLessEqual") return vm.getBoolean(codes[0](vm, "get").value <= codes[1](vm, "get").value);
-              if (operator === "_operatorPipe2") return vm.getBoolean(codes[0](vm, "get").value || codes[1](vm, "get").value);
               if (operator === "_operatorEqual2") return vm.getBoolean(codes[0](vm, "get").value === codes[1](vm, "get").value);
               if (operator === "_operatorExclamationEqual") return vm.getBoolean(codes[0](vm, "get").value !== codes[1](vm, "get").value);
+              if (operator === "_operatorPipe2") return vm.getBoolean(vm.toBoolean(codes[0](vm, "get")) || vm.toBoolean(codes[1](vm, "get")));
+              if (operator === "_operatorAmpersand2") return vm.getBoolean(vm.toBoolean(codes[0](vm, "get")) && vm.toBoolean(codes[1](vm, "get")));
               if (operator === "_operatorTilde") {
                 var left = codes[0](vm, "get").value;
                 var right = codes[1](vm, "get").value;
@@ -394,7 +395,6 @@
                 }
                 return vm.packVector(array);
               }
-              if (operator === "_operatorAmpersand2") return vm.getBoolean(codes[0](vm, "get").value && codes[1](vm, "get").value);
               if (operator === "_enumerateComma") return vm.packVector(codes.map(function(code) { return code(vm, "get"); }));
               if (operator === "_bracketsSquare") {
                 return vm.createObject(vm.types.typeArray, vm.unpackVector(vm.callInFrame(codes[0], vm, "get")));
@@ -756,7 +756,7 @@
               }
               if (operator === "_operatorQuestionColon") {
                 var res = codes[0](vm, "get");
-                return res.value ? res : codes[1](vm, "get");
+                return vm.toBoolean(res) ? res : codes[1](vm, "get");
               }
               if (operator === "_operatorQuestion2") {
                 var res = codes[0](vm, "get");
@@ -860,7 +860,7 @@
               if (vm.instanceOf(value, vm.types.typePointer)) return vm.callPointer(value, context, args);
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
-            if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
+            if (operator === "_ternaryQuestionColon") return codes[vm.toBoolean(codes[0](vm, "get")) ? 1 : 2](vm, context, args);
             if (operator === "_bracketsRound") return vm.callInFrame(codes[0], vm, context, args);
 
             throw "Unknown operator: " + operator + "/" + context;
