@@ -737,7 +737,10 @@
                 var array = vm.unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
                 return vm.createFunction(array, codes[1], vm.scope);
               }
-              if (operator === "_concatenate") {
+              if (operator === "_concatenateLiteral") {
+                return vm.createObject(vm.types.typeString, codes.map(function(code) { return vm.toString(code(vm, "get")); }).join(""));
+              }
+              if (operator === "_concatenateHereDocument") {
                 return vm.createObject(vm.types.typeString, codes.map(function(code) { return vm.toString(code(vm, "get")); }).join(""));
               }
               if (operator === "_enumerateSemicolon") {
@@ -1587,7 +1590,7 @@ ContentStringReplaceable
         codes.push(tail[i][0]);
         codes.push(tail[i][1]);
       }
-      return createCodeFromMethod("_concatenate", codes);
+      return createCodeFromMethod("_concatenateLiteral", codes);
     }
 
 ContentStringReplaceableText
@@ -1625,21 +1628,21 @@ HereDocument
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
           / HereDocument
 
-          )* "}" { return createCodeFromMethod("_concatenate", main); }
+          )* "}" { return createCodeFromMethod("_concatenateHereDocument", main); }
         / "[" main:(
 
             main:(! ("]" end:HereDocumentDelimiter & { return begin === end; }) main:(
               .
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
-          )* "]" { return createCodeFromMethod("_concatenate", main); }
+          )* "]" { return createCodeFromMethod("_concatenateHereDocument", main); }
         / begin2:HereDocumentDelimiter2 main:(
 
             main:(! (end2:HereDocumentDelimiter2 end:HereDocumentDelimiter & { return begin2 === end2 && begin === end; }) main:(
               .
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
-          )* HereDocumentDelimiter2 { return createCodeFromMethod("_concatenate", main); }
+          )* HereDocumentDelimiter2 { return createCodeFromMethod("_concatenateHereDocument", main); }
         ) HereDocumentDelimiter { return main; }
       / (
           "{" main:(
@@ -1650,21 +1653,21 @@ HereDocument
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
           / HereDocument
 
-          )* "}" { return createCodeFromMethod("_concatenate", main); }
+          )* "}" { return createCodeFromMethod("_concatenateHereDocument", main); }
         / "[" main:(
 
             main:(! ("]") main:(
               .
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
-          )* "]" { return createCodeFromMethod("_concatenate", main); }
+          )* "]" { return createCodeFromMethod("_concatenateHereDocument", main); }
         / begin2:HereDocumentDelimiter2 main:(
 
             main:(! (end2:HereDocumentDelimiter2 & { return begin2 === end2; }) main:(
               .
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
-          )* HereDocumentDelimiter2 { return createCodeFromMethod("_concatenate", main); }
+          )* HereDocumentDelimiter2 { return createCodeFromMethod("_concatenateHereDocument", main); }
         )
       )
     ) {
