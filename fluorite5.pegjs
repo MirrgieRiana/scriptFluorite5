@@ -147,9 +147,12 @@
           this.variables = {};
           this.parent = parent;
           this.isFrame = isFrame;
-          this.id = Math.floor(Math.random() * 1000000);
           this.UNDEFINED = UNDEFINED;
+
+          this.id = Scope.id;
+          Scope.id++;
         }
+        Scope.id = 0;
         Scope.prototype.getVariable = function(name) {
           var variable = getProperty(this.variables, name);
           if (variable != undefined) {
