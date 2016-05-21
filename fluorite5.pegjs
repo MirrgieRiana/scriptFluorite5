@@ -1231,7 +1231,7 @@
                 codes[0](vm, "invoke");
                 return;
               }
-              this.callMethod(operator, codes, "get", args);
+              vm.callMethod(operator, codes, "get", args);
               return;
             } else if (context === "contentStatement") {
               if (operator === "_bracketsRound") return ["round", codes[0], undefined, createCodeFromMethod(operator, codes)];
@@ -1294,7 +1294,7 @@
               if (type === "Void") return VOID;
               if (type === "Boolean") return createObject(typeBoolean, value);
             } else if (context === "invoke") {
-              return this.createLiteral(type, value, "get", []);
+              return vm.createLiteral(type, value, "get", []);
             } else if (context === "contentStatement") {
               if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value), value, createCodeFromLiteral(type, value)];
               return ["normal", createCodeFromLiteral(type, value), undefined, createCodeFromLiteral(type, value)];
