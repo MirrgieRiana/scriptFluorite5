@@ -1275,7 +1275,7 @@
           });
         };
         VMStandard.prototype.createFunction = function(args, code, scope) {
-          return vm.createObject(vm.types.typeFunction, {
+          return this.createObject(this.types.typeFunction, {
             args: args,
             code: code,
             scope: scope,
