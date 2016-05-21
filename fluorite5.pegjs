@@ -322,17 +322,15 @@
           this.dices = [];
           this.loopCapacity = 10000;
           this.loopCount = 0;
-
-          function consumeLoopCapacity()
-          {
+          this.consumeLoopCapacity = function() {
             vm.loopCount++;
             if (vm.loopCount >= vm.loopCapacity) {
               throw "Internal Fluorite Error: Too many calculation(>= " + vm.loopCapacity + " steps)";
             }
-          }
+          };
 
           this.callMethod = function(operator, codes, context, args) {
-            consumeLoopCapacity();
+            vm.consumeLoopCapacity();
 
             {
               var name = "_" + context + operator;
@@ -871,7 +869,7 @@
             throw "Unknown operator: " + operator + "/" + context;
           };
           this.toString = function(value) {
-            consumeLoopCapacity();
+            vm.consumeLoopCapacity();
             if (vm.instanceOf(value, vm.types.typeValue)) {
               return "" + callMethodOfBlessed(value, vm.createObject(vm.types.typeKeyword, "toString"), vm.VOID).value;
             } else {
@@ -879,7 +877,7 @@
             }
           };
           this.toNative = function(value) {
-            consumeLoopCapacity();
+            vm.consumeLoopCapacity();
             var vm = this;
             if (vm.instanceOf(value, vm.types.typeVector)) {
               return value.value.map(function(scalar) { return vm.toNative(scalar); });
@@ -890,11 +888,11 @@
             return value.value;
           };
           this.toBoolean = function(value) {
-            consumeLoopCapacity();
+            vm.consumeLoopCapacity();
             return !!value.value;
           };
           this.createLiteral = function(type, value, context, args) {
-            consumeLoopCapacity();
+            vm.consumeLoopCapacity();
             if (context === "get") {
               if (type === "Integer") return vm.createObject(vm.types.typeNumber, value);
               if (type === "Float") return vm.createObject(vm.types.typeNumber, value);
@@ -1207,6 +1205,7 @@
             if (!vm.instanceOf(faces, vm.types.typeNumber)) throw "Illegal argument[1]: " + faces.type.value.name + " != Number";
             return vm.createObject(vm.types.typeNumber, dice(count.value, faces.value));
           }, vm.scope));
+
           vm.scope.setOrDefine("_leftMultibyte_√", vm.createFunction(["x"], function(vm, context) {
             var x = vm.scope.getOrUndefined("x");
             if (!vm.instanceOf(x, vm.types.typeNumber)) throw "Illegal argument[0]: " + x.type.value.name + " != Number";
