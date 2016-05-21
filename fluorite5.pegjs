@@ -230,16 +230,15 @@
         {
           var vm = this;
 
-          function callFunction(blessedFunction, blessedArgs)
+          function callFunction(blessedFunction, blessedsArgs)
           {
             var i;
-            var array = vm.unpackVector(blessedArgs);
             vm.pushStack(blessedFunction.value.scope);
             vm.pushFrame();
             for (i = 0; i < blessedFunction.value.args.length; i++) {
-              vm.scope.defineOrSet(blessedFunction.value.args[i], array[i] || vm.UNDEFINED);
+              vm.scope.defineOrSet(blessedFunction.value.args[i], blessedsArgs[i] || vm.UNDEFINED);
             }
-            vm.scope.defineOrSet("_", vm.packVector(array.slice(i, array.length)));
+            vm.scope.defineOrSet("_", vm.packVector(blessedsArgs.slice(i, blessedsArgs.length)));
             var res;
             try {
               res = blessedFunction.value.code(vm, "get");
@@ -301,14 +300,14 @@
               return vm.createFunction([], function(vm, context, args) {
                 var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
                 array.unshift(blessed);
-                return callFunction(blessedName, vm.packVector(array));
+                return callFunction(blessedName, array);
               }, vm.scope);
             }
             throw "Type Error: " + blessed.type.value.name + "." + blessedName.type.value.name;
           }
           function callMethodOfBlessed(blessed, blessedName, blessedArgs)
           {
-            return callFunction(getMethodOfBlessed(blessed, blessedName), blessedArgs);
+            return callFunction(getMethodOfBlessed(blessed, blessedName), vm.unpackVector(blessedArgs));
           }
           function getPropertyBlessed(hash, name)
           {
@@ -342,7 +341,7 @@
               if (vm.instanceOf(func, vm.types.typeFunction)) {
                 var array = [vm.createObject(vm.types.typeString, context)];
                 Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
-                var pointer = callFunction(func, vm.packVector(array));
+                var pointer = callFunction(func, array);
                 if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
                 return vm.callPointer(pointer, context, args);
               } else {
@@ -415,10 +414,10 @@
                 var minus = operator == "_operatorMinus2Greater";
                 if (minus) {
                   return vm.packVector(vm.unpackVector(codes[0](vm, "get")).map(function(scalar) {
-                    return callFunction(vm.createFunction([], codes[1], vm.scope), scalar);
+                    return callFunction(vm.createFunction([], codes[1], vm.scope), [scalar]);
                   }));
                 } else {
-                  return callFunction(vm.createFunction([], codes[1], vm.scope), codes[0](vm, "get"));
+                  return callFunction(vm.createFunction([], codes[1], vm.scope), vm.unpackVector(codes[0](vm, "get")));
                 }
               }
               if (operator === "_operatorMinusGreater"
@@ -442,7 +441,7 @@
               if (operator === "_rightbracketsRound") {
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(codes[1], vm, "get"));
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.unpackVector(vm.callInFrame(codes[1], vm, "get")));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_statement") {
@@ -665,14 +664,14 @@
                   var blessedsNew = getMethodsOfTypeTree("new", blessedType);
 
                   for (i = 0; i < blessedsNew.length; i++) {
-                     blessedArguments = callFunction(blessedsNew[i], blessedArguments);
+                     blessedArguments = callFunction(blessedsNew[i], vm.unpackVector(blessedArguments));
                   }
 
                   blessedArguments.type = blessedType;
 
                   var blessedsInit = getMethodsOfTypeTree("init", blessedType);
                   for (i = blessedsInit.length - 1; i >= 0; i--) {
-                    callFunction(blessedsInit[i], blessedArguments);
+                    callFunction(blessedsInit[i], vm.unpackVector(blessedArguments));
                   }
 
                   return blessedArguments;
@@ -765,16 +764,16 @@
               if (operator === "_hereDocumentFunction") {
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["decoration", "function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.unpackVector(vm.callInFrame(function(vm, context, args) {
                   return vm.packVector([vm.createPointer(codes[1], vm.scope), vm.createPointer(codes[2], vm.scope)]);
-                }, vm, "get"));
+                }, vm, "get")));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftMultibyte") {
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
                 if (vm.instanceOf(value, vm.types.typeFunction)) {
-                  return vm.callPointer(callFunction(value, vm.createPointer(codes[1], vm.scope)), context, args);
+                  return vm.callPointer(callFunction(value, [vm.createPointer(codes[1], vm.scope)]), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -782,39 +781,39 @@
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
                 if (vm.instanceOf(value, vm.types.typeFunction)) {
-                  return vm.callPointer(callFunction(value, vm.packVector([vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)])), context, args);
+                  return vm.callPointer(callFunction(value, [vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)]), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftWord") {
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftWord", "word", "function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, [vm.callInFrame(function(vm, context, args) {
                   return codes[1](vm, "get");
-                }, vm, "get"));
+                }, vm, "get")]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorWord") {
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorWord", "word", "function"], value.value);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
-                  return vm.packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
+                  return [codes[0](vm, "get"), codes[2](vm, "get")];
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_rightComposite") {
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, [vm.callInFrame(function(vm, context, args) {
                   return codes[0](vm, "get");
-                }, vm, "get"));
+                }, vm, "get")]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorComposite") {
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value.value);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
-                  return vm.packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
+                  return [codes[0](vm, "get"), codes[2](vm, "get")];
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
