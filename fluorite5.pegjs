@@ -326,30 +326,20 @@
 
             return functions;
           }
-          function createType(name, supertype, providesPrimitiveConstructor)
+          function registerPrimitiveConstructor(blessedType)
           {
-            var blessedType = vm.createObject(vm.types.typeType, {
-              name: name,
-              supertype: supertype,
-              members: {},
-            });
-
-            if (providesPrimitiveConstructor) {
-              var f = function() {
-                blessedType.value.members["new"] = vm.createFunction(["type"], function(vm, context) {
-                  var blessedValue = vm.scope.getOrUndefined("type");
-                  if (vm.instanceOf(blessedValue, blessedType)) return blessedValue;
-                  throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
-                }, vm.scope);
-              };
-              if (listenersInitializeFinished === null) {
-                f();
-              } else {
-                listenersInitializeFinished.push(f);
-              }
+            var f = function() {
+              blessedType.value.members["new"] = vm.createFunction(["type"], function(vm, context) {
+                var blessedValue = vm.scope.getOrUndefined("type");
+                if (vm.instanceOf(blessedValue, blessedType)) return blessedValue;
+                throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
+              }, vm.scope);
+            };
+            if (listenersInitializeFinished === null) {
+              f();
+            } else {
+              listenersInitializeFinished.push(f);
             }
-
-            return blessedType;
           }
           function getMethodOfBlessed(blessed, blessedName)
           {
@@ -377,23 +367,23 @@
 
 
           vm.types = {};
-           vm.types.typeType = createType("Type", null, false);
-           vm.types.typeValue = createType("Value", null, false);
-             vm.types.typeUndefined = createType("Undefined", vm.types.typeValue, false);
-             vm.types.typeDefined = createType("Defined", vm.types.typeValue, false);
-               vm.types.typeNull = createType("Null", vm.types.typeDefined, false);
-               vm.types.typeNumber = createType("Number", vm.types.typeDefined, true);
-               vm.types.typeString = createType("String", vm.types.typeDefined, true);
-                 vm.types.typeKeyword = createType("Keyword", vm.types.typeString, false);
-               vm.types.typeBoolean = createType("Boolean", vm.types.typeDefined, true);
-               vm.types.typeFunction = createType("Function", vm.types.typeDefined, true);
-               vm.types.typePointer = createType("Pointer", vm.types.typeDefined, true);
-               vm.types.typeArray = createType("Array", vm.types.typeDefined, true);
-                 vm.types.typeVector = createType("Vector", vm.types.typeArray, false);
-               vm.types.typeObject = createType("Object", vm.types.typeDefined, true);
-                 vm.types.typeHash = createType("Hash", vm.types.typeObject, false);
-                 vm.types.typeEntry = createType("Entry", vm.types.typeObject, false);
-                 vm.types.typeException = createType("Exception", vm.types.typeObject, false);
+           vm.types.typeType = vm.createType("Type", null);
+           vm.types.typeValue = vm.createType("Value", null);
+             vm.types.typeUndefined = vm.createType("Undefined", vm.types.typeValue);
+             vm.types.typeDefined = vm.createType("Defined", vm.types.typeValue);
+               vm.types.typeNull = vm.createType("Null", vm.types.typeDefined);
+               vm.types.typeNumber = vm.createType("Number", vm.types.typeDefined); registerPrimitiveConstructor(vm.types.typeNumber);
+               vm.types.typeString = vm.createType("String", vm.types.typeDefined); registerPrimitiveConstructor(vm.types.typeString);
+                 vm.types.typeKeyword = vm.createType("Keyword", vm.types.typeString);
+               vm.types.typeBoolean = vm.createType("Boolean", vm.types.typeDefined); registerPrimitiveConstructor(vm.types.typeBoolean);
+               vm.types.typeFunction = vm.createType("Function", vm.types.typeDefined); registerPrimitiveConstructor(vm.types.typeFunction);
+               vm.types.typePointer = vm.createType("Pointer", vm.types.typeDefined); registerPrimitiveConstructor(vm.types.typePointer);
+               vm.types.typeArray = vm.createType("Array", vm.types.typeDefined); registerPrimitiveConstructor(vm.types.typeArray);
+                 vm.types.typeVector = vm.createType("Vector", vm.types.typeArray);
+               vm.types.typeObject = vm.createType("Object", vm.types.typeDefined); registerPrimitiveConstructor(vm.types.typeObject);
+                 vm.types.typeHash = vm.createType("Hash", vm.types.typeObject);
+                 vm.types.typeEntry = vm.createType("Entry", vm.types.typeObject);
+                 vm.types.typeException = vm.createType("Exception", vm.types.typeObject);
           vm.types.typeType.type = vm.types.typeType;
           vm.types.typeType.value.supertype = vm.types.typeDefined;
 
@@ -918,7 +908,7 @@
                     blessedExtends = vm.types.typeHash;
                   }
 
-                  var blessedResult = createType(blessedName.value, blessedExtends, false);
+                  var blessedResult = vm.createType(blessedName.value, blessedExtends);
 
                   if (value !== undefined && value[0] === "curly") {
                     vm.pushFrame();
@@ -1249,6 +1239,13 @@
           return this.createObject(this.types.typePointer, {
             code: code,
             scope: scope,
+          });
+        };
+        VMStandard.prototype.createType = function(name, supertype) {
+          return this.createObject(this.types.typeType, {
+            name: name,
+            supertype: supertype,
+            members: {},
           });
         };
         VMStandard.prototype.packVector = function(array) {
