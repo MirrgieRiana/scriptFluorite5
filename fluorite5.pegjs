@@ -425,6 +425,10 @@
           {
             return callFunction(getMethodOfBlessed(blessed, blessedName), blessedArgs);
           }
+          function getBoolean(value)
+          {
+            return value ? vm.TRUE : vm.FALSE;
+          }
           function getPropertyBlessed(hash, name)
           {
             var variable = Object.getOwnPropertyDescriptor(hash, name);
@@ -464,6 +468,8 @@
           vm.UNDEFINED = createObject(vm.types.typeUndefined, undefined);
           vm.NULL = createObject(vm.types.typeNull, null);
           vm.VOID = packVector([]);
+          vm.TRUE = createObject(vm.types.typeBoolean, true);
+          vm.FALSE = createObject(vm.types.typeBoolean, false);
 
           this.scope = new Scope(null, true, vm.UNDEFINED);
           this.stack = [];
@@ -638,14 +644,14 @@
             unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value = value && blessed.value;
             });
-            return createObject(vm.types.typeBoolean, value);
+            return getBoolean(value);
           }, vm.scope));
           vm.scope.setOrDefine("_function_or", createFunction([], function(vm, context) {
             var value = false;
             unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value = value || blessed.value;
             });
-            return createObject(vm.types.typeBoolean, value);
+            return getBoolean(value);
           }, vm.scope));
           vm.scope.setOrDefine("_function_max", createFunction([], function(vm, context) {
             var array = unpackVector(vm.scope.getOrUndefined("_"));
@@ -732,14 +738,14 @@
               if (operator === "_operatorCaret") return createObject(vm.types.typeNumber, Math.pow(codes[0](vm, "get").value, codes[1](vm, "get").value));
               if (operator === "_leftPlus") return createObject(vm.types.typeNumber, codes[0](vm, "get").value);
               if (operator === "_leftMinus") return createObject(vm.types.typeNumber, -codes[0](vm, "get").value);
-              if (operator === "_leftExclamation") return createObject(vm.types.typeBoolean, !codes[0](vm, "get").value);
-              if (operator === "_operatorGreater") return createObject(vm.types.typeBoolean, codes[0](vm, "get").value > codes[1](vm, "get").value);
-              if (operator === "_operatorGreaterEqual") return createObject(vm.types.typeBoolean, codes[0](vm, "get").value >= codes[1](vm, "get").value);
-              if (operator === "_operatorLess") return createObject(vm.types.typeBoolean, codes[0](vm, "get").value < codes[1](vm, "get").value);
-              if (operator === "_operatorLessEqual") return createObject(vm.types.typeBoolean, codes[0](vm, "get").value <= codes[1](vm, "get").value);
-              if (operator === "_operatorEqual2") return createObject(vm.types.typeBoolean, codes[0](vm, "get").value == codes[1](vm, "get").value);
-              if (operator === "_operatorExclamationEqual") return createObject(vm.types.typeBoolean, codes[0](vm, "get").value != codes[1](vm, "get").value);
-              if (operator === "_operatorPipe2") return createObject(vm.types.typeBoolean, codes[0](vm, "get").value || codes[1](vm, "get").value);
+              if (operator === "_leftExclamation") return getBoolean(!codes[0](vm, "get").value);
+              if (operator === "_operatorGreater") return getBoolean(codes[0](vm, "get").value > codes[1](vm, "get").value);
+              if (operator === "_operatorGreaterEqual") return getBoolean(codes[0](vm, "get").value >= codes[1](vm, "get").value);
+              if (operator === "_operatorLess") return getBoolean(codes[0](vm, "get").value < codes[1](vm, "get").value);
+              if (operator === "_operatorLessEqual") return getBoolean(codes[0](vm, "get").value <= codes[1](vm, "get").value);
+              if (operator === "_operatorEqual2") return getBoolean(codes[0](vm, "get").value == codes[1](vm, "get").value);
+              if (operator === "_operatorExclamationEqual") return getBoolean(codes[0](vm, "get").value != codes[1](vm, "get").value);
+              if (operator === "_operatorPipe2") return getBoolean(codes[0](vm, "get").value || codes[1](vm, "get").value);
               if (operator === "_operatorTilde") {
                 var left = codes[0](vm, "get").value;
                 var right = codes[1](vm, "get").value;
@@ -749,7 +755,7 @@
                 }
                 return packVector(array);
               }
-              if (operator === "_operatorAmpersand2") return createObject(vm.types.typeBoolean, codes[0](vm, "get").value && codes[1](vm, "get").value);
+              if (operator === "_operatorAmpersand2") return getBoolean(codes[0](vm, "get").value && codes[1](vm, "get").value);
               if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
               if (operator === "_bracketsSquare") {
                 return createObject(vm.types.typeArray, unpackVector(callInFrame(codes[0], vm, "get")));
@@ -841,7 +847,7 @@
                   var value = codes[1](vm, "get");
                   var type = codes[2](vm, "get");
                   if (!instanceOf(type, vm.types.typeType)) throw "Type Error: " + type.type.value.name + " != Type";
-                  return createObject(vm.types.typeBoolean, instanceOf(value, type));
+                  return getBoolean(instanceOf(value, type));
                 }
                 if (command.value === "length") {
                   var value = codes[1](vm, "get");
@@ -1247,8 +1253,8 @@
               if (type === "Float") return createObject(vm.types.typeNumber, value);
               if (type === "String") return createObject(vm.types.typeString, value);
               if (type === "Identifier") {
-                if (value === "true") return createObject(vm.types.typeBoolean, true);
-                if (value === "false") return createObject(vm.types.typeBoolean, false);
+                if (value === "true") return vm.TRUE;
+                if (value === "false") return vm.FALSE;
                 if (value === "undefined") return vm.UNDEFINED;
                 if (value === "null") return vm.NULL;
                 if (value === "Infinity") return createObject(vm.types.typeNumber, Infinity);
@@ -1256,7 +1262,7 @@
                 return createObject(vm.types.typeKeyword, value);
               }
               if (type === "Void") return vm.VOID;
-              if (type === "Boolean") return createObject(vm.types.typeBoolean, value);
+              if (type === "Boolean") return getBoolean(value);
             } else if (context === "invoke") {
               return vm.createLiteral(type, value, "get", []);
             } else if (context === "contentStatement") {
