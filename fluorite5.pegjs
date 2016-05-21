@@ -335,37 +335,28 @@
           this.callOperator = function(operator, codes, context, args) {
             vm.consumeLoopCapacity();
 
+            function tryCallFromScope(name)
             {
-              var name = "_" + context + operator;
               var func = vm.scope.getOrUndefined(name);
-              if (!vm.instanceOf(func, vm.types.typeUndefined)) {
-                if (vm.instanceOf(func, vm.types.typeFunction)) {
-                  var array = [vm.createObject(vm.types.typeString, context)];
-                  Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
-                  var pointer = callFunction(func, vm.packVector(array));
-                  if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
-                  return vm.callPointer(pointer, context, args);
-                } else {
-                  throw "`" + name + "` is not a function";
-                }
+              if (vm.instanceOf(func, vm.types.typeUndefined)) return false;
+              if (vm.instanceOf(func, vm.types.typeFunction)) {
+                var array = [vm.createObject(vm.types.typeString, context)];
+                Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
+                var pointer = callFunction(func, vm.packVector(array));
+                if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
+                return vm.callPointer(pointer, context, args);
+              } else {
+                throw "`" + name + "` is not a function";
               }
             }
 
-            {
-              var name = operator;
-              var func = vm.scope.getOrUndefined(name);
-              if (!vm.instanceOf(func, vm.types.typeUndefined)) {
-                if (vm.instanceOf(func, vm.types.typeFunction)) {
-                  var array = [vm.createObject(vm.types.typeString, context)];
-                  Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
-                  var pointer = callFunction(func, vm.packVector(array));
-                  if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
-                  return vm.callPointer(pointer, context, args);
-                } else {
-                  throw "`" + name + "` is not a function";
-                }
-              }
-            }
+            var res;
+
+            res = tryCallFromScope("_" + context + operator);
+            if (res !== false) return res;
+
+            res = tryCallFromScope(operator);
+            if (res !== false) return res;
 
             if (context === "get") {
 
