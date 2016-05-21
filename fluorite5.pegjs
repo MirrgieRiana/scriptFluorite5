@@ -229,36 +229,14 @@
 
           var listenersInitializeFinished = [];
 
-          function pushScope()
-          {
-            vm.scope = new Scope(vm.scope, false, UNDEFINED);
-          }
-          function pushFrame()
-          {
-            vm.scope = new Scope(vm.scope, true, UNDEFINED);
-          }
-          function popFrame()
-          {
-            vm.scope = vm.scope.getParentFrame();
-          }
-          function pushStack(scope2)
-          {
-            vm.stack.push(vm.scope);
-            vm.scope = scope2;
-          }
-          function popStack()
-          {
-            vm.scope = vm.stack.pop();
-          }
-
           function callInFrame(code, vm, context, args)
           {
-            pushFrame();
+            vm.pushFrame();
             var res;
             try {
               res = code(vm, context, args);
             } finally {
-              popFrame();
+              vm.popFrame();
             }
             return res;
           }
@@ -335,29 +313,29 @@
           {
             var i;
             var array = unpackVector(blessedArgs);
-            pushStack(blessedFunction.value.scope);
-            pushFrame();
+            vm.pushStack(blessedFunction.value.scope);
+            vm.pushFrame();
             for (i = 0; i < blessedFunction.value.args.length; i++) {
-              vm.scope.defineOrSet(blessedFunction.value.args[i], array[i] || UNDEFINED);
+              vm.scope.defineOrSet(blessedFunction.value.args[i], array[i] || vm.UNDEFINED);
             }
             vm.scope.defineOrSet("_", packVector(array.slice(i, array.length)));
             var res;
             try {
               res = blessedFunction.value.code(vm, "get");
             } finally {
-              popFrame();
-              popStack();
+              vm.popFrame();
+              vm.popStack();
             }
             return res;
           }
           function callPointer(blessedPointer, context, args)
           {
-            pushStack(blessedPointer.value.scope);
+            vm.pushStack(blessedPointer.value.scope);
             var res;
             try {
               res = blessedPointer.value.code(vm, context, args);
             } finally {
-              popStack();
+              vm.popStack();
             }
             return res;
           }
@@ -373,7 +351,7 @@
             variable = vm.scope.getOrUndefined(keyword);
             if (!instanceOf(variable, vm.types.typeUndefined)) return variable;
 
-            return UNDEFINED;
+            return vm.UNDEFINED;
           }
           function searchVariableWithType(keyword, blessedType)
           {
@@ -451,7 +429,7 @@
           {
             var variable = Object.getOwnPropertyDescriptor(hash, name);
             if (variable != undefined) variable = variable.value;
-            variable = variable || UNDEFINED;
+            variable = variable || vm.UNDEFINED;
             return variable;
           }
           function createException(message)
@@ -483,11 +461,11 @@
           vm.types.typeType.type = vm.types.typeType;
           vm.types.typeType.value.supertype = vm.types.typeDefined;
 
-          var UNDEFINED = createObject(vm.types.typeUndefined, undefined);
-          var NULL = createObject(vm.types.typeNull, null);
-          var VOID = packVector([]);
+          vm.UNDEFINED = createObject(vm.types.typeUndefined, undefined);
+          vm.NULL = createObject(vm.types.typeNull, null);
+          vm.VOID = packVector([]);
 
-          this.scope = new Scope(null, true, UNDEFINED);
+          this.scope = new Scope(null, true, vm.UNDEFINED);
           this.stack = [];
 
           listenersInitializeFinished.map(function(a) { a(); })
@@ -645,7 +623,7 @@
           }, vm.scope));
           vm.scope.setOrDefine("_function_average", createFunction([], function(vm, context) {
             var array = unpackVector(vm.scope.getOrUndefined("_"));
-            if (array.length == 0) return UNDEFINED;
+            if (array.length == 0) return vm.UNDEFINED;
             var value = 0;
             array.forEach(function(blessed) {
               value += blessed.value;
@@ -671,7 +649,7 @@
           }, vm.scope));
           vm.scope.setOrDefine("_function_max", createFunction([], function(vm, context) {
             var array = unpackVector(vm.scope.getOrUndefined("_"));
-            if (array.length == 0) return UNDEFINED;
+            if (array.length == 0) return vm.UNDEFINED;
             var value = array[0].value;
             for (var i = 1; i < array.length; i++) {
               if (value < array[i].value) value = array[i].value;
@@ -680,7 +658,7 @@
           }, vm.scope));
           vm.scope.setOrDefine("_function_min", createFunction([], function(vm, context) {
             var array = unpackVector(vm.scope.getOrUndefined("_"));
-            if (array.length == 0) return UNDEFINED;
+            if (array.length == 0) return vm.UNDEFINED;
             var value = array[0].value;
             for (var i = 1; i < array.length; i++) {
               if (value > array[i].value) value = array[i].value;
@@ -779,7 +757,7 @@
               if (operator === "_rightbracketsSquare") {
                 var value = codes[0](vm, "get");
                 if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["array"], value.value);
-                if (instanceOf(value, vm.types.typeArray)) return value.value[callInFrame(codes[1], vm, "get").value] || UNDEFINED;
+                if (instanceOf(value, vm.types.typeArray)) return value.value[callInFrame(codes[1], vm, "get").value] || vm.UNDEFINED;
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftAtsign") {
@@ -804,10 +782,10 @@
                 var right = codes[1](vm, "get");
                 if (minus) {
                   return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
-                    return callMethodOfBlessed(scalar, right, VOID);
+                    return callMethodOfBlessed(scalar, right, vm.VOID);
                   }));
                 } else {
-                  return callMethodOfBlessed(codes[0](vm, "get"), right, VOID);
+                  return callMethodOfBlessed(codes[0](vm, "get"), right, vm.VOID);
                 }
                 throw "Type Error: " + operator + "/" + right.type.value.name;
               }
@@ -833,18 +811,18 @@
                   var array = unpackVector(codes[1](vm, "arguments"));
                   array.map(function(item) {
                     if (!instanceOf(item, vm.types.typeKeyword)) throw "Type Error: " + item.type.value.name + " != Keyword";
-                    vm.scope.defineOrSet(item.value, UNDEFINED);
+                    vm.scope.defineOrSet(item.value, vm.UNDEFINED);
                   });
-                  return UNDEFINED;
+                  return vm.UNDEFINED;
                 }
                 if (command.value === "console_scope") {
                   console.log(vm.scope);
-                  return UNDEFINED;
+                  return vm.UNDEFINED;
                 }
                 if (command.value === "console_log") {
                   var value = codes[1](vm, "get");
                   console.log(value);
-                  return UNDEFINED;
+                  return vm.UNDEFINED;
                 }
                 if (command.value === "call") {
                   var blessedOperator = codes[1](vm, "get");
@@ -948,20 +926,20 @@
 
                   var blessedResult;
                   try {
-                    pushFrame();
+                    vm.pushFrame();
                     try {
                       blessedResult = codeTry(vm, "get");
                     } finally {
-                      popFrame();
+                      vm.popFrame();
                     }
                   } catch (e) {
                     if (instanceOf(e, vm.types.typeException)) {
-                      pushFrame();
+                      vm.pushFrame();
                       vm.scope.defineOrSet(blessedKeyword.value, e);
                       try {
                         blessedResult = codeCatch(vm, "get");
                       } finally {
-                        popFrame();
+                        vm.popFrame();
                       }
                     } else {
                       throw e;
@@ -1005,13 +983,13 @@
                   var blessedResult = createType(blessedName.value, blessedExtends, false);
 
                   if (value !== undefined && value[0] === "curly") {
-                    pushFrame();
+                    vm.pushFrame();
                     vm.scope.defineOrSet("class", blessedResult);
                     vm.scope.defineOrSet("super", blessedExtends);
                     try {
                       value[1](vm, "invoke")
                     } finally {
-                      popFrame();
+                      vm.popFrame();
                     }
                     value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
                   }
@@ -1094,7 +1072,7 @@
                       if (!instanceOf(value, vm.types.typeUndefined)) return value;
                       hash = hash.value.supertype;
                     }
-                    return UNDEFINED;
+                    return vm.UNDEFINED;
                   }
                 }
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
@@ -1242,7 +1220,7 @@
           this.toString = function(value) {
             consumeLoopCapacity();
             if (instanceOf(value, vm.types.typeValue)) {
-              return "" + callMethodOfBlessed(value, createObject(vm.types.typeKeyword, "toString"), VOID).value;
+              return "" + callMethodOfBlessed(value, createObject(vm.types.typeKeyword, "toString"), vm.VOID).value;
             } else {
               return "" + value;
             }
@@ -1271,13 +1249,13 @@
               if (type === "Identifier") {
                 if (value === "true") return createObject(vm.types.typeBoolean, true);
                 if (value === "false") return createObject(vm.types.typeBoolean, false);
-                if (value === "undefined") return UNDEFINED;
-                if (value === "null") return NULL;
+                if (value === "undefined") return vm.UNDEFINED;
+                if (value === "null") return vm.NULL;
                 if (value === "Infinity") return createObject(vm.types.typeNumber, Infinity);
                 if (value === "NaN") return createObject(vm.types.typeNumber, NaN);
                 return createObject(vm.types.typeKeyword, value);
               }
-              if (type === "Void") return VOID;
+              if (type === "Void") return vm.VOID;
               if (type === "Boolean") return createObject(vm.types.typeBoolean, value);
             } else if (context === "invoke") {
               return vm.createLiteral(type, value, "get", []);
@@ -1286,11 +1264,27 @@
               return ["normal", createCodeFromLiteral(type, value), undefined, createCodeFromLiteral(type, value)];
             } else if (context === "arguments") {
               if (type === "Identifier") return createObject(vm.types.typeKeyword, value);
-              if (type === "Void") return VOID;
+              if (type === "Void") return vm.VOID;
             }
             throw "Unknown Literal Type: " + context + "/" + type;
           };
         }
+        VMStandard.prototype.pushScope = function() {
+          this.scope = new Scope(this.scope, false, this.UNDEFINED);
+        };
+        VMStandard.prototype.pushFrame = function() {
+          this.scope = new Scope(this.scope, true, this.UNDEFINED);
+        };
+        VMStandard.prototype.popFrame = function() {
+          this.scope = this.scope.getParentFrame();
+        };
+        VMStandard.prototype.pushStack = function(scope2) {
+          this.stack.push(this.scope);
+          this.scope = scope2;
+        };
+        VMStandard.prototype.popStack = function() {
+          this.scope = this.stack.pop();
+        };
         
         return VMStandard;
       })();
