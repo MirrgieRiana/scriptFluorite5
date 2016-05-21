@@ -249,6 +249,7 @@
           {
             vm.scope = vm.stack.pop();
           }
+
           function callInFrame(code, vm, context, args)
           {
             pushFrame();
