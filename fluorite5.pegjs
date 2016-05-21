@@ -223,7 +223,8 @@
           }
         };
 
-        return function() {
+        function VMStandard()
+        {
           var vm = this;
 
           var listenersInitializeFinished = [];
@@ -1289,7 +1290,9 @@
             }
             throw "Unknown Literal Type: " + context + "/" + type;
           };
-        };
+        }
+        
+        return VMStandard;
       })();
     } else {
       throw "Unknown VM name: " + name;
