@@ -268,17 +268,6 @@
             }
             return res;
           }
-          function callPointer(blessedPointer, context, args)
-          {
-            vm.pushStack(blessedPointer.value.scope);
-            var res;
-            try {
-              res = blessedPointer.value.code(vm, context, args);
-            } finally {
-              vm.popStack();
-            }
-            return res;
-          }
           function searchVariable(accesses, keyword)
           {
             var variable;
@@ -376,7 +365,7 @@
                   Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
                   var pointer = callFunction(func, vm.packVector(array));
                   if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
-                  return callPointer(pointer, context, args);
+                  return vm.callPointer(pointer, context, args);
                 } else {
                   throw "`" + name + "` is not a function";
                 }
@@ -392,7 +381,7 @@
                   Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
                   var pointer = callFunction(func, vm.packVector(array));
                   if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
-                  return callPointer(pointer, context, args);
+                  return vm.callPointer(pointer, context, args);
                 } else {
                   throw "`" + name + "` is not a function";
                 }
@@ -518,7 +507,7 @@
                   })
                   return vm.callMethod(blessedOperator.value, array.map(function(item) {
                     return function(vm, context, args) {
-                      return callPointer(item, context, args);
+                      return vm.callPointer(item, context, args);
                     };
                   }), "get", []);
                 }
@@ -812,7 +801,7 @@
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
                 if (vm.instanceOf(value, vm.types.typeFunction)) {
-                  return callPointer(callFunction(value, vm.createPointer(codes[1], vm.scope)), context, args);
+                  return vm.callPointer(callFunction(value, vm.createPointer(codes[1], vm.scope)), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -820,7 +809,7 @@
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
                 if (vm.instanceOf(value, vm.types.typeFunction)) {
-                  return callPointer(callFunction(value, vm.packVector([vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)])), context, args);
+                  return vm.callPointer(callFunction(value, vm.packVector([vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)])), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -895,7 +884,7 @@
 
             if (operator === "_leftAsterisk") {
               var value = codes[0](vm, "get");
-              if (vm.instanceOf(value, vm.types.typePointer)) return callPointer(value, context, args);
+              if (vm.instanceOf(value, vm.types.typePointer)) return vm.callPointer(value, context, args);
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
             if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
@@ -1028,6 +1017,16 @@
         VMStandard.prototype.unpackVector = function(blessed) {
           if (this.instanceOf(blessed, this.types.typeVector)) return blessed.value;
           return [blessed];
+        };
+        VMStandard.prototype.callPointer = function(blessedPointer, context, args) {
+          this.pushStack(blessedPointer.value.scope);
+          var res;
+          try {
+            res = blessedPointer.value.code(this, context, args);
+          } finally {
+            this.popStack();
+          }
+          return res;
         };
         VMStandard.prototype.instanceOf = function(blessed, blessedType2) {
           if ((typeof blessed) !== "object") return false;
