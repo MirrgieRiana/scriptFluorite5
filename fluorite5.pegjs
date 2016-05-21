@@ -227,17 +227,6 @@
         {
           var vm = this;
 
-          function dice(count, faces)
-          {
-            var t = 0, i, value, values = [];
-            for (i = 0; i < count; i++) {
-              value = Math.floor(Math.random() * faces) + 1;
-              t += value;
-              values.push(value);
-            }
-            vm.dices.push(values);
-            return t;
-          }
           function callFunction(blessedFunction, blessedArgs)
           {
             var i;
@@ -1192,6 +1181,18 @@
             "randomBetween": createNativeBridge(function(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }, 2),
             "sqrt": createNativeBridge(Math.sqrt, 1),
           }));
+
+          function dice(count, faces)
+          {
+            var t = 0, i, value, values = [];
+            for (i = 0; i < count; i++) {
+              value = Math.floor(Math.random() * faces) + 1;
+              t += value;
+              values.push(value);
+            }
+            vm.dices.push(values);
+            return t;
+          }
           vm.scope.setOrDefine("_rightComposite_d", vm.createFunction(["count"], function(vm, context) {
             var count = vm.scope.getOrUndefined("count");
             if (!vm.instanceOf(count, vm.types.typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
