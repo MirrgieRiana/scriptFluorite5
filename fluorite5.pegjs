@@ -886,7 +886,11 @@
           };
           this.toBoolean = function(value) {
             vm.consumeLoopCapacity();
-            return !!value.value;
+            if (vm.instanceOf(value, vm.types.typeValue)) {
+              return !!callMethodOfBlessed(value, vm.createObject(vm.types.typeKeyword, "toBoolean"), vm.VOID).value;
+            } else {
+              return !!value;
+            }
           };
           this.createLiteral = function(type, value, context, args) {
             vm.consumeLoopCapacity();
@@ -1124,6 +1128,32 @@
           vm.types.typeException.value.members["toString"] = vm.createFunction(["this"], function(vm, context) {
             var value = vm.scope.getOrUndefined("this");
             return vm.createObject(vm.types.typeString, "<Exception: '" + value.value.message + "'>");
+          }, vm.scope);
+
+          vm.types.typeValue.value.members["toBoolean"] = vm.createFunction(["this"], function(vm, context) {
+            return vm.TRUE;
+          }, vm.scope);
+          vm.types.typeUndefined.value.members["toBoolean"] = vm.createFunction(["this"], function(vm, context) {
+            return vm.FALSE;
+          }, vm.scope);
+          vm.types.typeNull.value.members["toBoolean"] = vm.createFunction(["this"], function(vm, context) {
+            return vm.FALSE;
+          }, vm.scope);
+          vm.types.typeNumber.value.members["toBoolean"] = vm.createFunction(["this"], function(vm, context) {
+            var value = vm.scope.getOrUndefined("this");
+            return vm.getBoolean(value.value != 0);
+          }, vm.scope);
+          vm.types.typeString.value.members["toBoolean"] = vm.createFunction(["this"], function(vm, context) {
+            var value = vm.scope.getOrUndefined("this");
+            return vm.getBoolean(value.value !== "");
+          }, vm.scope);
+          vm.types.typeBoolean.value.members["toBoolean"] = vm.createFunction(["this"], function(vm, context) {
+            var value = vm.scope.getOrUndefined("this");
+            return value;
+          }, vm.scope);
+          vm.types.typeArray.value.members["toBoolean"] = vm.createFunction(["this"], function(vm, context) {
+            var value = vm.scope.getOrUndefined("this");
+            return vm.getBoolean(value.value.length > 0);
           }, vm.scope);
 
           {
