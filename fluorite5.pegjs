@@ -382,9 +382,9 @@
               if (operator === "_operatorGreaterEqual") return vm.getBoolean(codes[0](vm, "get").value >= codes[1](vm, "get").value);
               if (operator === "_operatorLess") return vm.getBoolean(codes[0](vm, "get").value < codes[1](vm, "get").value);
               if (operator === "_operatorLessEqual") return vm.getBoolean(codes[0](vm, "get").value <= codes[1](vm, "get").value);
-              if (operator === "_operatorEqual2") return vm.getBoolean(codes[0](vm, "get").value == codes[1](vm, "get").value);
-              if (operator === "_operatorExclamationEqual") return vm.getBoolean(codes[0](vm, "get").value != codes[1](vm, "get").value);
               if (operator === "_operatorPipe2") return vm.getBoolean(codes[0](vm, "get").value || codes[1](vm, "get").value);
+              if (operator === "_operatorEqual2") return vm.getBoolean(codes[0](vm, "get").value === codes[1](vm, "get").value);
+              if (operator === "_operatorExclamationEqual") return vm.getBoolean(codes[0](vm, "get").value !== codes[1](vm, "get").value);
               if (operator === "_operatorTilde") {
                 var left = codes[0](vm, "get").value;
                 var right = codes[1](vm, "get").value;
