@@ -1523,6 +1523,7 @@ Right
     / "#" _ main:Variable { return ["_operatorHash", [main]]; }
     / "++" { return ["_rightPlus2", []]; }
     / "--" (! ">") { return ["_rightMinus2", []]; }
+    / "..." { return ["_rightPeriod3", []]; }
     ))* { return right(head, tail); }
 
 Variable
