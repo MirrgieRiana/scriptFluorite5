@@ -15,7 +15,7 @@
   function createCodeFromMethod(operator, codes)
   {
     return function(vm, context, args) {
-      return vm.callMethod(operator, codes, context, args);
+      return vm.callOperator(operator, codes, context, args);
     };
   }
 
@@ -101,7 +101,7 @@
         }
 
         this.dices = [];
-        this.callMethod = function(operator, codes, context, args) {
+        this.callOperator = function(operator, codes, context, args) {
 
           if (context === "get") {
 
@@ -329,7 +329,7 @@
             }
           };
 
-          this.callMethod = function(operator, codes, context, args) {
+          this.callOperator = function(operator, codes, context, args) {
             vm.consumeLoopCapacity();
 
             {
@@ -481,7 +481,7 @@
                   var array = codes.slice(2, codes.length).map(function(item) {
                     return vm.createPointer(item, vm.scope);
                   })
-                  return vm.callMethod(blessedOperator.value, array.map(function(item) {
+                  return vm.callOperator(blessedOperator.value, array.map(function(item) {
                     return function(vm, context, args) {
                       return vm.callPointer(item, context, args);
                     };
@@ -846,7 +846,7 @@
                 codes[0](vm, "invoke");
                 return;
               }
-              vm.callMethod(operator, codes, "get", args);
+              vm.callOperator(operator, codes, "get", args);
               return;
             } else if (context === "contentStatement") {
               if (operator === "_bracketsRound") return ["round", codes[0], undefined, createCodeFromMethod(operator, codes)];
