@@ -227,17 +227,6 @@
         {
           var vm = this;
 
-          function callInFrame(code, vm, context, args)
-          {
-            vm.pushFrame();
-            var res;
-            try {
-              res = code(vm, context, args);
-            } finally {
-              vm.popFrame();
-            }
-            return res;
-          }
           function dice(count, faces)
           {
             var t = 0, i, value, values = [];
@@ -427,12 +416,12 @@
               if (operator === "_operatorAmpersand2") return vm.getBoolean(codes[0](vm, "get").value && codes[1](vm, "get").value);
               if (operator === "_enumerateComma") return vm.packVector(codes.map(function(code) { return code(vm, "get"); }));
               if (operator === "_bracketsSquare") {
-                return vm.createObject(vm.types.typeArray, vm.unpackVector(callInFrame(codes[0], vm, "get")));
+                return vm.createObject(vm.types.typeArray, vm.unpackVector(vm.callInFrame(codes[0], vm, "get")));
               }
               if (operator === "_rightbracketsSquare") {
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["array"], value.value);
-                if (vm.instanceOf(value, vm.types.typeArray)) return value.value[callInFrame(codes[1], vm, "get").value] || vm.UNDEFINED;
+                if (vm.instanceOf(value, vm.types.typeArray)) return value.value[vm.callInFrame(codes[1], vm, "get").value] || vm.UNDEFINED;
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftAtsign") {
@@ -472,7 +461,7 @@
               if (operator === "_rightbracketsRound") {
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(codes[1], vm, "get"));
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(codes[1], vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_statement") {
@@ -712,7 +701,7 @@
               if (operator === "_leftAmpersand") return vm.createPointer(codes[0], vm.scope);
               if (operator === "_bracketsCurly") {
                 var hash = {};
-                vm.unpackVector(callInFrame(codes[0], vm, "get")).forEach(function(item) {
+                vm.unpackVector(vm.callInFrame(codes[0], vm, "get")).forEach(function(item) {
                   if (vm.instanceOf(item, vm.types.typeEntry)) {
                     hash[item.value.key.value] = item.value.value;
                     return;
@@ -792,7 +781,7 @@
               if (operator === "_hereDocumentFunction") {
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["decoration", "function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
                   return vm.packVector([vm.createPointer(codes[1], vm.scope), vm.createPointer(codes[2], vm.scope)]);
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
@@ -816,7 +805,7 @@
               if (operator === "_leftWord") {
                 var value = codes[0](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftWord", "word", "function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
                   return codes[1](vm, "get");
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
@@ -824,7 +813,7 @@
               if (operator === "_operatorWord") {
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorWord", "word", "function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
                   return vm.packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
@@ -832,7 +821,7 @@
               if (operator === "_rightComposite") {
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
                   return codes[0](vm, "get");
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
@@ -840,7 +829,7 @@
               if (operator === "_operatorComposite") {
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value.value);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.callInFrame(function(vm, context, args) {
                   return vm.packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
@@ -888,7 +877,7 @@
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
             if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
-            if (operator === "_bracketsRound") return callInFrame(codes[0], vm, context, args);
+            if (operator === "_bracketsRound") return vm.callInFrame(codes[0], vm, context, args);
 
             throw "Unknown operator: " + operator + "/" + context;
           };
@@ -1017,6 +1006,16 @@
         VMStandard.prototype.unpackVector = function(blessed) {
           if (this.instanceOf(blessed, this.types.typeVector)) return blessed.value;
           return [blessed];
+        };
+        VMStandard.prototype.callInFrame = function(code, vm, context, args) {
+          this.pushFrame();
+          var res;
+          try {
+            res = code(this, context, args);
+          } finally {
+            this.popFrame();
+          }
+          return res;
         };
         VMStandard.prototype.callPointer = function(blessedPointer, context, args) {
           this.pushStack(blessedPointer.value.scope);
