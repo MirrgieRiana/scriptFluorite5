@@ -230,24 +230,24 @@
 
           function pushScope()
           {
-            scope = new Scope(scope, false, UNDEFINED);
+            vm.scope = new Scope(vm.scope, false, UNDEFINED);
           }
           function pushFrame()
           {
-            scope = new Scope(scope, true, UNDEFINED);
+            vm.scope = new Scope(vm.scope, true, UNDEFINED);
           }
           function popFrame()
           {
-            scope = scope.getParentFrame();
+            vm.scope = vm.scope.getParentFrame();
           }
           function pushStack(scope2)
           {
-            stack.push(scope);
-            scope = scope2;
+            vm.stack.push(vm.scope);
+            vm.scope = scope2;
           }
           function popStack()
           {
-            scope = stack.pop();
+            vm.scope = vm.stack.pop();
           }
           function callInFrame(code, vm, context, args)
           {
@@ -336,9 +336,9 @@
             pushStack(blessedFunction.value.scope);
             pushFrame();
             for (i = 0; i < blessedFunction.value.args.length; i++) {
-              scope.defineOrSet(blessedFunction.value.args[i], array[i] || UNDEFINED);
+              vm.scope.defineOrSet(blessedFunction.value.args[i], array[i] || UNDEFINED);
             }
-            scope.defineOrSet("_", packVector(array.slice(i, array.length)));
+            vm.scope.defineOrSet("_", packVector(array.slice(i, array.length)));
             var res;
             try {
               res = blessedFunction.value.code(vm, "get");
@@ -364,11 +364,11 @@
             var variable;
 
             for (var i = 0; i < accesses.length; i++) {
-              variable = scope.getOrUndefined("_" + accesses[i] + "_" + keyword);
+              variable = vm.scope.getOrUndefined("_" + accesses[i] + "_" + keyword);
               if (!instanceOf(variable, typeUndefined)) return variable;
             }
 
-            variable = scope.getOrUndefined(keyword);
+            variable = vm.scope.getOrUndefined(keyword);
             if (!instanceOf(variable, typeUndefined)) return variable;
 
             return UNDEFINED;
@@ -415,10 +415,10 @@
             if (providesPrimitiveConstructor) {
               var f = function() {
                 blessedType.value.members["new"] = createFunction(["type"], function(vm, context) {
-                  var blessedValue = scope.getOrUndefined("type");
+                  var blessedValue = vm.scope.getOrUndefined("type");
                   if (instanceOf(blessedValue, blessedType)) return blessedValue;
                   throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
-                }, scope);
+                }, vm.scope);
               };
               if (listenersInitializeFinished === null) {
                 f();
@@ -434,10 +434,10 @@
             if (instanceOf(blessedName, typeKeyword)) blessedName = searchVariableWithType(blessedName.value, blessed.type);
             if (instanceOf(blessedName, typeFunction)) {
               return createFunction([], function(vm, context, args) {
-                var array = unpackVector(scope.getOrUndefined("_"));
+                var array = unpackVector(vm.scope.getOrUndefined("_"));
                 array.unshift(blessed);
                 return callFunction(blessedName, packVector(array));
-              }, scope);
+              }, vm.scope);
             }
             throw "Type Error: " + blessed.type.value.name + "." + blessedName.type.value.name;
           }
@@ -501,92 +501,92 @@
           var NULL = createObject(typeNull, null);
           var VOID = packVector([]);
 
-          var scope = new Scope(null, true, UNDEFINED);
-          var stack = [];
+          this.scope = new Scope(null, true, UNDEFINED);
+          this.stack = [];
 
           listenersInitializeFinished.map(function(a) { a(); })
           listenersInitializeFinished = null;
 
           typeValue.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, "<" + value.type.value.name + ">");
-          }, scope);
+          }, vm.scope);
           typeNumber.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, "" + value.value);
-          }, scope);
+          }, vm.scope);
           typeString.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, value.value);
-          }, scope);
+          }, vm.scope);
           typeBoolean.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, "" + value.value);
-          }, scope);
+          }, vm.scope);
           typeArray.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
-          }, scope);
+          }, vm.scope);
           typeHash.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, "{" + Object.keys(value.value).map(function(key) {
               return key + ": " + vm.toString(value.value[key]);
             }).join(", ") + "}");
-          }, scope);
+          }, vm.scope);
           typeEntry.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, vm.toString(value.value.key) + ": " + vm.toString(value.value.value));
-          }, scope);
+          }, vm.scope);
           typeVector.value.members["toString"] = createFunction([], function(vm, context) {
-            var value = scope.getOrUndefined("_");
+            var value = vm.scope.getOrUndefined("_");
             if (value.value.length == 0) return createObject(typeString, "<Void>");
             return createObject(typeString, value.value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
-          }, scope);
+          }, vm.scope);
           typeType.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, "<Type: " + value.value.name + ">");
-          }, scope);
+          }, vm.scope);
           typeFunction.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             if (value.value.args.length === 0) return createObject(typeString, "<Function>");
             return createObject(typeString, "<Function: " + value.value.args.join(", ") + ">");
-          }, scope);
+          }, vm.scope);
           typeException.value.members["toString"] = createFunction(["this"], function(vm, context) {
-            var value = scope.getOrUndefined("this");
+            var value = vm.scope.getOrUndefined("this");
             return createObject(typeString, "<Exception: '" + value.value.message + "'>");
-          }, scope);
+          }, vm.scope);
           
           {
             var hash = {};
             types.forEach(function(type) {
               hash[type.value.name] = type;
             });
-            scope.setOrDefine("fluorite", createObject(typeHash, {
+            vm.scope.setOrDefine("fluorite", createObject(typeHash, {
               "type": createObject(typeHash, hash),
             }));
           }
           types.forEach(function(type) {
-            scope.setOrDefine("_class_" + type.value.name, type);
+            vm.scope.setOrDefine("_class_" + type.value.name, type);
           });
           function createNativeBridge(func, argumentCount)
           {
             if (argumentCount == 0) {
               return createFunction([], function(vm, context) {
                 return createObject(typeNumber, func());
-              }, scope);
+              }, vm.scope);
             } else if (argumentCount == 1) {
               return createFunction(["x"], function(vm, context) {
-                return createObject(typeNumber, func(scope.getOrUndefined("x").value));
-              }, scope);
+                return createObject(typeNumber, func(vm.scope.getOrUndefined("x").value));
+              }, vm.scope);
             } else if (argumentCount == 2) {
               return createFunction(["x", "y"], function(vm, context) {
-                return createObject(typeNumber, func(scope.getOrUndefined("x").value, scope.getOrUndefined("y").value));
-              }, scope);
+                return createObject(typeNumber, func(vm.scope.getOrUndefined("x").value, vm.scope.getOrUndefined("y").value));
+              }, vm.scope);
             } else {
               throw "TODO"; // TODO
             }
           }
-          scope.setOrDefine("Math", createObject(typeHash, {
+          vm.scope.setOrDefine("Math", createObject(typeHash, {
             "PI": createObject(typeNumber, Math.PI),
             "E": createObject(typeNumber, Math.E),
             "abs": createNativeBridge(Math.abs, 1),
@@ -606,101 +606,101 @@
             "randomBetween": createNativeBridge(function(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }, 2),
             "sqrt": createNativeBridge(Math.sqrt, 1),
           }));
-          scope.setOrDefine("_rightComposite_d", createFunction(["count"], function(vm, context) {
-            var count = scope.getOrUndefined("count");
+          vm.scope.setOrDefine("_rightComposite_d", createFunction(["count"], function(vm, context) {
+            var count = vm.scope.getOrUndefined("count");
             if (!instanceOf(count, typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
             if (count.value > 20) throw createException("Illegal argument[0]: " + count.value + " > 20");
             return createObject(typeNumber, dice(count.value, 6));
-          }, scope));
-          scope.setOrDefine("_function_d", createFunction(["count", "faces"], function(vm, context) {
-            var count = scope.getOrUndefined("count");
-            var faces = scope.getOrUndefined("faces");
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_d", createFunction(["count", "faces"], function(vm, context) {
+            var count = vm.scope.getOrUndefined("count");
+            var faces = vm.scope.getOrUndefined("faces");
             if (!instanceOf(count, typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
             if (count.value > 20) throw createException("Illegal argument[0]: " + count.value + " > 20");
             if (!instanceOf(faces, typeNumber)) throw "Illegal argument[1]: " + faces.type.value.name + " != Number";
             return createObject(typeNumber, dice(count.value, faces.value));
-          }, scope));
-          scope.setOrDefine("_leftMultibyte_√", createFunction(["x"], function(vm, context) {
-            var x = scope.getOrUndefined("x");
+          }, vm.scope));
+          vm.scope.setOrDefine("_leftMultibyte_√", createFunction(["x"], function(vm, context) {
+            var x = vm.scope.getOrUndefined("x");
             if (!instanceOf(x, typeNumber)) throw "Illegal argument[0]: " + x.type.value.name + " != Number";
             return createObject(typeNumber, Math.sqrt(x.value));
-          }, scope));
-          scope.setOrDefine("_function_join", createFunction(["separator"], function(vm, context) {
-            var separator = scope.getOrUndefined("separator");
-            var vector = scope.getOrUndefined("_");
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_join", createFunction(["separator"], function(vm, context) {
+            var separator = vm.scope.getOrUndefined("separator");
+            var vector = vm.scope.getOrUndefined("_");
             return createObject(typeString, unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(separator.value));
-          }, scope));
-          scope.setOrDefine("_function_join1", createFunction([], function(vm, context) {
-            var vector = scope.getOrUndefined("_");
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_join1", createFunction([], function(vm, context) {
+            var vector = vm.scope.getOrUndefined("_");
             return createObject(typeString, unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(""));
-          }, scope));
-          scope.setOrDefine("_function_join2", createFunction([], function(vm, context) {
-            var vector = scope.getOrUndefined("_");
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_join2", createFunction([], function(vm, context) {
+            var vector = vm.scope.getOrUndefined("_");
             return createObject(typeString, unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(", "));
-          }, scope));
-          scope.setOrDefine("_function_join3", createFunction([], function(vm, context) {
-            var vector = scope.getOrUndefined("_");
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_join3", createFunction([], function(vm, context) {
+            var vector = vm.scope.getOrUndefined("_");
             return createObject(typeString, unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join("\n"));
-          }, scope));
-          scope.setOrDefine("_function_sum", createFunction([], function(vm, context) {
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_sum", createFunction([], function(vm, context) {
             var value = 0;
-            unpackVector(scope.getOrUndefined("_")).forEach(function(blessed) {
+            unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value += blessed.value;
             });
             return createObject(typeNumber, value);
-          }, scope));
-          scope.setOrDefine("_function_average", createFunction([], function(vm, context) {
-            var array = unpackVector(scope.getOrUndefined("_"));
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_average", createFunction([], function(vm, context) {
+            var array = unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return UNDEFINED;
             var value = 0;
             array.forEach(function(blessed) {
               value += blessed.value;
             });
             return createObject(typeNumber, value / array.length);
-          }, scope));
-          scope.setOrDefine("_function_count", createFunction([], function(vm, context) {
-            return createObject(typeNumber, unpackVector(scope.getOrUndefined("_")).length);
-          }, scope));
-          scope.setOrDefine("_function_and", createFunction([], function(vm, context) {
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_count", createFunction([], function(vm, context) {
+            return createObject(typeNumber, unpackVector(vm.scope.getOrUndefined("_")).length);
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_and", createFunction([], function(vm, context) {
             var value = true;
-            unpackVector(scope.getOrUndefined("_")).forEach(function(blessed) {
+            unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value = value && blessed.value;
             });
             return createObject(typeBoolean, value);
-          }, scope));
-          scope.setOrDefine("_function_or", createFunction([], function(vm, context) {
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_or", createFunction([], function(vm, context) {
             var value = false;
-            unpackVector(scope.getOrUndefined("_")).forEach(function(blessed) {
+            unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value = value || blessed.value;
             });
             return createObject(typeBoolean, value);
-          }, scope));
-          scope.setOrDefine("_function_max", createFunction([], function(vm, context) {
-            var array = unpackVector(scope.getOrUndefined("_"));
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_max", createFunction([], function(vm, context) {
+            var array = unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return UNDEFINED;
             var value = array[0].value;
             for (var i = 1; i < array.length; i++) {
               if (value < array[i].value) value = array[i].value;
             }
             return createObject(typeNumber, value);
-          }, scope));
-          scope.setOrDefine("_function_min", createFunction([], function(vm, context) {
-            var array = unpackVector(scope.getOrUndefined("_"));
+          }, vm.scope));
+          vm.scope.setOrDefine("_function_min", createFunction([], function(vm, context) {
+            var array = unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return UNDEFINED;
             var value = array[0].value;
             for (var i = 1; i < array.length; i++) {
               if (value > array[i].value) value = array[i].value;
             }
             return createObject(typeNumber, value);
-          }, scope));
+          }, vm.scope));
 
           this.dices = [];
           this.loopCapacity = 10000;
@@ -719,11 +719,11 @@
 
             {
               var name = "_" + context + operator;
-              var func = scope.getOrUndefined(name);
+              var func = vm.scope.getOrUndefined(name);
               if (!instanceOf(func, typeUndefined)) {
                 if (instanceOf(func, typeFunction)) {
                   var array = [createObject(typeString, context)];
-                  Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, scope); }));
+                  Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, vm.scope); }));
                   var pointer = callFunction(func, packVector(array));
                   if (!instanceOf(pointer, typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
                   return callPointer(pointer, context, args);
@@ -735,11 +735,11 @@
 
             {
               var name = operator;
-              var func = scope.getOrUndefined(name);
+              var func = vm.scope.getOrUndefined(name);
               if (!instanceOf(func, typeUndefined)) {
                 if (instanceOf(func, typeFunction)) {
                   var array = [createObject(typeString, context)];
-                  Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, scope); }));
+                  Array.prototype.push.apply(array, codes.map(function(code) { return createPointer(code, vm.scope); }));
                   var pointer = callFunction(func, packVector(array));
                   if (!instanceOf(pointer, typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
                   return callPointer(pointer, context, args);
@@ -806,10 +806,10 @@
                 var minus = operator == "_operatorMinus2Greater";
                 if (minus) {
                   return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
-                    return callFunction(createFunction([], codes[1], scope), scalar);
+                    return callFunction(createFunction([], codes[1], vm.scope), scalar);
                   }));
                 } else {
-                  return callFunction(createFunction([], codes[1], scope), codes[0](vm, "get"));
+                  return callFunction(createFunction([], codes[1], vm.scope), codes[0](vm, "get"));
                 }
               }
               if (operator === "_operatorMinusGreater"
@@ -829,7 +829,7 @@
                 key: codes[0](vm, "get"),
                 value: codes[1](vm, "get"),
               });
-              if (operator === "_leftDollar") return scope.getOrUndefined(codes[0](vm, "get").value);
+              if (operator === "_leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get").value);
               if (operator === "_rightbracketsRound") {
                 var value = codes[0](vm, "get");
                 if (instanceOf(value, typeKeyword)) value = searchVariable(["function"], value.value);
@@ -847,12 +847,12 @@
                   var array = unpackVector(codes[1](vm, "arguments"));
                   array.map(function(item) {
                     if (!instanceOf(item, typeKeyword)) throw "Type Error: " + item.type.value.name + " != Keyword";
-                    scope.defineOrSet(item.value, UNDEFINED);
+                    vm.scope.defineOrSet(item.value, UNDEFINED);
                   });
                   return UNDEFINED;
                 }
                 if (command.value === "console_scope") {
-                  console.log(scope);
+                  console.log(vm.scope);
                   return UNDEFINED;
                 }
                 if (command.value === "console_log") {
@@ -864,7 +864,7 @@
                   var blessedOperator = codes[1](vm, "get");
                   if (!instanceOf(blessedOperator, typeString)) throw "Type Error: " + blessedOperator.type.value.name + " != String";
                   var array = codes.slice(2, codes.length).map(function(item) {
-                    return createPointer(item, scope);
+                    return createPointer(item, vm.scope);
                   })
                   return vm.callMethod(blessedOperator.value, array.map(function(item) {
                     return function(vm, context, args) {
@@ -971,7 +971,7 @@
                   } catch (e) {
                     if (instanceOf(e, typeException)) {
                       pushFrame();
-                      scope.defineOrSet(blessedKeyword.value, e);
+                      vm.scope.defineOrSet(blessedKeyword.value, e);
                       try {
                         blessedResult = codeCatch(vm, "get");
                       } finally {
@@ -1020,8 +1020,8 @@
                   
                   if (value !== undefined && value[0] === "curly") {
                     pushFrame();
-                    scope.defineOrSet("class", blessedResult);
-                    scope.defineOrSet("super", blessedExtends);
+                    vm.scope.defineOrSet("class", blessedResult);
+                    vm.scope.defineOrSet("super", blessedExtends);
                     try {
                       value[1](vm, "invoke")
                     } finally {
@@ -1034,7 +1034,7 @@
                   
                   // parse end
                   
-                  if (isNamed) scope.defineOrSet("_class_" + blessedName.value, blessedResult);
+                  if (isNamed) vm.scope.defineOrSet("_class_" + blessedName.value, blessedResult);
                   return blessedResult;
                 }
                 if (command.value === "new") {
@@ -1070,7 +1070,7 @@
                 }
                 throw "Unknown command: " + command.value;
               }
-              if (operator === "_leftAmpersand") return createPointer(codes[0], scope);
+              if (operator === "_leftAmpersand") return createPointer(codes[0], vm.scope);
               if (operator === "_bracketsCurly") {
                 var hash = {};
                 unpackVector(callInFrame(codes[0], vm, "get")).forEach(function(item) {
@@ -1120,7 +1120,7 @@
               }
               if (operator === "_operatorColonGreater") {
                 var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
-                return createFunction(array, codes[1], scope);
+                return createFunction(array, codes[1], vm.scope);
               }
               if (operator === "_concatenate") {
                 return createObject(typeString, codes.map(function(code) { return vm.toString(code(vm, "get")); }).join(""));
@@ -1154,7 +1154,7 @@
                 var value = codes[0](vm, "get");
                 if (instanceOf(value, typeKeyword)) value = searchVariable(["decoration", "function"], value.value);
                 if (instanceOf(value, typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                  return packVector([createPointer(codes[1], scope), createPointer(codes[2], scope)]);
+                  return packVector([createPointer(codes[1], vm.scope), createPointer(codes[2], vm.scope)]);
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -1162,7 +1162,7 @@
                 var value = codes[0](vm, "get");
                 if (instanceOf(value, typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
                 if (instanceOf(value, typeFunction)) {
-                  return callPointer(callFunction(value, createPointer(codes[1], scope)), context, args);
+                  return callPointer(callFunction(value, createPointer(codes[1], vm.scope)), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -1170,7 +1170,7 @@
                 var value = codes[1](vm, "get");
                 if (instanceOf(value, typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
                 if (instanceOf(value, typeFunction)) {
-                  return callPointer(callFunction(value, packVector([createPointer(codes[0], scope), createPointer(codes[2], scope)])), context, args);
+                  return callPointer(callFunction(value, packVector([createPointer(codes[0], vm.scope), createPointer(codes[2], vm.scope)])), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -1209,7 +1209,7 @@
             } else if (context === "set") {
               if (operator === "_leftDollar") {
                 var value = args[0];
-                scope.setOrDefine(codes[0](vm, "get").value, value);
+                vm.scope.setOrDefine(codes[0](vm, "get").value, value);
                 return value;
               }
               if (operator === "_operatorColon2") {
