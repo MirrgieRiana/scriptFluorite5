@@ -251,52 +251,16 @@
             vm.dices.push(values);
             return t;
           }
-          function visitScalar(array, blessed)
-          {
-            if (instanceOf(blessed, vm.types.typeVector)) {
-              for (var i = 0; i < blessed.value.length; i++) {
-                visitScalar(array, blessed.value[i]);
-              }
-            } else {
-              array.push(blessed);
-            }
-          }
-          function packVector(array)
-          {
-            var array2 = [];
-            array.forEach(function(item) { visitScalar(array2, item); });
-            if (array2.length == 1) return array2[0];
-            return vm.createObject(vm.types.typeVector, array2);
-          }
-          function unpackVector(blessed)
-          {
-            if (instanceOf(blessed, vm.types.typeVector)) return blessed.value;
-            return [blessed];
-          }
-          function instanceOf(blessed, blessedType2)
-          {
-            if ((typeof blessed) !== "object") return false;
-            if (blessed.type === undefined) return false;
-
-            var blessedType = blessed.type;
-
-            while (blessedType !== null) {
-              if (blessedType == blessedType2) return true;
-              blessedType = blessedType.value.supertype;
-            }
-
-            return false;
-          }
           function callFunction(blessedFunction, blessedArgs)
           {
             var i;
-            var array = unpackVector(blessedArgs);
+            var array = vm.unpackVector(blessedArgs);
             vm.pushStack(blessedFunction.value.scope);
             vm.pushFrame();
             for (i = 0; i < blessedFunction.value.args.length; i++) {
               vm.scope.defineOrSet(blessedFunction.value.args[i], array[i] || vm.UNDEFINED);
             }
-            vm.scope.defineOrSet("_", packVector(array.slice(i, array.length)));
+            vm.scope.defineOrSet("_", vm.packVector(array.slice(i, array.length)));
             var res;
             try {
               res = blessedFunction.value.code(vm, "get");
@@ -323,11 +287,11 @@
 
             for (var i = 0; i < accesses.length; i++) {
               variable = vm.scope.getOrUndefined("_" + accesses[i] + "_" + keyword);
-              if (!instanceOf(variable, vm.types.typeUndefined)) return variable;
+              if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
             }
 
             variable = vm.scope.getOrUndefined(keyword);
-            if (!instanceOf(variable, vm.types.typeUndefined)) return variable;
+            if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
 
             return vm.UNDEFINED;
           }
@@ -338,7 +302,7 @@
             while (blessedType !== null) {
 
               variable = getPropertyBlessed(blessedType.value.members, keyword);
-              if (!instanceOf(variable, vm.types.typeUndefined)) return variable;
+              if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
 
               blessedType = blessedType.value.supertype;
             }
@@ -353,7 +317,7 @@
             while (blessedType !== null) {
 
               f = getPropertyBlessed(blessedType.value.members, keyword);
-              if (!instanceOf(f, vm.types.typeUndefined)) {
+              if (!vm.instanceOf(f, vm.types.typeUndefined)) {
                 functions.push(f);
               }
 
@@ -374,7 +338,7 @@
               var f = function() {
                 blessedType.value.members["new"] = vm.createFunction(["type"], function(vm, context) {
                   var blessedValue = vm.scope.getOrUndefined("type");
-                  if (instanceOf(blessedValue, blessedType)) return blessedValue;
+                  if (vm.instanceOf(blessedValue, blessedType)) return blessedValue;
                   throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
                 }, vm.scope);
               };
@@ -389,12 +353,12 @@
           }
           function getMethodOfBlessed(blessed, blessedName)
           {
-            if (instanceOf(blessedName, vm.types.typeKeyword)) blessedName = searchVariableWithType(blessedName.value, blessed.type);
-            if (instanceOf(blessedName, vm.types.typeFunction)) {
+            if (vm.instanceOf(blessedName, vm.types.typeKeyword)) blessedName = searchVariableWithType(blessedName.value, blessed.type);
+            if (vm.instanceOf(blessedName, vm.types.typeFunction)) {
               return vm.createFunction([], function(vm, context, args) {
-                var array = unpackVector(vm.scope.getOrUndefined("_"));
+                var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
                 array.unshift(blessed);
-                return callFunction(blessedName, packVector(array));
+                return callFunction(blessedName, vm.packVector(array));
               }, vm.scope);
             }
             throw "Type Error: " + blessed.type.value.name + "." + blessedName.type.value.name;
@@ -435,7 +399,7 @@
 
           vm.UNDEFINED = vm.createObject(vm.types.typeUndefined, undefined);
           vm.NULL = vm.createObject(vm.types.typeNull, null);
-          vm.VOID = packVector([]);
+          vm.VOID = vm.packVector([]);
           vm.TRUE = vm.createObject(vm.types.typeBoolean, true);
           vm.FALSE = vm.createObject(vm.types.typeBoolean, false);
 
@@ -546,57 +510,57 @@
           }));
           vm.scope.setOrDefine("_rightComposite_d", vm.createFunction(["count"], function(vm, context) {
             var count = vm.scope.getOrUndefined("count");
-            if (!instanceOf(count, vm.types.typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
+            if (!vm.instanceOf(count, vm.types.typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
             if (count.value > 20) throw vm.createException("Illegal argument[0]: " + count.value + " > 20");
             return vm.createObject(vm.types.typeNumber, dice(count.value, 6));
           }, vm.scope));
           vm.scope.setOrDefine("_function_d", vm.createFunction(["count", "faces"], function(vm, context) {
             var count = vm.scope.getOrUndefined("count");
             var faces = vm.scope.getOrUndefined("faces");
-            if (!instanceOf(count, vm.types.typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
+            if (!vm.instanceOf(count, vm.types.typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
             if (count.value > 20) throw vm.createException("Illegal argument[0]: " + count.value + " > 20");
-            if (!instanceOf(faces, vm.types.typeNumber)) throw "Illegal argument[1]: " + faces.type.value.name + " != Number";
+            if (!vm.instanceOf(faces, vm.types.typeNumber)) throw "Illegal argument[1]: " + faces.type.value.name + " != Number";
             return vm.createObject(vm.types.typeNumber, dice(count.value, faces.value));
           }, vm.scope));
           vm.scope.setOrDefine("_leftMultibyte_√", vm.createFunction(["x"], function(vm, context) {
             var x = vm.scope.getOrUndefined("x");
-            if (!instanceOf(x, vm.types.typeNumber)) throw "Illegal argument[0]: " + x.type.value.name + " != Number";
+            if (!vm.instanceOf(x, vm.types.typeNumber)) throw "Illegal argument[0]: " + x.type.value.name + " != Number";
             return vm.createObject(vm.types.typeNumber, Math.sqrt(x.value));
           }, vm.scope));
           vm.scope.setOrDefine("_function_join", vm.createFunction(["separator"], function(vm, context) {
             var separator = vm.scope.getOrUndefined("separator");
             var vector = vm.scope.getOrUndefined("_");
-            return vm.createObject(vm.types.typeString, unpackVector(vector).map(function(blessed) {
+            return vm.createObject(vm.types.typeString, vm.unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(separator.value));
           }, vm.scope));
           vm.scope.setOrDefine("_function_join1", vm.createFunction([], function(vm, context) {
             var vector = vm.scope.getOrUndefined("_");
-            return vm.createObject(vm.types.typeString, unpackVector(vector).map(function(blessed) {
+            return vm.createObject(vm.types.typeString, vm.unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(""));
           }, vm.scope));
           vm.scope.setOrDefine("_function_join2", vm.createFunction([], function(vm, context) {
             var vector = vm.scope.getOrUndefined("_");
-            return vm.createObject(vm.types.typeString, unpackVector(vector).map(function(blessed) {
+            return vm.createObject(vm.types.typeString, vm.unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(", "));
           }, vm.scope));
           vm.scope.setOrDefine("_function_join3", vm.createFunction([], function(vm, context) {
             var vector = vm.scope.getOrUndefined("_");
-            return vm.createObject(vm.types.typeString, unpackVector(vector).map(function(blessed) {
+            return vm.createObject(vm.types.typeString, vm.unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join("\n"));
           }, vm.scope));
           vm.scope.setOrDefine("_function_sum", vm.createFunction([], function(vm, context) {
             var value = 0;
-            unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
+            vm.unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value += blessed.value;
             });
             return vm.createObject(vm.types.typeNumber, value);
           }, vm.scope));
           vm.scope.setOrDefine("_function_average", vm.createFunction([], function(vm, context) {
-            var array = unpackVector(vm.scope.getOrUndefined("_"));
+            var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return vm.UNDEFINED;
             var value = 0;
             array.forEach(function(blessed) {
@@ -605,24 +569,24 @@
             return vm.createObject(vm.types.typeNumber, value / array.length);
           }, vm.scope));
           vm.scope.setOrDefine("_function_count", vm.createFunction([], function(vm, context) {
-            return vm.createObject(vm.types.typeNumber, unpackVector(vm.scope.getOrUndefined("_")).length);
+            return vm.createObject(vm.types.typeNumber, vm.unpackVector(vm.scope.getOrUndefined("_")).length);
           }, vm.scope));
           vm.scope.setOrDefine("_function_and", vm.createFunction([], function(vm, context) {
             var value = true;
-            unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
+            vm.unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value = value && blessed.value;
             });
             return vm.getBoolean(value);
           }, vm.scope));
           vm.scope.setOrDefine("_function_or", vm.createFunction([], function(vm, context) {
             var value = false;
-            unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
+            vm.unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value = value || blessed.value;
             });
             return vm.getBoolean(value);
           }, vm.scope));
           vm.scope.setOrDefine("_function_max", vm.createFunction([], function(vm, context) {
-            var array = unpackVector(vm.scope.getOrUndefined("_"));
+            var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return vm.UNDEFINED;
             var value = array[0].value;
             for (var i = 1; i < array.length; i++) {
@@ -631,7 +595,7 @@
             return vm.createObject(vm.types.typeNumber, value);
           }, vm.scope));
           vm.scope.setOrDefine("_function_min", vm.createFunction([], function(vm, context) {
-            var array = unpackVector(vm.scope.getOrUndefined("_"));
+            var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return vm.UNDEFINED;
             var value = array[0].value;
             for (var i = 1; i < array.length; i++) {
@@ -658,12 +622,12 @@
             {
               var name = "_" + context + operator;
               var func = vm.scope.getOrUndefined(name);
-              if (!instanceOf(func, vm.types.typeUndefined)) {
-                if (instanceOf(func, vm.types.typeFunction)) {
+              if (!vm.instanceOf(func, vm.types.typeUndefined)) {
+                if (vm.instanceOf(func, vm.types.typeFunction)) {
                   var array = [vm.createObject(vm.types.typeString, context)];
                   Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
-                  var pointer = callFunction(func, packVector(array));
-                  if (!instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
+                  var pointer = callFunction(func, vm.packVector(array));
+                  if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
                   return callPointer(pointer, context, args);
                 } else {
                   throw "`" + name + "` is not a function";
@@ -674,12 +638,12 @@
             {
               var name = operator;
               var func = vm.scope.getOrUndefined(name);
-              if (!instanceOf(func, vm.types.typeUndefined)) {
-                if (instanceOf(func, vm.types.typeFunction)) {
+              if (!vm.instanceOf(func, vm.types.typeUndefined)) {
+                if (vm.instanceOf(func, vm.types.typeFunction)) {
                   var array = [vm.createObject(vm.types.typeString, context)];
                   Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
-                  var pointer = callFunction(func, packVector(array));
-                  if (!instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
+                  var pointer = callFunction(func, vm.packVector(array));
+                  if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
                   return callPointer(pointer, context, args);
                 } else {
                   throw "`" + name + "` is not a function";
@@ -692,8 +656,8 @@
               if (operator === "_operatorPlus") {
                 var left = codes[0](vm, "get");
                 var right = codes[1](vm, "get");
-                if (instanceOf(left, vm.types.typeNumber)) {
-                  if (instanceOf(right, vm.types.typeNumber)) {
+                if (vm.instanceOf(left, vm.types.typeNumber)) {
+                  if (vm.instanceOf(right, vm.types.typeNumber)) {
                     return vm.createObject(vm.types.typeNumber, left.value + right.value);
                   }
                 }
@@ -721,29 +685,29 @@
                 for (var i = left; i <= right; i++) {
                   array.push(vm.createObject(vm.types.typeNumber, i));
                 }
-                return packVector(array);
+                return vm.packVector(array);
               }
               if (operator === "_operatorAmpersand2") return vm.getBoolean(codes[0](vm, "get").value && codes[1](vm, "get").value);
-              if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "get"); }));
+              if (operator === "_enumerateComma") return vm.packVector(codes.map(function(code) { return code(vm, "get"); }));
               if (operator === "_bracketsSquare") {
-                return vm.createObject(vm.types.typeArray, unpackVector(callInFrame(codes[0], vm, "get")));
+                return vm.createObject(vm.types.typeArray, vm.unpackVector(callInFrame(codes[0], vm, "get")));
               }
               if (operator === "_rightbracketsSquare") {
                 var value = codes[0](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["array"], value.value);
-                if (instanceOf(value, vm.types.typeArray)) return value.value[callInFrame(codes[1], vm, "get").value] || vm.UNDEFINED;
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["array"], value.value);
+                if (vm.instanceOf(value, vm.types.typeArray)) return value.value[callInFrame(codes[1], vm, "get").value] || vm.UNDEFINED;
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftAtsign") {
                 var value = codes[0](vm, "get");
-                if (instanceOf(value, vm.types.typeArray)) return vm.createObject(vm.types.typeVector, value.value);
+                if (vm.instanceOf(value, vm.types.typeArray)) return vm.createObject(vm.types.typeVector, value.value);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorMinus2Greater"
                 || operator === "_operatorEqual2Greater") 	{
                 var minus = operator == "_operatorMinus2Greater";
                 if (minus) {
-                  return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
+                  return vm.packVector(vm.unpackVector(codes[0](vm, "get")).map(function(scalar) {
                     return callFunction(vm.createFunction([], codes[1], vm.scope), scalar);
                   }));
                 } else {
@@ -755,7 +719,7 @@
                 var minus = operator == "_operatorMinusGreater";
                 var right = codes[1](vm, "get");
                 if (minus) {
-                  return packVector(unpackVector(codes[0](vm, "get")).map(function(scalar) {
+                  return vm.packVector(vm.unpackVector(codes[0](vm, "get")).map(function(scalar) {
                     return callMethodOfBlessed(scalar, right, vm.VOID);
                   }));
                 } else {
@@ -770,21 +734,21 @@
               if (operator === "_leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get").value);
               if (operator === "_rightbracketsRound") {
                 var value = codes[0](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["function"], value.value);
-                if (instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(codes[1], vm, "get"));
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["function"], value.value);
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(codes[1], vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_statement") {
                 var command = codes[0](vm, "get");
-                if (!instanceOf(command, vm.types.typeKeyword)) throw "Type Error: " + command.type.value.name + " != String";
+                if (!vm.instanceOf(command, vm.types.typeKeyword)) throw "Type Error: " + command.type.value.name + " != String";
                 if (command.value === "typeof") {
                   var value = codes[1](vm, "get");
                   return value.type;
                 }
                 if (command.value === "var") {
-                  var array = unpackVector(codes[1](vm, "arguments"));
+                  var array = vm.unpackVector(codes[1](vm, "arguments"));
                   array.map(function(item) {
-                    if (!instanceOf(item, vm.types.typeKeyword)) throw "Type Error: " + item.type.value.name + " != Keyword";
+                    if (!vm.instanceOf(item, vm.types.typeKeyword)) throw "Type Error: " + item.type.value.name + " != Keyword";
                     vm.scope.defineOrSet(item.value, vm.UNDEFINED);
                   });
                   return vm.UNDEFINED;
@@ -800,7 +764,7 @@
                 }
                 if (command.value === "call") {
                   var blessedOperator = codes[1](vm, "get");
-                  if (!instanceOf(blessedOperator, vm.types.typeString)) throw "Type Error: " + blessedOperator.type.value.name + " != String";
+                  if (!vm.instanceOf(blessedOperator, vm.types.typeString)) throw "Type Error: " + blessedOperator.type.value.name + " != String";
                   var array = codes.slice(2, codes.length).map(function(item) {
                     return vm.createPointer(item, vm.scope);
                   })
@@ -814,50 +778,50 @@
                   if (codes.length != 3) throw "Illegal command argument: " + command.value;
                   var value = codes[1](vm, "get");
                   var type = codes[2](vm, "get");
-                  if (!instanceOf(type, vm.types.typeType)) throw "Type Error: " + type.type.value.name + " != Type";
-                  return vm.getBoolean(instanceOf(value, type));
+                  if (!vm.instanceOf(type, vm.types.typeType)) throw "Type Error: " + type.type.value.name + " != Type";
+                  return vm.getBoolean(vm.instanceOf(value, type));
                 }
                 if (command.value === "length") {
                   var value = codes[1](vm, "get");
-                  if (instanceOf(value, vm.types.typeArray)) return vm.createObject(vm.types.typeNumber, value.value.length);
-                  if (instanceOf(value, vm.types.typeVector)) return vm.createObject(vm.types.typeNumber, value.value.length);
-                  if (instanceOf(value, vm.types.typeString)) return vm.createObject(vm.types.typeNumber, value.value.length);
+                  if (vm.instanceOf(value, vm.types.typeArray)) return vm.createObject(vm.types.typeNumber, value.value.length);
+                  if (vm.instanceOf(value, vm.types.typeVector)) return vm.createObject(vm.types.typeNumber, value.value.length);
+                  if (vm.instanceOf(value, vm.types.typeString)) return vm.createObject(vm.types.typeNumber, value.value.length);
                   throw "Illegal Argument: " + value.type.value;
                 }
                 if (command.value === "keys") {
                   var value = codes[1](vm, "get");
-                  if (!instanceOf(value, vm.types.typeHash)) throw "Type Error: " + value.type.value.name + " != Hash";
-                  return packVector(Object.keys(value.value).map(function(key) {
+                  if (!vm.instanceOf(value, vm.types.typeHash)) throw "Type Error: " + value.type.value.name + " != Hash";
+                  return vm.packVector(Object.keys(value.value).map(function(key) {
                     return vm.createObject(vm.types.typeKeyword, key);
                   }));
                 }
                 if (command.value === "entry_key") {
                   var value = codes[1](vm, "get");
-                  if (!instanceOf(value, vm.types.typeEntry)) throw "Type Error: " + value.type.value.name + " != Entry";
+                  if (!vm.instanceOf(value, vm.types.typeEntry)) throw "Type Error: " + value.type.value.name + " != Entry";
                   return value.value.key;
                 }
                 if (command.value === "entry_value") {
                   var value = codes[1](vm, "get");
-                  if (!instanceOf(value, vm.types.typeEntry)) throw "Type Error: " + value.type.value.name + " != Entry";
+                  if (!vm.instanceOf(value, vm.types.typeEntry)) throw "Type Error: " + value.type.value.name + " != Entry";
                   return value.value.value;
                 }
                 if (command.value === "size") {
                   var value = codes[1](vm, "get");
-                  return vm.createObject(vm.types.typeNumber, unpackVector(value).length);
+                  return vm.createObject(vm.types.typeNumber, vm.unpackVector(value).length);
                 }
                 if (command.value === "li") {
                   var array = [];
                   for (var i = 1; i < codes.length; i++) {
                     array.push(codes[i](vm, "get"));
                   }
-                  return packVector(array);
+                  return vm.packVector(array);
                 }
                 if (command.value === "array") {
                   var array = [];
                   for (var i = 1; i < codes.length; i++) {
                     array.push(codes[i](vm, "get"));
                   }
-                  return vm.createObject(vm.types.typeArray, unpackVector(packVector(array)));
+                  return vm.createObject(vm.types.typeArray, vm.unpackVector(vm.packVector(array)));
                 }
                 if (command.value === "throw") {
                   var i = 1, value;
@@ -865,7 +829,7 @@
 
                   if (!(value !== undefined)) throw "Illegal command argument";
                   var blessedValue = value[3](vm, "get");
-                  if (!instanceOf(blessedValue, vm.types.typeString)) throw "Type Error: " + blessedValue.type.value.name + " != String";
+                  if (!vm.instanceOf(blessedValue, vm.types.typeString)) throw "Type Error: " + blessedValue.type.value.name + " != String";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   if (value !== undefined) throw "Illegal command argument: " + value[0];
@@ -887,7 +851,7 @@
 
                   if (!(value !== undefined && value[0] === "round")) throw "Illegal command argument";
                   var blessedKeyword = value[1](vm, "arguments");
-                  if (!instanceOf(blessedKeyword, vm.types.typeKeyword)) throw "Type Error: " + blessedKeyword.type.value.name + " != Keyword";
+                  if (!vm.instanceOf(blessedKeyword, vm.types.typeKeyword)) throw "Type Error: " + blessedKeyword.type.value.name + " != Keyword";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   if (!(value !== undefined && value[0] === "curly")) throw "Illegal command argument";
@@ -907,7 +871,7 @@
                       vm.popFrame();
                     }
                   } catch (e) {
-                    if (instanceOf(e, vm.types.typeException)) {
+                    if (vm.instanceOf(e, vm.types.typeException)) {
                       vm.pushFrame();
                       vm.scope.defineOrSet(blessedKeyword.value, e);
                       try {
@@ -930,7 +894,7 @@
                   var isNamed;
                   if (value !== undefined && !((value[0] === "keyword" && value[2] === "extends") || value[0] === "curly")) {
                     blessedName = value[1](vm, "get");
-                    if (!instanceOf(blessedName, vm.types.typeKeyword)) throw "Type Error: " + blessedName.type.value.name + " != Keyword";
+                    if (!vm.instanceOf(blessedName, vm.types.typeKeyword)) throw "Type Error: " + blessedName.type.value.name + " != Keyword";
                     value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                     isNamed = true;
@@ -946,8 +910,8 @@
                     value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                     blessedExtends = value[1](vm, "get");
-                    if (instanceOf(blessedExtends, vm.types.typeKeyword)) blessedExtends = searchVariable(["class"], blessedExtends.value);
-                    if (!instanceOf(blessedExtends, vm.types.typeType)) throw "Type Error: " + blessedExtends.type.value.name + " != Type";
+                    if (vm.instanceOf(blessedExtends, vm.types.typeKeyword)) blessedExtends = searchVariable(["class"], blessedExtends.value);
+                    if (!vm.instanceOf(blessedExtends, vm.types.typeType)) throw "Type Error: " + blessedExtends.type.value.name + " != Type";
                     value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   } else {
@@ -980,8 +944,8 @@
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   var blessedType = value[1](vm, "get");
-                  if (instanceOf(blessedType, vm.types.typeKeyword)) blessedType = searchVariable(["class"], blessedType.value);
-                  if (!instanceOf(blessedType, vm.types.typeType)) throw "Type Error: " + blessedType.type.value.name + " != Type";
+                  if (vm.instanceOf(blessedType, vm.types.typeKeyword)) blessedType = searchVariable(["class"], blessedType.value);
+                  if (!vm.instanceOf(blessedType, vm.types.typeType)) throw "Type Error: " + blessedType.type.value.name + " != Type";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   var blessedArguments = value[1](vm, "get");
@@ -1011,8 +975,8 @@
               if (operator === "_leftAmpersand") return vm.createPointer(codes[0], vm.scope);
               if (operator === "_bracketsCurly") {
                 var hash = {};
-                unpackVector(callInFrame(codes[0], vm, "get")).forEach(function(item) {
-                  if (instanceOf(item, vm.types.typeEntry)) {
+                vm.unpackVector(callInFrame(codes[0], vm, "get")).forEach(function(item) {
+                  if (vm.instanceOf(item, vm.types.typeEntry)) {
                     hash[item.value.key.value] = item.value.value;
                     return;
                   }
@@ -1022,28 +986,28 @@
               }
               if (operator === "_operatorColon2") {
                 var hash = codes[0](vm, "get");
-                if (instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["hash", "class"], hash.value);
+                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["hash", "class"], hash.value);
                 var key = codes[1](vm, "get");
-                if (instanceOf(hash, vm.types.typeHash)) {
-                  if (instanceOf(key, vm.types.typeString)) return getPropertyBlessed(hash.value, key.value);
-                  if (instanceOf(key, vm.types.typeKeyword)) return getPropertyBlessed(hash.value, key.value);
+                if (vm.instanceOf(hash, vm.types.typeHash)) {
+                  if (vm.instanceOf(key, vm.types.typeString)) return getPropertyBlessed(hash.value, key.value);
+                  if (vm.instanceOf(key, vm.types.typeKeyword)) return getPropertyBlessed(hash.value, key.value);
                 }
-                if (instanceOf(hash, vm.types.typeType)) {
-                  if (instanceOf(key, vm.types.typeString)) return getPropertyBlessed(hash.value.members, key.value);
-                  if (instanceOf(key, vm.types.typeKeyword)) return getPropertyBlessed(hash.value.members, key.value);
+                if (vm.instanceOf(hash, vm.types.typeType)) {
+                  if (vm.instanceOf(key, vm.types.typeString)) return getPropertyBlessed(hash.value.members, key.value);
+                  if (vm.instanceOf(key, vm.types.typeKeyword)) return getPropertyBlessed(hash.value.members, key.value);
                 }
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
               }
               if (operator === "_operatorHash") {
                 var hash = codes[0](vm, "get");
-                if (instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class"], hash.value);
+                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class"], hash.value);
                 var key = codes[1](vm, "get");
-                if (instanceOf(hash, vm.types.typeType)) {
-                  if (instanceOf(key, vm.types.typeString)) {
+                if (vm.instanceOf(hash, vm.types.typeType)) {
+                  if (vm.instanceOf(key, vm.types.typeString)) {
                     var value;
                     while (hash != null) {
                       value = getPropertyBlessed(hash.value.members, key.value);
-                      if (!instanceOf(value, vm.types.typeUndefined)) return value;
+                      if (!vm.instanceOf(value, vm.types.typeUndefined)) return value;
                       hash = hash.value.supertype;
                     }
                     return vm.UNDEFINED;
@@ -1057,7 +1021,7 @@
                 return getMethodOfBlessed(left, right);
               }
               if (operator === "_operatorColonGreater") {
-                var array = unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
+                var array = vm.unpackVector(codes[0](vm, "arguments")).map(function(item) { return item.value; });
                 return vm.createFunction(array, codes[1], vm.scope);
               }
               if (operator === "_concatenate") {
@@ -1086,61 +1050,61 @@
               }
               if (operator === "_operatorQuestion2") {
                 var res = codes[0](vm, "get");
-                return !instanceOf(res, vm.types.typeUndefined) ? res : codes[1](vm, "get");
+                return !vm.instanceOf(res, vm.types.typeUndefined) ? res : codes[1](vm, "get");
               }
               if (operator === "_hereDocumentFunction") {
                 var value = codes[0](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["decoration", "function"], value.value);
-                if (instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                  return packVector([vm.createPointer(codes[1], vm.scope), vm.createPointer(codes[2], vm.scope)]);
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["decoration", "function"], value.value);
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                  return vm.packVector([vm.createPointer(codes[1], vm.scope), vm.createPointer(codes[2], vm.scope)]);
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftMultibyte") {
                 var value = codes[0](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
-                if (instanceOf(value, vm.types.typeFunction)) {
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
+                if (vm.instanceOf(value, vm.types.typeFunction)) {
                   return callPointer(callFunction(value, vm.createPointer(codes[1], vm.scope)), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorMultibyte") {
                 var value = codes[1](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
-                if (instanceOf(value, vm.types.typeFunction)) {
-                  return callPointer(callFunction(value, packVector([vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)])), context, args);
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
+                if (vm.instanceOf(value, vm.types.typeFunction)) {
+                  return callPointer(callFunction(value, vm.packVector([vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)])), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftWord") {
                 var value = codes[0](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftWord", "word", "function"], value.value);
-                if (instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftWord", "word", "function"], value.value);
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                   return codes[1](vm, "get");
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorWord") {
                 var value = codes[1](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorWord", "word", "function"], value.value);
-                if (instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                  return packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorWord", "word", "function"], value.value);
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                  return vm.packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_rightComposite") {
                 var value = codes[1](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value.value);
-                if (instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value.value);
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
                   return codes[0](vm, "get");
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorComposite") {
                 var value = codes[1](vm, "get");
-                if (instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value.value);
-                if (instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
-                  return packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
+                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value.value);
+                if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, callInFrame(function(vm, context, args) {
+                  return vm.packVector([codes[0](vm, "get"), codes[2](vm, "get")]);
                 }, vm, "get"));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -1152,15 +1116,15 @@
               }
               if (operator === "_operatorColon2") {
                 var hash = codes[0](vm, "get");
-                if (instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["hash"], hash.value);
+                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["hash"], hash.value);
                 var key = codes[1](vm, "get");
-                if (instanceOf(hash, vm.types.typeHash)) {
-                  if (instanceOf(key, vm.types.typeString)) return hash.value[key.value] = args[0];
-                  if (instanceOf(key, vm.types.typeKeyword)) return hash.value[key.value] = args[0];
+                if (vm.instanceOf(hash, vm.types.typeHash)) {
+                  if (vm.instanceOf(key, vm.types.typeString)) return hash.value[key.value] = args[0];
+                  if (vm.instanceOf(key, vm.types.typeKeyword)) return hash.value[key.value] = args[0];
                 }
-                if (instanceOf(hash, vm.types.typeType)) {
-                  if (instanceOf(key, vm.types.typeString)) return hash.value.members[key.value] = args[0];
-                  if (instanceOf(key, vm.types.typeKeyword)) return hash.value.members[key.value] = args[0];
+                if (vm.instanceOf(hash, vm.types.typeType)) {
+                  if (vm.instanceOf(key, vm.types.typeString)) return hash.value.members[key.value] = args[0];
+                  if (vm.instanceOf(key, vm.types.typeKeyword)) return hash.value.members[key.value] = args[0];
                 }
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
               }
@@ -1178,12 +1142,12 @@
               return ["normal", createCodeFromMethod(operator, codes), undefined, createCodeFromMethod(operator, codes)];
             } else if (context === "arguments") {
               if (operator === "_leftDollar") return codes[0](vm, "arguments");
-              if (operator === "_enumerateComma") return packVector(codes.map(function(code) { return code(vm, "arguments"); }));
+              if (operator === "_enumerateComma") return vm.packVector(codes.map(function(code) { return code(vm, "arguments"); }));
             }
 
             if (operator === "_leftAsterisk") {
               var value = codes[0](vm, "get");
-              if (instanceOf(value, vm.types.typePointer)) return callPointer(value, context, args);
+              if (vm.instanceOf(value, vm.types.typePointer)) return callPointer(value, context, args);
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
             if (operator === "_ternaryQuestionColon") return codes[codes[0](vm, "get").value ? 1 : 2](vm, context, args);
@@ -1193,7 +1157,7 @@
           };
           this.toString = function(value) {
             consumeLoopCapacity();
-            if (instanceOf(value, vm.types.typeValue)) {
+            if (vm.instanceOf(value, vm.types.typeValue)) {
               return "" + callMethodOfBlessed(value, vm.createObject(vm.types.typeKeyword, "toString"), vm.VOID).value;
             } else {
               return "" + value;
@@ -1202,10 +1166,10 @@
           this.toNative = function(value) {
             consumeLoopCapacity();
             var vm = this;
-            if (instanceOf(value, vm.types.typeVector)) {
+            if (vm.instanceOf(value, vm.types.typeVector)) {
               return value.value.map(function(scalar) { return vm.toNative(scalar); });
             }
-            if (instanceOf(value, vm.types.typeArray)) {
+            if (vm.instanceOf(value, vm.types.typeArray)) {
               return value.value.map(function(scalar) { return vm.toNative(scalar); });
             }
             return value.value;
@@ -1286,6 +1250,42 @@
             code: code,
             scope: scope,
           });
+        };
+        VMStandard.prototype.packVector = function(array) {
+          var vm = this;
+
+          function visitScalar(array, blessed)
+          {
+            if (vm.instanceOf(blessed, vm.types.typeVector)) {
+              for (var i = 0; i < blessed.value.length; i++) {
+                visitScalar(array, blessed.value[i]);
+              }
+            } else {
+              array.push(blessed);
+            }
+          }
+
+          var array2 = [];
+          array.forEach(function(item) { visitScalar(array2, item); });
+          if (array2.length == 1) return array2[0];
+          return this.createObject(this.types.typeVector, array2);
+        };
+        VMStandard.prototype.unpackVector = function(blessed) {
+          if (this.instanceOf(blessed, this.types.typeVector)) return blessed.value;
+          return [blessed];
+        };
+        VMStandard.prototype.instanceOf = function(blessed, blessedType2) {
+          if ((typeof blessed) !== "object") return false;
+          if (blessed.type === undefined) return false;
+
+          var blessedType = blessed.type;
+
+          while (blessedType !== null) {
+            if (blessedType == blessedType2) return true;
+            blessedType = blessedType.value.supertype;
+          }
+
+          return false;
         };
 
         return VMStandard;
