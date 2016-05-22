@@ -823,7 +823,7 @@
               }
               if (operator === "_operatorColon2") {
                 var hash = codes[0](vm, "get");
-                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["hash"], hash.value);
+                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class", "hash"], hash.value);
                 var key = codes[1](vm, "get");
                 if (vm.instanceOf(hash, vm.types.typeHash)) {
                   if (vm.instanceOf(key, vm.types.typeString)) return hash.value[key.value] = args[0];
