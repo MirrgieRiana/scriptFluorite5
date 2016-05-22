@@ -25,9 +25,9 @@
     for (i = 0; i < tail.length; i++) {
       var operator = tail[i][1];
       if ((typeof operator) === "string") {
-        result = createCodeFromMethod("_operator" + operator, [result, tail[i][3]]);
+        result = createCodeFromMethod("operator" + operator, [result, tail[i][3]]);
       } else {
-        result = createCodeFromMethod("_operator" + operator[0], [result, operator[1], tail[i][3]]);
+        result = createCodeFromMethod("operator" + operator[0], [result, operator[1], tail[i][3]]);
       }
     }
     return result;
@@ -39,9 +39,9 @@
     for (i = head.length - 1; i >= 0; i--) {
       var operator = head[i][2];
       if ((typeof operator) === "string") {
-        result = createCodeFromMethod("_operator" + operator, [head[i][0], result]);
+        result = createCodeFromMethod("operator" + operator, [head[i][0], result]);
       } else {
-        result = createCodeFromMethod("_operator" + operator[0], [head[i][0], operator[1], result]);
+        result = createCodeFromMethod("operator" + operator[0], [head[i][0], operator[1], result]);
       }
     }
     return result;
@@ -53,9 +53,9 @@
     for (i = head.length - 1; i >= 0; i--) {
       var operator = head[i][0];
       if ((typeof operator) === "string") {
-        result = createCodeFromMethod("_left" + operator, [result]);
+        result = createCodeFromMethod("left" + operator, [result]);
       } else {
-        result = createCodeFromMethod("_left" + operator[0], [operator[1], result]);
+        result = createCodeFromMethod("left" + operator[0], [operator[1], result]);
       }
     }
     return result;
@@ -79,7 +79,7 @@
     for (i = 0; i < tail.length; i++) {
       result.push(tail[i][3]);
     }
-    return createCodeFromMethod("_enumerate" + operator, result);
+    return createCodeFromMethod("enumerate" + operator, result);
   }
 
   function getVM(name)
@@ -105,14 +105,14 @@
 
           if (context === "get") {
 
-            if (operator === "_operatorPlus") return codes[0](vm, "get", []) + codes[1](vm, "get", []);
-            if (operator === "_operatorMinus") return codes[0](vm, "get", []) - codes[1](vm, "get", []);
-            if (operator === "_operatorAsterisk") return codes[0](vm, "get", []) * codes[1](vm, "get", []);
-            if (operator === "_operatorSlash") return codes[0](vm, "get", []) / codes[1](vm, "get", []);
-            if (operator === "_leftPlus") return codes[0](vm, "get", []);
-            if (operator === "_leftMinus") return -codes[0](vm, "get", []);
-            if (operator === "_bracketsRound") return codes[0](vm, "get", []);
-            if (operator === "_operatorComposite") return dice(codes[0](vm, "get", []), codes[2](vm, "get", []));
+            if (operator === "operatorPlus") return codes[0](vm, "get", []) + codes[1](vm, "get", []);
+            if (operator === "operatorMinus") return codes[0](vm, "get", []) - codes[1](vm, "get", []);
+            if (operator === "operatorAsterisk") return codes[0](vm, "get", []) * codes[1](vm, "get", []);
+            if (operator === "operatorSlash") return codes[0](vm, "get", []) / codes[1](vm, "get", []);
+            if (operator === "leftPlus") return codes[0](vm, "get", []);
+            if (operator === "leftMinus") return -codes[0](vm, "get", []);
+            if (operator === "bracketsRound") return codes[0](vm, "get", []);
+            if (operator === "operatorComposite") return dice(codes[0](vm, "get", []), codes[2](vm, "get", []));
 
             throw "Unknown operator: " + operator;
           } else {
@@ -326,15 +326,15 @@
 
             var res;
 
-            res = tryCallFromScope("_" + context + operator);
+            res = tryCallFromScope("_" + context + "_" + operator);
             if (res !== false) return res;
 
-            res = tryCallFromScope(operator);
+            res = tryCallFromScope("_" + operator);
             if (res !== false) return res;
 
             if (context === "get") {
 
-              if (operator === "_operatorPlus") {
+              if (operator === "operatorPlus") {
                 var left = codes[0](vm, "get", []);
                 var right = codes[1](vm, "get", []);
                 if (vm.instanceOf(left, vm.types.typeNumber)) {
@@ -344,23 +344,23 @@
                 }
                 return vm.createObject(vm.types.typeString, vm.toString(left) + vm.toString(right));
               }
-              if (operator === "_operatorMinus") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value - codes[1](vm, "get", []).value);
-              if (operator === "_operatorAsterisk") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value * codes[1](vm, "get", []).value);
-              if (operator === "_operatorPercent") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value % codes[1](vm, "get", []).value);
-              if (operator === "_operatorSlash") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value / codes[1](vm, "get", []).value);
-              if (operator === "_operatorCaret") return vm.createObject(vm.types.typeNumber, Math.pow(codes[0](vm, "get", []).value, codes[1](vm, "get", []).value));
-              if (operator === "_leftPlus") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value);
-              if (operator === "_leftMinus") return vm.createObject(vm.types.typeNumber, -codes[0](vm, "get", []).value);
-              if (operator === "_leftExclamation") return vm.getBoolean(!vm.toBoolean(codes[0](vm, "get", [])));
-              if (operator === "_operatorGreater") return vm.getBoolean(codes[0](vm, "get", []).value > codes[1](vm, "get", []).value);
-              if (operator === "_operatorGreaterEqual") return vm.getBoolean(codes[0](vm, "get", []).value >= codes[1](vm, "get", []).value);
-              if (operator === "_operatorLess") return vm.getBoolean(codes[0](vm, "get", []).value < codes[1](vm, "get", []).value);
-              if (operator === "_operatorLessEqual") return vm.getBoolean(codes[0](vm, "get", []).value <= codes[1](vm, "get", []).value);
-              if (operator === "_operatorEqual2") return vm.getBoolean(codes[0](vm, "get", []).value === codes[1](vm, "get", []).value);
-              if (operator === "_operatorExclamationEqual") return vm.getBoolean(codes[0](vm, "get", []).value !== codes[1](vm, "get", []).value);
-              if (operator === "_operatorPipe2") return vm.getBoolean(vm.toBoolean(codes[0](vm, "get", [])) || vm.toBoolean(codes[1](vm, "get", [])));
-              if (operator === "_operatorAmpersand2") return vm.getBoolean(vm.toBoolean(codes[0](vm, "get", [])) && vm.toBoolean(codes[1](vm, "get", [])));
-              if (operator === "_operatorTilde") {
+              if (operator === "operatorMinus") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value - codes[1](vm, "get", []).value);
+              if (operator === "operatorAsterisk") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value * codes[1](vm, "get", []).value);
+              if (operator === "operatorPercent") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value % codes[1](vm, "get", []).value);
+              if (operator === "operatorSlash") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value / codes[1](vm, "get", []).value);
+              if (operator === "operatorCaret") return vm.createObject(vm.types.typeNumber, Math.pow(codes[0](vm, "get", []).value, codes[1](vm, "get", []).value));
+              if (operator === "leftPlus") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value);
+              if (operator === "leftMinus") return vm.createObject(vm.types.typeNumber, -codes[0](vm, "get", []).value);
+              if (operator === "leftExclamation") return vm.getBoolean(!vm.toBoolean(codes[0](vm, "get", [])));
+              if (operator === "operatorGreater") return vm.getBoolean(codes[0](vm, "get", []).value > codes[1](vm, "get", []).value);
+              if (operator === "operatorGreaterEqual") return vm.getBoolean(codes[0](vm, "get", []).value >= codes[1](vm, "get", []).value);
+              if (operator === "operatorLess") return vm.getBoolean(codes[0](vm, "get", []).value < codes[1](vm, "get", []).value);
+              if (operator === "operatorLessEqual") return vm.getBoolean(codes[0](vm, "get", []).value <= codes[1](vm, "get", []).value);
+              if (operator === "operatorEqual2") return vm.getBoolean(codes[0](vm, "get", []).value === codes[1](vm, "get", []).value);
+              if (operator === "operatorExclamationEqual") return vm.getBoolean(codes[0](vm, "get", []).value !== codes[1](vm, "get", []).value);
+              if (operator === "operatorPipe2") return vm.getBoolean(vm.toBoolean(codes[0](vm, "get", [])) || vm.toBoolean(codes[1](vm, "get", [])));
+              if (operator === "operatorAmpersand2") return vm.getBoolean(vm.toBoolean(codes[0](vm, "get", [])) && vm.toBoolean(codes[1](vm, "get", [])));
+              if (operator === "operatorTilde") {
                 var left = codes[0](vm, "get", []).value;
                 var right = codes[1](vm, "get", []).value;
                 var array = [];
@@ -369,23 +369,23 @@
                 }
                 return vm.packVector(array);
               }
-              if (operator === "_enumerateComma") return vm.packVector(codes.map(function(code) { return code(vm, "get", []); }));
-              if (operator === "_bracketsSquare") {
+              if (operator === "enumerateComma") return vm.packVector(codes.map(function(code) { return code(vm, "get", []); }));
+              if (operator === "bracketsSquare") {
                 return vm.createObject(vm.types.typeArray, vm.unpackVector(codes[0](vm, "get", [])));
               }
-              if (operator === "_rightbracketsSquare") {
+              if (operator === "rightbracketsSquare") {
                 var value = codes[0](vm, "get", []);
                 if (vm.instanceOf(value, vm.types.typeArray)) return value.value[codes[1](vm, "get", []).value] || vm.UNDEFINED;
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_leftAtsign") {
+              if (operator === "leftAtsign") {
                 var value = codes[0](vm, "get", []);
                 if (vm.instanceOf(value, vm.types.typeArray)) return vm.createObject(vm.types.typeVector, value.value);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_operatorMinus2Greater"
-                || operator === "_operatorEqual2Greater") 	{
-                var minus = operator == "_operatorMinus2Greater";
+              if (operator === "operatorMinus2Greater"
+                || operator === "operatorEqual2Greater") 	{
+                var minus = operator == "operatorMinus2Greater";
                 if (minus) {
                   return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
                     return vm.callFunction(vm.createFunction([], codes[1], vm.scope), [scalar]);
@@ -394,9 +394,9 @@
                   return vm.callFunction(vm.createFunction([], codes[1], vm.scope), vm.unpackVector(codes[0](vm, "get", [])));
                 }
               }
-              if (operator === "_operatorMinusGreater"
-                || operator === "_operatorEqualGreater") 	{
-                var minus = operator == "_operatorMinusGreater";
+              if (operator === "operatorMinusGreater"
+                || operator === "operatorEqualGreater") 	{
+                var minus = operator == "operatorMinusGreater";
                 var right = codes[1](vm, "get", []);
                 if (minus) {
                   return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
@@ -407,17 +407,17 @@
                 }
                 throw "Type Error: " + operator + "/" + right.type.value.name;
               }
-              if (operator === "_operatorColon") return vm.createObject(vm.types.typeEntry, {
+              if (operator === "operatorColon") return vm.createObject(vm.types.typeEntry, {
                 key: codes[0](vm, "get", []),
                 value: codes[1](vm, "get", []),
               });
-              if (operator === "_leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get", []).value);
-              if (operator === "_rightbracketsRound") {
+              if (operator === "leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get", []).value);
+              if (operator === "rightbracketsRound") {
                 var value = codes[0](vm, "get", []);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return vm.callFunction(value, vm.unpackVector(codes[1](vm, "get", [])));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_statement") {
+              if (operator === "statement") {
                 var command = codes[0](vm, "get", []);
                 if (!vm.instanceOf(command, vm.types.typeKeyword)) throw "Type Error: " + command.type.value.name + " != String";
                 if (command.value === "typeof") {
@@ -650,8 +650,8 @@
                 }
                 throw "Unknown command: " + command.value;
               }
-              if (operator === "_leftAmpersand") return vm.createPointer(codes[0], vm.scope);
-              if (operator === "_bracketsCurly") {
+              if (operator === "leftAmpersand") return vm.createPointer(codes[0], vm.scope);
+              if (operator === "bracketsCurly") {
                 var hash = {};
                 vm.unpackVector(codes[0](vm, "get", [])).forEach(function(item) {
                   if (vm.instanceOf(item, vm.types.typeEntry)) {
@@ -662,7 +662,7 @@
                 });
                 return vm.createObject(vm.types.typeHash, hash);
               }
-              if (operator === "_operatorColon2") {
+              if (operator === "operatorColon2") {
                 var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                 var key = codes[1](vm, "get", []);
                 if (vm.instanceOf(hash, vm.types.typeHash)) {
@@ -675,7 +675,7 @@
                 }
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
               }
-              if (operator === "_operatorHash") {
+              if (operator === "operatorHash") {
                 var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                 var key = codes[1](vm, "get", []);
                 if (vm.instanceOf(hash, vm.types.typeType)) {
@@ -691,92 +691,92 @@
                 }
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
               }
-              if (operator === "_operatorPeriod") {
+              if (operator === "operatorPeriod") {
                 var left = codes[0](vm, "get", []);
                 var right = codes[1](vm, "get", []);
                 return getMethodOfBlessed(left, right);
               }
-              if (operator === "_operatorColonGreater") {
+              if (operator === "operatorColonGreater") {
                 var array = codes[0](vm, "arguments").value.map(function(item) { return [item[0].value, item[1]]; });
                 return vm.createFunction(array, codes[1], vm.scope);
               }
-              if (operator === "_concatenateLiteral") {
+              if (operator === "concatenateLiteral") {
                 return vm.createObject(vm.types.typeString, codes.map(function(code) { return vm.toString(code(vm, "get", [])); }).join(""));
               }
-              if (operator === "_concatenateHereDocument") {
+              if (operator === "concatenateHereDocument") {
                 return vm.createObject(vm.types.typeString, codes.map(function(code) { return vm.toString(code(vm, "get", [])); }).join(""));
               }
-              if (operator === "_enumerateSemicolon") {
+              if (operator === "enumerateSemicolon") {
                 for (var i = 0; i < codes.length - 1; i++) {
                   codes[i](vm, "invoke");
                 }
                 return codes[codes.length - 1](vm, "get", []);
               }
-              if (operator === "_operatorEqual") return codes[0](vm, "set", [codes[1](vm, "get", [])]);
-              if (operator === "_rightPlus2") {
+              if (operator === "operatorEqual") return codes[0](vm, "set", [codes[1](vm, "get", [])]);
+              if (operator === "rightPlus2") {
                 var res = codes[0](vm, "get", []);
                 codes[0](vm, "set", [vm.createObject(vm.types.typeNumber, res.value + 1)]);
                 return res;
               }
-              if (operator === "_rightMinus2") {
+              if (operator === "rightMinus2") {
                 var res = codes[0](vm, "get", []);
                 codes[0](vm, "set", [vm.createObject(vm.types.typeNumber, res.value - 1)]);
                 return res;
               }
-              if (operator === "_operatorQuestionColon") {
+              if (operator === "operatorQuestionColon") {
                 var res = codes[0](vm, "get", []);
                 return vm.toBoolean(res) ? res : codes[1](vm, "get", []);
               }
-              if (operator === "_operatorQuestion2") {
+              if (operator === "operatorQuestion2") {
                 var res = codes[0](vm, "get", []);
                 return !vm.instanceOf(res, vm.types.typeUndefined) ? res : codes[1](vm, "get", []);
               }
-              if (operator === "_hereDocumentFunction") {
+              if (operator === "hereDocumentFunction") {
                 var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "decoration"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return vm.callFunction(value, [vm.createPointer(codes[1], vm.scope), vm.createPointer(codes[2], vm.scope)]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_leftMultibyte") {
+              if (operator === "leftMultibyte") {
                 var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "leftMultibyte"), vm.createObject(vm.types.typeKeyword, "multibyte"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) {
                   return vm.callPointer(vm.callFunction(value, [vm.createPointer(codes[1], vm.scope)]), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_operatorMultibyte") {
+              if (operator === "operatorMultibyte") {
                 var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "operatorMultibyte"), vm.createObject(vm.types.typeKeyword, "multibyte"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) {
                   return vm.callPointer(vm.callFunction(value, [vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)]), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_leftWord") {
+              if (operator === "leftWord") {
                 var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "leftWord"), vm.createObject(vm.types.typeKeyword, "word"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return vm.callFunction(value, [codes[1](vm, "get", [])]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_operatorWord") {
+              if (operator === "operatorWord") {
                 var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "operatorWord"), vm.createObject(vm.types.typeKeyword, "word"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return vm.callFunction(value, [codes[0](vm, "get", []), codes[2](vm, "get", [])]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_rightComposite") {
+              if (operator === "rightComposite") {
                 var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "rightComposite"), vm.createObject(vm.types.typeKeyword, "composite"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return vm.callFunction(value, [codes[0](vm, "get", [])]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
-              if (operator === "_operatorComposite") {
+              if (operator === "operatorComposite") {
                 var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "operatorComposite"), vm.createObject(vm.types.typeKeyword, "composite"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return vm.callFunction(value, [codes[0](vm, "get", []), codes[2](vm, "get", [])]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
             } else if (context === "set") {
-              if (operator === "_leftDollar") {
+              if (operator === "leftDollar") {
                 var value = args[0];
                 vm.scope.setOrDefine(codes[0](vm, "get", []).value, value);
                 return value;
               }
-              if (operator === "_operatorColon2") {
+              if (operator === "operatorColon2") {
                 var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                 var key = codes[1](vm, "get", []);
                 if (vm.instanceOf(hash, vm.types.typeHash)) {
@@ -790,35 +790,35 @@
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
               }
             } else if (context === "invoke") {
-              if (operator === "_bracketsCurly") {
+              if (operator === "bracketsCurly") {
                 codes[0](vm, "invoke");
                 return;
               }
               vm.callOperator(operator, codes, "get", []);
               return;
             } else if (context === "contentStatement") {
-              if (operator === "_bracketsRound") return ["round", codes[0], undefined, createCodeFromMethod(operator, codes)];
-              if (operator === "_bracketsSquare") return ["square", codes[0], undefined, createCodeFromMethod(operator, codes)];
-              if (operator === "_bracketsCurly") return ["curly", codes[0], undefined, createCodeFromMethod(operator, codes)];
+              if (operator === "bracketsRound") return ["round", codes[0], undefined, createCodeFromMethod(operator, codes)];
+              if (operator === "bracketsSquare") return ["square", codes[0], undefined, createCodeFromMethod(operator, codes)];
+              if (operator === "bracketsCurly") return ["curly", codes[0], undefined, createCodeFromMethod(operator, codes)];
               return ["normal", createCodeFromMethod(operator, codes), undefined, createCodeFromMethod(operator, codes)];
             } else if (context === "arguments") {
-              if (operator === "_leftDollar") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), vm.types.typeValue]]);
-              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")])]]);
-              if (operator === "_enumerateComma") return vm.createObject(vm.types.typeObject, codes.map(function(code) { return code(vm, "argument").value; }));
+              if (operator === "leftDollar") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), vm.types.typeValue]]);
+              if (operator === "operatorColon") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")])]]);
+              if (operator === "enumerateComma") return vm.createObject(vm.types.typeObject, codes.map(function(code) { return code(vm, "argument").value; }));
             } else if (context === "argument") {
-              if (operator === "_leftDollar") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), vm.types.typeValue]);
-              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")])]);
+              if (operator === "leftDollar") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), vm.types.typeValue]);
+              if (operator === "operatorColon") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")])]);
             } else if (context === "argumentName") {
-              if (operator === "_leftDollar") return codes[0](vm, "argumentName");
+              if (operator === "leftDollar") return codes[0](vm, "argumentName");
             }
 
-            if (operator === "_leftAsterisk") {
+            if (operator === "leftAsterisk") {
               var value = codes[0](vm, "get", []);
               if (vm.instanceOf(value, vm.types.typePointer)) return vm.callPointer(value, context, args);
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
-            if (operator === "_ternaryQuestionColon") return codes[vm.toBoolean(codes[0](vm, "get", [])) ? 1 : 2](vm, context, args);
-            if (operator === "_bracketsRound") return vm.callInFrame(codes[0], vm, context, args);
+            if (operator === "ternaryQuestionColon") return codes[vm.toBoolean(codes[0](vm, "get", [])) ? 1 : 2](vm, context, args);
+            if (operator === "bracketsRound") return vm.callInFrame(codes[0], vm, context, args);
 
             throw "Unknown operator: " + operator + "/" + context;
           };
@@ -1390,9 +1390,9 @@ Arrows
       for (i = head.length - 1; i >= 0; i--) {
         var result2 = head[i][0][1];
         for (j = 1; j < head[i].length; j++) {
-          result2 = createCodeFromMethod("_operator" + head[i][j - 1][0], [result2, head[i][j][1]]);
+          result2 = createCodeFromMethod("operator" + head[i][j - 1][0], [result2, head[i][j][1]]);
         }
-        result = createCodeFromMethod("_operator" + head[i][head[i].length - 1][0], [result2, result]);
+        result = createCodeFromMethod("operator" + head[i][head[i].length - 1][0], [result2, result]);
       }
       return result;
     }
@@ -1406,9 +1406,9 @@ Entry
     ) _ Iif)* { return operatorLeft(head, tail); }
 
 Iif
-  = head:Range _ "?" _ body:Iif _ ":" _ tail:Iif { return createCodeFromMethod("_ternaryQuestionColon", [head, body, tail]); }
-  / head:Range _ "?:" _ tail:Iif { return createCodeFromMethod("_operatorQuestionColon", [head, tail]); }
-  / head:Range _ "??" _ tail:Iif { return createCodeFromMethod("_operatorQuestion2", [head, tail]); }
+  = head:Range _ "?" _ body:Iif _ ":" _ tail:Iif { return createCodeFromMethod("ternaryQuestionColon", [head, body, tail]); }
+  / head:Range _ "?:" _ tail:Iif { return createCodeFromMethod("operatorQuestionColon", [head, tail]); }
+  / head:Range _ "??" _ tail:Iif { return createCodeFromMethod("operatorQuestion2", [head, tail]); }
   / Range
 
 Range
@@ -1443,7 +1443,7 @@ Compare
 
       for (i = 0; i < tail.length; i++) {
         right = tail[i][3];
-        codes.push(createCodeFromMethod("_operator" + tail[i][1], [left, right]));
+        codes.push(createCodeFromMethod("operator" + tail[i][1], [left, right]));
         left = right;
       }
 
@@ -1507,18 +1507,18 @@ Left
 
 Right
   = head:Variable tail:(_ (
-      "(" _ main:Formula _ ")" { return ["_rightbracketsRound", [main]]; }
-    / "[" _ main:Formula _ "]" { return ["_rightbracketsSquare", [main]]; }
-    / "{" _ main:Formula _ "}" { return ["_rightbracketsCurly", [main]]; }
-    / "(" _ ")" { return ["_rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
-    / "[" _ "]" { return ["_rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
-    / "{" _ "}" { return ["_rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
-    / "::" _ main:Variable { return ["_operatorColon2", [main]]; }
-    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
-    / "#" _ main:Variable { return ["_operatorHash", [main]]; }
-    / "++" { return ["_rightPlus2", []]; }
-    / "--" (! ">") { return ["_rightMinus2", []]; }
-    / "..." { return ["_rightPeriod3", []]; }
+      "(" _ main:Formula _ ")" { return ["rightbracketsRound", [main]]; }
+    / "[" _ main:Formula _ "]" { return ["rightbracketsSquare", [main]]; }
+    / "{" _ main:Formula _ "}" { return ["rightbracketsCurly", [main]]; }
+    / "(" _ ")" { return ["rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
+    / "[" _ "]" { return ["rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
+    / "{" _ "}" { return ["rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
+    / "::" _ main:Variable { return ["operatorColon2", [main]]; }
+    / "." _ main:Variable { return ["operatorPeriod", [main]]; }
+    / "#" _ main:Variable { return ["operatorHash", [main]]; }
+    / "++" { return ["rightPlus2", []]; }
+    / "--" (! ">") { return ["rightMinus2", []]; }
+    / "..." { return ["rightPeriod3", []]; }
     ))* { return right(head, tail); }
 
 Variable
@@ -1527,12 +1527,12 @@ Variable
     ) _)* tail:Factor { return left(head, tail); }
 
 Factor
-  = "(" _ main:Formula _ ")" { return createCodeFromMethod("_bracketsRound", [main]); }
-  / "[" _ main:Formula _ "]" { return createCodeFromMethod("_bracketsSquare", [main]); }
-  / "{" _ main:Formula _ "}" { return createCodeFromMethod("_bracketsCurly", [main]); }
-  / "(" _ ")" { return createCodeFromMethod("_bracketsRound", [createCodeFromLiteral("Void", "void")]); }
-  / "[" _ "]" { return createCodeFromMethod("_bracketsSquare", [createCodeFromLiteral("Void", "void")]); }
-  / "{" _ "}" { return createCodeFromMethod("_bracketsCurly", [createCodeFromLiteral("Void", "void")]); }
+  = "(" _ main:Formula _ ")" { return createCodeFromMethod("bracketsRound", [main]); }
+  / "[" _ main:Formula _ "]" { return createCodeFromMethod("bracketsSquare", [main]); }
+  / "{" _ main:Formula _ "}" { return createCodeFromMethod("bracketsCurly", [main]); }
+  / "(" _ ")" { return createCodeFromMethod("bracketsRound", [createCodeFromLiteral("Void", "void")]); }
+  / "[" _ "]" { return createCodeFromMethod("bracketsSquare", [createCodeFromLiteral("Void", "void")]); }
+  / "{" _ "}" { return createCodeFromMethod("bracketsCurly", [createCodeFromLiteral("Void", "void")]); }
   / Composite
   / Identifier
   / String
@@ -1544,7 +1544,7 @@ Statement
   = "/" head:Identifier main:(_ ContentStatement)* (_ "/" (! Identifier))? {
       var array = [head];
       main.map(function(item) { array.push(item[1]); })
-      return createCodeFromMethod("_statement", array);
+      return createCodeFromMethod("statement", array);
     }
 
 ContentStatement
@@ -1553,14 +1553,14 @@ ContentStatement
 
 FactorStatement
   = head:Variable tail:(_ (
-      "::" _ main:Variable { return ["_operatorColon2", [main]]; }
-    / "." _ main:Variable { return ["_operatorPeriod", [main]]; }
-    / "#" _ main:Variable { return ["_operatorHash", [main]]; }
+      "::" _ main:Variable { return ["operatorColon2", [main]]; }
+    / "." _ main:Variable { return ["operatorPeriod", [main]]; }
+    / "#" _ main:Variable { return ["operatorHash", [main]]; }
     ))* { return right(head, tail); }
 
 Composite
-  = head:Number body:BodyComposite tail:Composite { return createCodeFromMethod("_operatorComposite", [head, body, tail]); }
-  / head:Number body:BodyComposite { return createCodeFromMethod("_rightComposite", [head, body]); }
+  = head:Number body:BodyComposite tail:Composite { return createCodeFromMethod("operatorComposite", [head, body, tail]); }
+  / head:Number body:BodyComposite { return createCodeFromMethod("rightComposite", [head, body]); }
   / head:Number { return head; }
 
 Number
@@ -1610,7 +1610,7 @@ ContentStringReplaceable
         codes.push(tail[i][0]);
         codes.push(tail[i][1]);
       }
-      return createCodeFromMethod("_concatenateLiteral", codes);
+      return createCodeFromMethod("concatenateLiteral", codes);
     }
 
 ContentStringReplaceableText
@@ -1629,8 +1629,8 @@ ContentStringReplaceableText
 
 ContentStringReplaceableReplacement
   = "$" "(" main:Formula ")" { return main; }
-  / "$" "{" main:Formula "}" { return createCodeFromMethod("_leftDollar", [main]); }
-  / "$" main:(Integer / Identifier) { return createCodeFromMethod("_leftDollar", [main]); }
+  / "$" "{" main:Formula "}" { return createCodeFromMethod("leftDollar", [main]); }
+  / "$" main:(Integer / Identifier) { return createCodeFromMethod("leftDollar", [main]); }
 
 HereDocument
   = "%" head:(
@@ -1648,21 +1648,21 @@ HereDocument
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
           / HereDocument
 
-          )* "}" { return createCodeFromMethod("_concatenateHereDocument", main); }
+          )* "}" { return createCodeFromMethod("concatenateHereDocument", main); }
         / "[" main:(
 
             main:(! ("]" end:HereDocumentDelimiter & { return begin === end; }) main:(
               .
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
-          )* "]" { return createCodeFromMethod("_concatenateHereDocument", main); }
+          )* "]" { return createCodeFromMethod("concatenateHereDocument", main); }
         / begin2:HereDocumentDelimiter2 main:(
 
             main:(! (end2:HereDocumentDelimiter2 end:HereDocumentDelimiter & { return begin2 === end2 && begin === end; }) main:(
               .
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
-          )* HereDocumentDelimiter2 { return createCodeFromMethod("_concatenateHereDocument", main); }
+          )* HereDocumentDelimiter2 { return createCodeFromMethod("concatenateHereDocument", main); }
         ) HereDocumentDelimiter { return main; }
       / (
           "{" main:(
@@ -1673,26 +1673,26 @@ HereDocument
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
           / HereDocument
 
-          )* "}" { return createCodeFromMethod("_concatenateHereDocument", main); }
+          )* "}" { return createCodeFromMethod("concatenateHereDocument", main); }
         / "[" main:(
 
             main:(! ("]") main:(
               .
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
-          )* "]" { return createCodeFromMethod("_concatenateHereDocument", main); }
+          )* "]" { return createCodeFromMethod("concatenateHereDocument", main); }
         / begin2:HereDocumentDelimiter2 main:(
 
             main:(! (end2:HereDocumentDelimiter2 & { return begin2 === end2; }) main:(
               .
             ) { return main; })+ { return createCodeFromLiteral("String", main.join("")); }
 
-          )* HereDocumentDelimiter2 { return createCodeFromMethod("_concatenateHereDocument", main); }
+          )* HereDocumentDelimiter2 { return createCodeFromMethod("concatenateHereDocument", main); }
         )
       )
     ) {
       if (head !== null) {
-        return createCodeFromMethod("_hereDocumentFunction", [head[0], head[1], tail]);
+        return createCodeFromMethod("hereDocumentFunction", [head[0], head[1], tail]);
       } else {
         return tail;
       }
