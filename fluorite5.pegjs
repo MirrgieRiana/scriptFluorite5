@@ -408,7 +408,6 @@
               }
               if (operator === "_rightbracketsSquare") {
                 var value = codes[0](vm, "get");
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["array"], value.value);
                 if (vm.instanceOf(value, vm.types.typeArray)) return value.value[codes[1](vm, "get").value] || vm.UNDEFINED;
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -448,7 +447,6 @@
               if (operator === "_leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get").value);
               if (operator === "_rightbracketsRound") {
                 var value = codes[0](vm, "get");
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["function"], value.value);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, vm.unpackVector(codes[1](vm, "get")));
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -700,7 +698,7 @@
               }
               if (operator === "_operatorColon2") {
                 var hash = codes[0](vm, "get");
-                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["hash", "class"], hash.value);
+                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class"], hash.value);
                 var key = codes[1](vm, "get");
                 if (vm.instanceOf(hash, vm.types.typeHash)) {
                   if (vm.instanceOf(key, vm.types.typeString)) return getPropertyBlessed(hash.value, key.value);
@@ -823,7 +821,7 @@
               }
               if (operator === "_operatorColon2") {
                 var hash = codes[0](vm, "get");
-                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class", "hash"], hash.value);
+                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class"], hash.value);
                 var key = codes[1](vm, "get");
                 if (vm.instanceOf(hash, vm.types.typeHash)) {
                   if (vm.instanceOf(key, vm.types.typeString)) return hash.value[key.value] = args[0];
