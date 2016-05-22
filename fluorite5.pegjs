@@ -847,14 +847,14 @@
               return ["normal", createCodeFromMethod(operator, codes), undefined, createCodeFromMethod(operator, codes)];
             } else if (context === "arguments") {
               if (operator === "_leftDollar") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), vm.types.typeValue]]);
-              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), codes[1](vm, "argumentType")]]);
+              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), codes[1](vm, "getType")]]);
               if (operator === "_enumerateComma") return vm.createObject(vm.types.typeObject, codes.map(function(code) { return code(vm, "argument").value; }));
             } else if (context === "argument") {
               if (operator === "_leftDollar") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), vm.types.typeValue]);
-              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), codes[1](vm, "argumentType")]);
+              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), codes[1](vm, "getType")]);
             } else if (context === "argumentName") {
               if (operator === "_leftDollar") return codes[0](vm, "argumentName");
-            } else if (context === "argumentType") {
+            } else if (context === "getType") {
               if (operator === "_leftDollar") vm.scope.getOrUndefined(codes[0](vm, "get").value);
             }
 
@@ -924,7 +924,7 @@
               if (type === "Identifier") return vm.createObject(vm.types.typeObject, [vm.createObject(vm.types.typeKeyword, value), vm.types.typeValue]);
             } else if (context === "argumentName") {
               if (type === "Identifier") return vm.createObject(vm.types.typeKeyword, value);
-            } else if (context === "argumentType") {
+            } else if (context === "getType") {
               if (type === "Identifier") {
                 var blessedType = searchVariable(["class"], value);
                 if (!vm.instanceOf(blessedType, vm.types.typeType)) throw "Type Error: " + blessedType.type.value.name + " != Type";
