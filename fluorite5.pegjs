@@ -855,7 +855,7 @@
               if (type === "Integer") return vm.createObject(vm.types.typeNumber, value);
               if (type === "Float") return vm.createObject(vm.types.typeNumber, value);
               if (type === "String") return vm.createObject(vm.types.typeString, value);
-              if (type === "Identifier") {
+              if (type === "Affix" || type === "Identifier") {
                 if (value === "true") return vm.TRUE;
                 if (value === "false") return vm.FALSE;
                 if (value === "undefined") return vm.UNDEFINED;
@@ -1579,7 +1579,7 @@ Hex "Hex"
   = "0x" main:([0-9a-zA-Z]+ { return text(); }) { return createCodeFromLiteral("Integer", parseInt(main, 16)); }
 
 BodyComposite
-  = CharacterIdentifier+ { return createCodeFromLiteral("Identifier", text()); }
+  = CharacterIdentifier+ { return createCodeFromLiteral("Affix", text()); }
 
 Identifier "Identifier"
   = CharacterIdentifier ([0-9] / CharacterIdentifier)* { return createCodeFromLiteral("Identifier", text()); }
