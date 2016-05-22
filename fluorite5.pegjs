@@ -508,14 +508,13 @@
 
                   if (!(value !== undefined)) throw "Illegal command argument";
                   var blessedValue = value[3](vm, "get", []);
-                  if (!vm.instanceOf(blessedValue, vm.types.typeString)) throw "Type Error: " + blessedValue.type.value.name + " != String";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   if (value !== undefined) throw "Illegal command argument: " + value[0];
 
                   // parse end
 
-                  throw blessedValue.value;
+                  throw blessedValue;
                 }
                 if (command.value === "try") {
                   var i = 1, value;
