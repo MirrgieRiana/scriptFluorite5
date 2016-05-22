@@ -250,7 +250,7 @@
 
             while (blessedType !== null) {
 
-              variable = getPropertyBlessed(blessedType.value.members, keyword);
+              variable = getProperty(blessedType.value.members, keyword) || vm.UNDEFINED;
               if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
 
               blessedType = blessedType.value.supertype;
@@ -265,7 +265,7 @@
 
             while (blessedType !== null) {
 
-              f = getPropertyBlessed(blessedType.value.members, keyword);
+              f = getProperty(blessedType.value.members, keyword) || vm.UNDEFINED;
               if (!vm.instanceOf(f, vm.types.typeUndefined)) {
                 functions.push(f);
               }
@@ -290,13 +290,6 @@
           function callMethodOfBlessed(blessed, blessedName, blessedArgs)
           {
             return vm.callFunction(getMethodOfBlessed(blessed, blessedName), vm.unpackVector(blessedArgs));
-          }
-          function getPropertyBlessed(hash, name)
-          {
-            var variable = Object.getOwnPropertyDescriptor(hash, name);
-            if (variable != undefined) variable = variable.value;
-            variable = variable || vm.UNDEFINED;
-            return variable;
           }
 
           vm.initBootstrap();
@@ -672,12 +665,12 @@
                 var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                 var key = codes[1](vm, "get", []);
                 if (vm.instanceOf(hash, vm.types.typeHash)) {
-                  if (vm.instanceOf(key, vm.types.typeString)) return getPropertyBlessed(hash.value, key.value);
-                  if (vm.instanceOf(key, vm.types.typeKeyword)) return getPropertyBlessed(hash.value, key.value);
+                  if (vm.instanceOf(key, vm.types.typeString)) return getProperty(hash.value, key.value) || vm.UNDEFINED;
+                  if (vm.instanceOf(key, vm.types.typeKeyword)) return getProperty(hash.value, key.value) || vm.UNDEFINED;
                 }
                 if (vm.instanceOf(hash, vm.types.typeType)) {
-                  if (vm.instanceOf(key, vm.types.typeString)) return getPropertyBlessed(hash.value.members, key.value);
-                  if (vm.instanceOf(key, vm.types.typeKeyword)) return getPropertyBlessed(hash.value.members, key.value);
+                  if (vm.instanceOf(key, vm.types.typeString)) return getProperty(hash.value.members, key.value) || vm.UNDEFINED;
+                  if (vm.instanceOf(key, vm.types.typeKeyword)) return getProperty(hash.value.members, key.value) || vm.UNDEFINED;
                 }
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
               }
@@ -688,7 +681,7 @@
                   if (vm.instanceOf(key, vm.types.typeString)) {
                     var value;
                     while (hash != null) {
-                      value = getPropertyBlessed(hash.value.members, key.value);
+                      value = getProperty(hash.value.members, key.value) || vm.UNDEFINED;
                       if (!vm.instanceOf(value, vm.types.typeUndefined)) return value;
                       hash = hash.value.supertype;
                     }
