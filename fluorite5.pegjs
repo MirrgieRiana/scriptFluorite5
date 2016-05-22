@@ -529,8 +529,10 @@
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   if (!(value !== undefined && value[0] === "round")) throw "Illegal command argument";
-                  var blessedKeyword = value[1](vm, "arguments").value[0][0];
-                  if (!vm.instanceOf(blessedKeyword, vm.types.typeKeyword)) throw "Type Error: " + blessedKeyword.type.value.name + " != Keyword";
+                  var arg = value[1](vm, "arguments").value;
+                  if (arg.length != 1) throw "Illegal number of arguments: " + arg.length + " != 1";
+                  arg = arg[0];
+                  arg = [arg[0].value, arg[1]];
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   if (!(value !== undefined && value[0] === "curly")) throw "Illegal command argument";
@@ -550,9 +552,9 @@
                       vm.popFrame();
                     }
                   } catch (e) {
-                    if (vm.instanceOf(e, vm.types.typeException)) {
+                    if (vm.instanceOf(e, arg[1])) {
                       vm.pushFrame();
-                      vm.scope.defineOrSet(blessedKeyword.value, e);
+                      vm.scope.defineOrSet(arg[0], e);
                       try {
                         blessedResult = codeCatch(vm, "get", []);
                       } finally {
