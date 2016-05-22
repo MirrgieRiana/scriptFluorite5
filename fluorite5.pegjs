@@ -234,8 +234,7 @@
           {
             var i;
             for (i = 0; i < blessedFunction.value.args.length; i++) {
-              var value = blessedsArgs[i] || vm.UNDEFINED;
-              if (!vm.instanceOf(value, blessedFunction.value.args[i][1])) return false;
+              if (!vm.instanceOf(blessedsArgs[i] || vm.UNDEFINED, blessedFunction.value.args[i][1])) return false;
             }
             return true;
           }
