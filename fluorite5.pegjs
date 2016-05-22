@@ -235,7 +235,7 @@
             var variable;
 
             for (var i = 0; i < accesses.length; i++) {
-              variable = vm.scope.getOrUndefined("_" + accesses[i] + "_" + keyword);
+              variable = vm.scope.getOrUndefined(accesses[i] + "_" + keyword);
               if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
             }
 
@@ -615,7 +615,7 @@
 
                   // parse end
 
-                  if (isNamed) vm.scope.defineOrSet("_class_" + blessedName.value, blessedResult);
+                  if (isNamed) vm.scope.defineOrSet("class_" + blessedName.value, blessedResult);
                   return blessedResult;
                 }
                 if (command.value === "new") {
@@ -1161,7 +1161,7 @@
             }));
           }
           Object.keys(vm.types).forEach(function(key) {
-            vm.scope.setOrDefine("_class_" + vm.types[key].value.name, vm.types[key]);
+            vm.scope.setOrDefine("class_" + vm.types[key].value.name, vm.types[key]);
           });
           function createNativeBridge(func, argumentCount)
           {
@@ -1213,13 +1213,13 @@
             vm.dices.push(values);
             return t;
           }
-          vm.scope.setOrDefine("_rightComposite_d", vm.createFunction([["count", vm.types.Value]], function(vm, context) {
+          vm.scope.setOrDefine("rightComposite_d", vm.createFunction([["count", vm.types.Value]], function(vm, context) {
             var count = vm.scope.getOrUndefined("count");
             if (!vm.instanceOf(count, vm.types.typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
             if (count.value > 20) throw vm.createException("Illegal argument[0]: " + count.value + " > 20");
             return vm.createObject(vm.types.typeNumber, dice(count.value, 6));
           }, vm.scope));
-          vm.scope.setOrDefine("_function_d", vm.createFunction([["count", vm.types.Value], ["faces", vm.types.Value]], function(vm, context) {
+          vm.scope.setOrDefine("function_d", vm.createFunction([["count", vm.types.Value], ["faces", vm.types.Value]], function(vm, context) {
             var count = vm.scope.getOrUndefined("count");
             var faces = vm.scope.getOrUndefined("faces");
             if (!vm.instanceOf(count, vm.types.typeNumber)) throw "Illegal argument[0]: " + count.type.value.name + " != Number";
@@ -1228,44 +1228,44 @@
             return vm.createObject(vm.types.typeNumber, dice(count.value, faces.value));
           }, vm.scope));
 
-          vm.scope.setOrDefine("_leftMultibyte_√", vm.createFunction([["x", vm.types.Value]], function(vm, context) {
+          vm.scope.setOrDefine("leftMultibyte_√", vm.createFunction([["x", vm.types.Value]], function(vm, context) {
             var x = vm.scope.getOrUndefined("x");
             if (!vm.instanceOf(x, vm.types.typeNumber)) throw "Illegal argument[0]: " + x.type.value.name + " != Number";
             return vm.createObject(vm.types.typeNumber, Math.sqrt(x.value));
           }, vm.scope));
-          vm.scope.setOrDefine("_function_join", vm.createFunction([["separator", vm.types.Value]], function(vm, context) {
+          vm.scope.setOrDefine("function_join", vm.createFunction([["separator", vm.types.Value]], function(vm, context) {
             var separator = vm.scope.getOrUndefined("separator");
             var vector = vm.scope.getOrUndefined("_");
             return vm.createObject(vm.types.typeString, vm.unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(separator.value));
           }, vm.scope));
-          vm.scope.setOrDefine("_function_join1", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_join1", vm.createFunction([], function(vm, context) {
             var vector = vm.scope.getOrUndefined("_");
             return vm.createObject(vm.types.typeString, vm.unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(""));
           }, vm.scope));
-          vm.scope.setOrDefine("_function_join2", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_join2", vm.createFunction([], function(vm, context) {
             var vector = vm.scope.getOrUndefined("_");
             return vm.createObject(vm.types.typeString, vm.unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join(", "));
           }, vm.scope));
-          vm.scope.setOrDefine("_function_join3", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_join3", vm.createFunction([], function(vm, context) {
             var vector = vm.scope.getOrUndefined("_");
             return vm.createObject(vm.types.typeString, vm.unpackVector(vector).map(function(blessed) {
               return vm.toString(blessed);
             }).join("\n"));
           }, vm.scope));
-          vm.scope.setOrDefine("_function_sum", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_sum", vm.createFunction([], function(vm, context) {
             var value = 0;
             vm.unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value += blessed.value;
             });
             return vm.createObject(vm.types.typeNumber, value);
           }, vm.scope));
-          vm.scope.setOrDefine("_function_average", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_average", vm.createFunction([], function(vm, context) {
             var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return vm.UNDEFINED;
             var value = 0;
@@ -1274,24 +1274,24 @@
             });
             return vm.createObject(vm.types.typeNumber, value / array.length);
           }, vm.scope));
-          vm.scope.setOrDefine("_function_count", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_count", vm.createFunction([], function(vm, context) {
             return vm.createObject(vm.types.typeNumber, vm.unpackVector(vm.scope.getOrUndefined("_")).length);
           }, vm.scope));
-          vm.scope.setOrDefine("_function_and", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_and", vm.createFunction([], function(vm, context) {
             var value = true;
             vm.unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value = value && blessed.value;
             });
             return vm.getBoolean(value);
           }, vm.scope));
-          vm.scope.setOrDefine("_function_or", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_or", vm.createFunction([], function(vm, context) {
             var value = false;
             vm.unpackVector(vm.scope.getOrUndefined("_")).forEach(function(blessed) {
               value = value || blessed.value;
             });
             return vm.getBoolean(value);
           }, vm.scope));
-          vm.scope.setOrDefine("_function_max", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_max", vm.createFunction([], function(vm, context) {
             var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return vm.UNDEFINED;
             var value = array[0].value;
@@ -1300,7 +1300,7 @@
             }
             return vm.createObject(vm.types.typeNumber, value);
           }, vm.scope));
-          vm.scope.setOrDefine("_function_min", vm.createFunction([], function(vm, context) {
+          vm.scope.setOrDefine("function_min", vm.createFunction([], function(vm, context) {
             var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
             if (array.length == 0) return vm.UNDEFINED;
             var value = array[0].value;
