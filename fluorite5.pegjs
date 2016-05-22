@@ -1492,7 +1492,7 @@ Compare
 Shift
   = head:Add tail:(_ (
       "<<" { return "Less2"; }
-    / ">>" { return "Grater2"; }
+    / ">>" { return "Greater2"; }
     ) _ Term)* { return operatorLeft(head, tail); }
 
 Add
