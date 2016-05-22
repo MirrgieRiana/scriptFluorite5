@@ -621,8 +621,7 @@
                     // dummy
                     value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
-                    blessedExtends = value[1](vm, "get", []);
-                    if (vm.instanceOf(blessedExtends, vm.types.typeKeyword)) blessedExtends = searchVariable(["class"], blessedExtends.value);
+                    blessedExtends = value[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                     if (!vm.instanceOf(blessedExtends, vm.types.typeType)) throw "Type Error: " + blessedExtends.type.value.name + " != Type";
                     value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
@@ -655,8 +654,7 @@
                   var i = 1, value;
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
-                  var blessedType = value[1](vm, "get", []);
-                  if (vm.instanceOf(blessedType, vm.types.typeKeyword)) blessedType = searchVariable(["class"], blessedType.value);
+                  var blessedType = value[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                   if (!vm.instanceOf(blessedType, vm.types.typeType)) throw "Type Error: " + blessedType.type.value.name + " != Type";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
@@ -697,8 +695,7 @@
                 return vm.createObject(vm.types.typeHash, hash);
               }
               if (operator === "_operatorColon2") {
-                var hash = codes[0](vm, "get", []);
-                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class"], hash.value);
+                var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                 var key = codes[1](vm, "get", []);
                 if (vm.instanceOf(hash, vm.types.typeHash)) {
                   if (vm.instanceOf(key, vm.types.typeString)) return getPropertyBlessed(hash.value, key.value);
@@ -711,8 +708,7 @@
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
               }
               if (operator === "_operatorHash") {
-                var hash = codes[0](vm, "get", []);
-                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class"], hash.value);
+                var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                 var key = codes[1](vm, "get", []);
                 if (vm.instanceOf(hash, vm.types.typeType)) {
                   if (vm.instanceOf(key, vm.types.typeString)) {
@@ -768,48 +764,41 @@
                 return !vm.instanceOf(res, vm.types.typeUndefined) ? res : codes[1](vm, "get", []);
               }
               if (operator === "_hereDocumentFunction") {
-                var value = codes[0](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["decoration", "function"], value.value);
+                var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "decoration"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, [vm.createPointer(codes[1], vm.scope), vm.createPointer(codes[2], vm.scope)]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftMultibyte") {
-                var value = codes[0](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftMultibyte", "multibyte", "function"], value.value);
+                var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "leftMultibyte"), vm.createObject(vm.types.typeKeyword, "multibyte"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) {
                   return vm.callPointer(callFunction(value, [vm.createPointer(codes[1], vm.scope)]), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorMultibyte") {
-                var value = codes[1](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorMultibyte", "multibyte", "function"], value.value);
+                var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "operatorMultibyte"), vm.createObject(vm.types.typeKeyword, "multibyte"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) {
                   return vm.callPointer(callFunction(value, [vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)]), context, args);
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_leftWord") {
-                var value = codes[0](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["leftWord", "word", "function"], value.value);
+                var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "leftWord"), vm.createObject(vm.types.typeKeyword, "word"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, [codes[1](vm, "get", [])]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorWord") {
-                var value = codes[1](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorWord", "word", "function"], value.value);
+                var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "operatorWord"), vm.createObject(vm.types.typeKeyword, "word"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, [codes[0](vm, "get", []), codes[2](vm, "get", [])]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_rightComposite") {
-                var value = codes[1](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["rightComposite", "composite", "function"], value.value);
+                var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "rightComposite"), vm.createObject(vm.types.typeKeyword, "composite"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, [codes[0](vm, "get", [])]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "_operatorComposite") {
-                var value = codes[1](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeKeyword)) value = searchVariable(["operatorComposite", "composite", "function"], value.value);
+                var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "operatorComposite"), vm.createObject(vm.types.typeKeyword, "composite"), vm.createObject(vm.types.typeKeyword, "function")]);
                 if (vm.instanceOf(value, vm.types.typeFunction)) return callFunction(value, [codes[0](vm, "get", []), codes[2](vm, "get", [])]);
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -820,8 +809,7 @@
                 return value;
               }
               if (operator === "_operatorColon2") {
-                var hash = codes[0](vm, "get", []);
-                if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = searchVariable(["class"], hash.value);
+                var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                 var key = codes[1](vm, "get", []);
                 if (vm.instanceOf(hash, vm.types.typeHash)) {
                   if (vm.instanceOf(key, vm.types.typeString)) return hash.value[key.value] = args[0];
@@ -847,15 +835,13 @@
               return ["normal", createCodeFromMethod(operator, codes), undefined, createCodeFromMethod(operator, codes)];
             } else if (context === "arguments") {
               if (operator === "_leftDollar") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), vm.types.typeValue]]);
-              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), codes[1](vm, "getType")]]);
+              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")])]]);
               if (operator === "_enumerateComma") return vm.createObject(vm.types.typeObject, codes.map(function(code) { return code(vm, "argument").value; }));
             } else if (context === "argument") {
               if (operator === "_leftDollar") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), vm.types.typeValue]);
-              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), codes[1](vm, "getType")]);
+              if (operator === "_operatorColon") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")])]);
             } else if (context === "argumentName") {
               if (operator === "_leftDollar") return codes[0](vm, "argumentName");
-            } else if (context === "getType") {
-              if (operator === "_leftDollar") vm.scope.getOrUndefined(codes[0](vm, "get", []).value);
             }
 
             if (operator === "_leftAsterisk") {
@@ -908,6 +894,11 @@
                 if (value === "null") return vm.NULL;
                 if (value === "Infinity") return vm.createObject(vm.types.typeNumber, Infinity);
                 if (value === "NaN") return vm.createObject(vm.types.typeNumber, NaN);
+
+                if (args.length > 0) {
+                  var blessed = searchVariable(args.map(function(arg) { return arg.value; }), value);
+                  if (!vm.instanceOf(blessed, vm.types.typeUndefined)) return blessed;
+                }
                 return vm.createObject(vm.types.typeKeyword, value);
               }
               if (type === "Void") return vm.VOID;
@@ -924,12 +915,6 @@
               if (type === "Identifier") return vm.createObject(vm.types.typeObject, [vm.createObject(vm.types.typeKeyword, value), vm.types.typeValue]);
             } else if (context === "argumentName") {
               if (type === "Identifier") return vm.createObject(vm.types.typeKeyword, value);
-            } else if (context === "getType") {
-              if (type === "Identifier") {
-                var blessedType = searchVariable(["class"], value);
-                if (!vm.instanceOf(blessedType, vm.types.typeType)) throw "Type Error: " + blessedType.type.value.name + " != Type";
-                return blessedType;
-              }
             }
             throw "Unknown Literal Type: " + context + "/" + type;
           };
