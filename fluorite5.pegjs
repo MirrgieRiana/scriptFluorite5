@@ -314,14 +314,14 @@
 
             function tryCallFromScope(name)
             {
-              var func = vm.scope.getOrUndefined(name);
-              if (vm.instanceOf(func, vm.types.typeUndefined)) return false;
-              if (vm.instanceOf(func, vm.types.typeFunction)) {
+              var blessedFunction = vm.scope.getOrUndefined(name);
+              if (vm.instanceOf(blessedFunction, vm.types.typeUndefined)) return false;
+              if (vm.instanceOf(blessedFunction, vm.types.typeFunction)) {
                 var array = [vm.createObject(vm.types.typeString, context)];
                 Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
-                var pointer = vm.callFunction(func, array);
-                if (!vm.instanceOf(pointer, vm.types.typePointer)) throw "Illegal type of operation result: " + pointer.type.value.name;
-                return vm.callPointer(pointer, context, args);
+                var blessedPointer = vm.callFunction(blessedFunction, array);
+                if (!vm.instanceOf(blessedPointer, vm.types.typePointer)) throw "Illegal type of operation result: " + blessedPointer.type.value.name;
+                return vm.callPointer(blessedPointer, context, args);
               } else {
                 throw "`" + name + "` is not a function";
               }
