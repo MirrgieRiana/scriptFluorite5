@@ -244,16 +244,19 @@
 
             return vm.UNDEFINED;
           }
-          function searchVariableWithType(keyword, blessedType)
+          function searchVariableWithType(keyword, blessedsTypes)
           {
             var variable;
 
-            while (blessedType !== null) {
+            for (var i = 0; i < blessedsTypes.length; i++) {
+              var blessedType = blessedsTypes[i];
+              while (blessedType !== null) {
 
-              variable = getProperty(blessedType.value.members, keyword) || vm.UNDEFINED;
-              if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
+                variable = getProperty(blessedType.value.members, keyword) || vm.UNDEFINED;
+                if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
 
-              blessedType = blessedType.value.supertype;
+                blessedType = blessedType.value.supertype;
+              }
             }
 
             return searchVariable(["method", "function"], keyword);
@@ -277,7 +280,7 @@
           }
           function getMethodOfBlessed(blessed, blessedName)
           {
-            if (vm.instanceOf(blessedName, vm.types.typeKeyword)) blessedName = searchVariableWithType(blessedName.value, blessed.type);
+            if (vm.instanceOf(blessedName, vm.types.typeKeyword)) blessedName = searchVariableWithType(blessedName.value, [blessed.type]);
             if (vm.instanceOf(blessedName, vm.types.typeFunction)) {
               return vm.createFunction([], function(vm, context, args) {
                 var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
