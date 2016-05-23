@@ -338,6 +338,7 @@
             res = tryCallFromScope("_" + context + "_core");
             if (res !== false) return res;
 
+            //############################################################## TODO ###############################################################
             if (context === "get") {
 
               if (operator === "operatorPlus") {
@@ -825,6 +826,7 @@
             }
             if (operator === "ternaryQuestionColon") return codes[vm.toBoolean(codes[0](vm, "get", [])) ? 1 : 2](vm, context, args);
             if (operator === "bracketsRound") return vm.callInFrame(codes[0], vm, context, args);
+            //############################################################## TODO ###############################################################
 
             var blessedsArgs = codes.map(function(code) { return code(vm, "get", []); });
             blessedsArgs.unshift(vm.createObject(vm.types.typeString, context));
