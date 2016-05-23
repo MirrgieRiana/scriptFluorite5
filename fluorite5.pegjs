@@ -329,10 +329,13 @@
 
             var res;
 
-            res = tryCallFromScope("_" + context + "_" + operator);
+            res = tryCallFromScope("_" + context + "_core_" + operator);
             if (res !== false) return res;
 
-            res = tryCallFromScope("_" + operator);
+            res = tryCallFromScope("_core_" + operator);
+            if (res !== false) return res;
+
+            res = tryCallFromScope("_" + context + "_core");
             if (res !== false) return res;
 
             if (context === "get") {
@@ -822,6 +825,27 @@
             }
             if (operator === "ternaryQuestionColon") return codes[vm.toBoolean(codes[0](vm, "get", [])) ? 1 : 2](vm, context, args);
             if (operator === "bracketsRound") return vm.callInFrame(codes[0], vm, context, args);
+
+            var blessedsArgs = codes.map(function(code) { return code(vm, "get", []); });
+            blessedsArgs.unshift(vm.createObject(vm.types.typeString, context));
+            var blessedsTypes = blessedsArgs.map(function(blessed) { return blessed.type; });
+
+            function tryCallMethodFromScopeAndType(name)
+            {
+              var blessedFunction = searchVariableWithType(name, blessedsTypes);
+              if (vm.instanceOf(blessedFunction, vm.types.typeUndefined)) return false;
+              if (vm.instanceOf(blessedFunction, vm.types.typeFunction)) {
+                return vm.callFunction(blessedFunction, blessedsArgs);
+              } else {
+                throw "`" + name + "` is not a function";
+              }
+            }
+
+            res = tryCallMethodFromScopeAndType("_" + context + "_" + operator);
+            if (res !== false) return res;
+
+            res = tryCallMethodFromScopeAndType("_" + operator);
+            if (res !== false) return res;
 
             throw "Unknown operator: " + operator + "/" + context;
           };
