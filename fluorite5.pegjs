@@ -343,9 +343,9 @@
                   }));
                 } else {
                   if (vm.instanceOf(right, vm.types.typeString)) {
-                    return vm.callMethodOfBlessed(codes[0](vm, "get", []), right.value, vm.VOID);
+                    return vm.callMethod(right.value, [], vm.unpackVector(codes[0](vm, "get", [])));
                   } else if (vm.instanceOf(right, vm.types.typeFunction)) {
-                    return vm.callFunction(right, [codes[0](vm, "get", [])]);
+                    return vm.callFunction(right, vm.unpackVector(codes[0](vm, "get", [])));
                   } else {
                     throw "Type Error: " + right.type.value.name + " != String, Function";
                   }
