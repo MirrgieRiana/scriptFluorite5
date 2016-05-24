@@ -750,18 +750,10 @@
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "leftMultibyte") {
-                var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "leftMultibyte"), vm.createObject(vm.types.typeKeyword, "multibyte"), vm.createObject(vm.types.typeKeyword, "function")]);
-                if (vm.instanceOf(value, vm.types.typeFunction)) {
-                  return vm.callPointer(vm.callFunction(value, [vm.createPointer(codes[1], vm.scope)]), context, args);
-                }
-                throw "Type Error: " + operator + "/" + value.type.value.name;
+                return vm.callOperator("leftMultibyte_" + codes[0](vm, "get", []).value, [codes[1]], context, args);
               }
               if (operator === "operatorMultibyte") {
-                var value = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "operatorMultibyte"), vm.createObject(vm.types.typeKeyword, "multibyte"), vm.createObject(vm.types.typeKeyword, "function")]);
-                if (vm.instanceOf(value, vm.types.typeFunction)) {
-                  return vm.callPointer(vm.callFunction(value, [vm.createPointer(codes[0], vm.scope), vm.createPointer(codes[2], vm.scope)]), context, args);
-                }
-                throw "Type Error: " + operator + "/" + value.type.value.name;
+                return vm.callOperator("operatorMultibyte_" + codes[1](vm, "get", []).value, [codes[0], codes[2]], context, args);
               }
               if (operator === "leftWord") {
                 var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "leftWord"), vm.createObject(vm.types.typeKeyword, "word"), vm.createObject(vm.types.typeKeyword, "function")]);
