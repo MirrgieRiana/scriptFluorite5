@@ -236,64 +236,6 @@
         {
           var vm = this;
 
-          function getMethodOfCall(name, blessedsTypes, predicate)
-          {
-            var res;
-
-            for (var i = 0; i < blessedsTypes.length; i++) {
-              var blessedType = blessedsTypes[i];
-              while (blessedType !== null) {
-
-                res = getProperty(blessedType.value.members, name) || vm.UNDEFINED;
-                if (vm.instanceOf(res, vm.types.typeFunction)) if (predicate(res)) return res;
-
-                blessedType = blessedType.value.supertype;
-              }
-            }
-
-            res = vm.scope.getOrUndefined("method_" + name);
-            if (vm.instanceOf(res, vm.types.typeFunction)) if (predicate(res)) return res;
-
-            res = vm.scope.getOrUndefined("function_" + name);
-            if (vm.instanceOf(res, vm.types.typeFunction)) if (predicate(res)) return res;
-
-            res = vm.scope.getOrUndefined(name);
-            if (vm.instanceOf(res, vm.types.typeFunction)) if (predicate(res)) return res;
-
-            return vm.UNDEFINED;
-          }
-          function tryCallMethod(name, blessedsTypes, blessedsArgs)
-          {
-            var res = getMethodOfCall(name, blessedsTypes, function(blessedFunction) {
-              return vm.isCallableFunction(blessedFunction, blessedsArgs);
-            });
-            if (vm.instanceOf(res, vm.types.typeFunction)) {
-              return vm.callFunction(res, blessedsArgs);
-            }
-            return false;
-          }
-          function tryCallMethodOfOperator(name, blessedsArgs)
-          {
-            return tryCallMethod(name, blessedsArgs.map(function(blessedArg) { return blessedArg.type; }), blessedsArgs);
-          }
-          function callMethod(name, blessedsTypes, blessedsArgs)
-          {
-            var res = getMethodOfCall(name, blessedsTypes, function(blessedFunction) {
-              return vm.isCallableFunction(blessedFunction, blessedsArgs);
-            });
-            if (vm.instanceOf(res, vm.types.typeFunction)) {
-              return vm.callFunction(res, blessedsArgs);
-            }
-            throw "No such method: " + name + "(" + blessedsArgs.map(function(blessedArg) { return blessedArg.type.value.name; }).join(", ") + ")/"
-              + blessedsTypes.map(function(blessedType) { return blessedType.value.name; }).join(", ");
-          }
-          function callMethodOfBlessed_2(blessedObject, name, blessedArgs)
-          {
-            var blesseds = vm.unpackVector(blessedArgs);
-            blesseds.unshift(blessedObject);
-            return callMethod(name, [blessedObject.type], blesseds);
-          }
-
           function searchVariable(accesses, keyword)
           {
             var variable;
@@ -439,7 +381,7 @@
                 if (minus) {
                   return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
                     if (vm.instanceOf(right, vm.types.typeString)) {
-                      return callMethodOfBlessed_2(scalar, right.value, vm.VOID);
+                      return vm.callMethodOfBlessed(scalar, right.value, vm.VOID);
                     } else if (vm.instanceOf(right, vm.types.typeFunction)) {
                       return vm.callFunction(right, [scalar]);
                     } else {
@@ -448,7 +390,7 @@
                   }));
                 } else {
                   if (vm.instanceOf(right, vm.types.typeString)) {
-                    return callMethodOfBlessed_2(codes[0](vm, "get", []), right.value, vm.VOID);
+                    return vm.callMethodOfBlessed(codes[0](vm, "get", []), right.value, vm.VOID);
                   } else if (vm.instanceOf(right, vm.types.typeFunction)) {
                     return vm.callFunction(right, [codes[0](vm, "get", [])]);
                   } else {
@@ -746,7 +688,7 @@
                 if (vm.instanceOf(right, vm.types.typeString)) {
                   var left = codes[0](vm, "get", []);
                   return vm.createFunction([], function(vm, context, args) {
-                      return callMethodOfBlessed_2(left, right.value, vm.scope.getOrUndefined("_"));
+                      return vm.callMethodOfBlessed(left, right.value, vm.scope.getOrUndefined("_"));
                   }, vm.scope)
                 } else if (vm.instanceOf(right, vm.types.typeFunction)) {
                   var left = codes[0](vm, "get", []);
@@ -880,10 +822,10 @@
             blessedsArgs.unshift(vm.createObject(vm.types.typeString, context));
             var blessedsTypes = blessedsArgs.map(function(blessed) { return blessed.type; });
 
-            res = tryCallMethodOfOperator("_" + context + "_" + operator, blessedsArgs);
+            res = vm.tryCallMethodOfOperator("_" + context + "_" + operator, blessedsArgs);
             if (res !== false) return res;
 
-            res = tryCallMethodOfOperator("_" + operator, blessedsArgs);
+            res = vm.tryCallMethodOfOperator("_" + operator, blessedsArgs);
             if (res !== false) return res;
 
             throw "Unknown operator: " + operator + "/" + context;
@@ -891,7 +833,7 @@
           this.toString = function(value) {
             vm.consumeLoopCapacity();
             if (vm.instanceOf(value, vm.types.typeValue)) {
-              return "" + callMethodOfBlessed_2(value, "toString", vm.VOID).value;
+              return "" + vm.callMethodOfBlessed(value, "toString", vm.VOID).value;
             } else {
               return "" + value;
             }
@@ -910,7 +852,7 @@
           this.toBoolean = function(value) {
             vm.consumeLoopCapacity();
             if (vm.instanceOf(value, vm.types.typeValue)) {
-              return !!callMethodOfBlessed_2(value, "toBoolean", vm.VOID).value;
+              return !!vm.callMethodOfBlessed(value, "toBoolean", vm.VOID).value;
             } else {
               return !!value;
             }
@@ -1081,6 +1023,60 @@
           }
 
           return false;
+        };
+        VMStandard.prototype.getMethodOfCall = function(name, blessedsTypes, predicate) {
+          var res;
+
+          for (var i = 0; i < blessedsTypes.length; i++) {
+            var blessedType = blessedsTypes[i];
+            while (blessedType !== null) {
+
+              res = getProperty(blessedType.value.members, name) || this.UNDEFINED;
+              if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+
+              blessedType = blessedType.value.supertype;
+            }
+          }
+
+          res = this.scope.getOrUndefined("method_" + name);
+          if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+
+          res = this.scope.getOrUndefined("function_" + name);
+          if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+
+          res = this.scope.getOrUndefined(name);
+          if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+
+          return this.UNDEFINED;
+        };
+        VMStandard.prototype.tryCallMethod = function(name, blessedsTypes, blessedsArgs) {
+          var vm = this;
+          var res = this.getMethodOfCall(name, blessedsTypes, function(blessedFunction) {
+            return vm.isCallableFunction(blessedFunction, blessedsArgs);
+          });
+          if (this.instanceOf(res, this.types.typeFunction)) {
+            return this.callFunction(res, blessedsArgs);
+          }
+          return false;
+        };
+        VMStandard.prototype.tryCallMethodOfOperator = function(name, blessedsArgs) {
+          return this.tryCallMethod(name, blessedsArgs.map(function(blessedArg) { return blessedArg.type; }), blessedsArgs);
+        };
+        VMStandard.prototype.callMethod = function(name, blessedsTypes, blessedsArgs) {
+          var vm = this;
+          var res = this.getMethodOfCall(name, blessedsTypes, function(blessedFunction) {
+            return vm.isCallableFunction(blessedFunction, blessedsArgs);
+          });
+          if (this.instanceOf(res, this.types.typeFunction)) {
+            return this.callFunction(res, blessedsArgs);
+          }
+          throw "No such method: " + name + "(" + blessedsArgs.map(function(blessedArg) { return blessedArg.type.value.name; }).join(", ") + ")/"
+            + blessedsTypes.map(function(blessedType) { return blessedType.value.name; }).join(", ");
+        };
+        VMStandard.prototype.callMethodOfBlessed = function(blessedObject, name, blessedArgs) {
+          var blesseds = this.unpackVector(blessedArgs);
+          blesseds.unshift(blessedObject);
+          return this.callMethod(name, [blessedObject.type], blesseds);
         };
 
         VMStandard.prototype.initBootstrap = function() {
