@@ -236,24 +236,6 @@
         {
           var vm = this;
 
-          function getMethodsOfTypeTree(keyword, blessedType)
-          {
-            var f;
-            var functions = [];
-
-            while (blessedType !== null) {
-
-              f = getProperty(blessedType.value.members, keyword) || vm.UNDEFINED;
-              if (!vm.instanceOf(f, vm.types.typeUndefined)) {
-                functions.push(f);
-              }
-
-              blessedType = blessedType.value.supertype;
-            }
-
-            return functions;
-          }
-
           vm.initBootstrap();
 
           vm.initLibrary();
@@ -597,6 +579,25 @@
                   return blessedResult;
                 }
                 if (command.value === "new") {
+
+                  function getMethodsOfTypeTree(keyword, blessedType)
+                  {
+                    var f;
+                    var functions = [];
+
+                    while (blessedType !== null) {
+
+                      f = getProperty(blessedType.value.members, keyword) || vm.UNDEFINED;
+                      if (!vm.instanceOf(f, vm.types.typeUndefined)) {
+                        functions.push(f);
+                      }
+
+                      blessedType = blessedType.value.supertype;
+                    }
+
+                    return functions;
+                  }
+
                   var i = 1, value;
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
