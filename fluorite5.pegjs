@@ -282,21 +282,6 @@
             //############################################################## TODO ###############################################################
             if (context === "get") {
 
-              if (operator === "operatorPlus") {
-                var left = codes[0](vm, "get", []);
-                var right = codes[1](vm, "get", []);
-                if (vm.instanceOf(left, vm.types.typeNumber)) {
-                  if (vm.instanceOf(right, vm.types.typeNumber)) {
-                    return vm.createObject(vm.types.typeNumber, left.value + right.value);
-                  }
-                }
-                return vm.createObject(vm.types.typeString, vm.toString(left) + vm.toString(right));
-              }
-              if (operator === "operatorMinus") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value - codes[1](vm, "get", []).value);
-              if (operator === "operatorAsterisk") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value * codes[1](vm, "get", []).value);
-              if (operator === "operatorPercent") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value % codes[1](vm, "get", []).value);
-              if (operator === "operatorSlash") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value / codes[1](vm, "get", []).value);
-              if (operator === "operatorCaret") return vm.createObject(vm.types.typeNumber, Math.pow(codes[0](vm, "get", []).value, codes[1](vm, "get", []).value));
               if (operator === "leftPlus") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value);
               if (operator === "leftMinus") return vm.createObject(vm.types.typeNumber, -codes[0](vm, "get", []).value);
               if (operator === "leftExclamation") return vm.getBoolean(!vm.toBoolean(codes[0](vm, "get", [])));
@@ -1279,6 +1264,49 @@
             "randomBetween": createNativeBridge(function(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }, 2),
             "sqrt": createNativeBridge(Math.sqrt, 1),
           }));
+
+          vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
+            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+              var a = vm.scope.getOrUndefined("a");
+              var b = vm.scope.getOrUndefined("b");
+              return vm.createObject(vm.types.typeNumber, a.value + b.value);
+            }, vm.scope),
+            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeString], ["b", vm.types.typeValue]], function(vm, context) {
+              var a = vm.scope.getOrUndefined("a");
+              var b = vm.scope.getOrUndefined("b");
+              return vm.createObject(vm.types.typeString, a.value + vm.toString(b));
+            }, vm.scope),
+            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeValue], ["b", vm.types.typeString]], function(vm, context) {
+              var a = vm.scope.getOrUndefined("a");
+              var b = vm.scope.getOrUndefined("b");
+              return vm.createObject(vm.types.typeString, vm.toString(a) + b.value);
+            }, vm.scope),
+          ]));
+          vm.scope.setOrDefine("_get_operatorMinus", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeNumber, a.value - b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorAsterisk", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeNumber, a.value * b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorPercent", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeNumber, a.value % b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorSlash", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeNumber, a.value / b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorCaret", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeNumber, Math.pow(a.value, b.value));
+          }, vm.scope));
 
           function dice(count, faces)
           {
