@@ -142,89 +142,95 @@
           return variable;
         }
 
-        function Scope(parent, isFrame, UNDEFINED)
-        {
-          this.variables = {};
-          this.parent = parent;
-          this.isFrame = isFrame;
-          this.UNDEFINED = UNDEFINED;
+        var Scope = (function() {
 
-          this.id = Scope.id;
-          Scope.id++;
-        }
-        Scope.id = 0;
-        Scope.prototype.getVariable = function(name) {
-          var variable = getProperty(this.variables, name);
-          if (variable != undefined) {
-            return variable;
-          } else {
-            if (this.parent != undefined) {
-              return this.parent.getVariable(name);
+          function Scope(parent, isFrame, UNDEFINED)
+          {
+            this.variables = {};
+            this.parent = parent;
+            this.isFrame = isFrame;
+            this.UNDEFINED = UNDEFINED;
+
+            this.id = Scope.id;
+            Scope.id++;
+          }
+          Scope.id = 0;
+          function getVariable(scope, name) 
+          {
+            var variable = getProperty(scope.variables, name);
+            if (variable != undefined) {
+              return variable;
             } else {
-              return undefined;
+              if (scope.parent != undefined) {
+                return getVariable(scope.parent, name);
+              } else {
+                return undefined;
+              }
             }
           }
-        };
-        Scope.prototype.define = function(name) {
-          if (this.getVariable(name) != undefined) {
-            throw "Duplicate variable definition: " + name;
-          } else {
-            this.variables[name] = {
-              value: this.UNDEFINED,
-            };
-          }
-        };
-        Scope.prototype.get = function(name) {
-          var variable = this.getVariable(name);
-          if (variable != undefined) {
-            return variable.value;
-          } else {
-            throw "Unknown variable: " + name;
-          }
-        };
-        Scope.prototype.getOrUndefined = function(name) {
-          var variable = this.getVariable(name);
-          if (variable != undefined) {
-            return variable.value;
-          } else {
-            return this.UNDEFINED;
-          }
-        };
-        Scope.prototype.set = function(name, value) {
-          var variable = this.getVariable(name);
-          if (variable != undefined) {
-            variable.value = value;
-          } else {
-            throw "Unknown variable: " + name;
-          }
-        };
-        Scope.prototype.setOrDefine = function(name, value) {
-          var variable = this.getVariable(name);
-          if (variable != undefined) {
-            variable.value = value;
-          } else {
-            this.variables[name] = {
-              value: value,
-            };
-          }
-        };
-        Scope.prototype.defineOrSet = function(name, value) {
-          var variable = getProperty(this.variables, name);
-          if (variable != undefined) {
-            variable.value = value;
-          } else {
-            this.variables[name] = {
-              value: value,
-            };
-          }
-        };
-        Scope.prototype.getParentFrame = function(name, value) {
-          if (this.parent.isFrame) {
-            return this.parent;
-          } else {
-            return this.parent.getParentFrame();
-          }
-        };
+          Scope.prototype.define = function(name) {
+            if (getVariable(this, name) != undefined) {
+              throw "Duplicate variable definition: " + name;
+            } else {
+              this.variables[name] = {
+                value: this.UNDEFINED,
+              };
+            }
+          };
+          Scope.prototype.get = function(name) {
+            var variable = getVariable(this, name);
+            if (variable != undefined) {
+              return variable.value;
+            } else {
+              throw "Unknown variable: " + name;
+            }
+          };
+          Scope.prototype.getOrUndefined = function(name) {
+            var variable = getVariable(this, name);
+            if (variable != undefined) {
+              return variable.value;
+            } else {
+              return this.UNDEFINED;
+            }
+          };
+          Scope.prototype.set = function(name, value) {
+            var variable = getVariable(this, name);
+            if (variable != undefined) {
+              variable.value = value;
+            } else {
+              throw "Unknown variable: " + name;
+            }
+          };
+          Scope.prototype.setOrDefine = function(name, value) {
+            var variable = getVariable(this, name);
+            if (variable != undefined) {
+              variable.value = value;
+            } else {
+              this.variables[name] = {
+                value: value,
+              };
+            }
+          };
+          Scope.prototype.defineOrSet = function(name, value) {
+            var variable = getProperty(this.variables, name);
+            if (variable != undefined) {
+              variable.value = value;
+            } else {
+              this.variables[name] = {
+                value: value,
+              };
+            }
+          };
+          Scope.prototype.getParentFrame = function(name, value) {
+            if (this.parent.isFrame) {
+              return this.parent;
+            } else {
+              return this.parent.getParentFrame();
+            }
+          };
+
+          return Scope;
+        })();
 
         function VMStandard()
         {
