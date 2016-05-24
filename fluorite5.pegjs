@@ -433,6 +433,12 @@
                   var value = codes[1](vm, "get", []);
                   return vm.createObject(vm.types.typeNumber, vm.unpackVector(value).length);
                 }
+                if (command.value === "loopCount") {
+                  return vm.createObject(vm.types.typeNumber, vm.loopCount);
+                }
+                if (command.value === "loopCapacity") {
+                  return vm.createObject(vm.types.typeNumber, vm.loopCapacity);
+                }
                 if (command.value === "li") {
                   var array = [];
                   for (var i = 1; i < codes.length; i++) {
