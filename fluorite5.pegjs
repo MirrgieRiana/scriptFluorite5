@@ -236,20 +236,6 @@
         {
           var vm = this;
 
-          function searchVariable(accesses, keyword)
-          {
-            var variable;
-
-            for (var i = 0; i < accesses.length; i++) {
-              variable = vm.scope.getOrUndefined(accesses[i] + "_" + keyword);
-              if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
-            }
-
-            variable = vm.scope.getOrUndefined(keyword);
-            if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
-
-            return vm.UNDEFINED;
-          }
           function getMethodsOfTypeTree(keyword, blessedType)
           {
             var f;
@@ -872,8 +858,17 @@
                 if (value === "NaN") return vm.createObject(vm.types.typeNumber, NaN);
 
                 if (args.length > 0) {
-                  var blessed = searchVariable(args.map(function(arg) { return arg.value; }), value);
-                  if (!vm.instanceOf(blessed, vm.types.typeUndefined)) return blessed;
+                  var accesses = args.map(function(arg) { return arg.value; });
+                  var variable;
+
+                  for (var i = 0; i < accesses.length; i++) {
+                    variable = vm.scope.getOrUndefined(accesses[i] + "_" + value);
+                    if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
+                  }
+
+                  variable = vm.scope.getOrUndefined(value);
+                  if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
+
                 }
                 return vm.createObject(vm.types.typeKeyword, value);
               }
