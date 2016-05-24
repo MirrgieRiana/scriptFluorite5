@@ -761,9 +761,22 @@
                 throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
               }
               if (operator === "operatorPeriod") {
-                var left = codes[0](vm, "get", []);
                 var right = codes[1](vm, "get", []);
-                return getMethodOfBlessed(left, right);
+                if (vm.instanceOf(right, vm.types.typeString)) {
+                  var left = codes[0](vm, "get", []);
+                  return vm.createFunction([], function(vm, context, args) {
+                      return callMethodOfBlessed_2(left, right.value, vm.scope.getOrUndefined("_"));
+                  }, vm.scope)
+                } else if (vm.instanceOf(right, vm.types.typeFunction)) {
+                  var left = codes[0](vm, "get", []);
+                  return vm.createFunction([], function(vm, context, args) {
+                      var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
+                      array.unshift(left);
+                      return vm.callFunction(right, array);
+                  }, vm.scope)
+                } else {
+                  throw "Type Error: " + right.type.value.name + " != String, Function";
+                }
               }
               if (operator === "operatorColonGreater") {
                 var array = codes[0](vm, "arguments").value.map(function(item) { return [item[0].value, item[1]]; });
