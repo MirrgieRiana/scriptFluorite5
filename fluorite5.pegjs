@@ -262,6 +262,20 @@
 
             return vm.UNDEFINED;
           }
+          function tryCallMethod(name, blessedsTypes, blessedsArgs)
+          {
+            var res = getMethodOfCall(name, blessedsTypes, function(blessedFunction) {
+              return vm.isCallableFunction(blessedFunction, blessedsArgs);
+            });
+            if (vm.instanceOf(res, vm.types.typeFunction)) {
+              return vm.callFunction(res, blessedsArgs);
+            }
+            return false;
+          }
+          function tryCallMethodOfOperator(name, blessedsArgs)
+          {
+            return tryCallMethod(name, blessedsArgs.map(function(blessedArg) { return blessedArg.type; }), blessedsArgs);
+          }
           function callMethod(name, blessedsTypes, blessedsArgs)
           {
             var res = getMethodOfCall(name, blessedsTypes, function(blessedFunction) {
@@ -910,10 +924,10 @@
               }
             }
 
-            res = tryCallMethodFromScopeAndType("_" + context + "_" + operator);
+            res = tryCallMethodOfOperator("_" + context + "_" + operator, blessedsArgs);
             if (res !== false) return res;
 
-            res = tryCallMethodFromScopeAndType("_" + operator);
+            res = tryCallMethodOfOperator("_" + operator, blessedsArgs);
             if (res !== false) return res;
 
             throw "Unknown operator: " + operator + "/" + context;
