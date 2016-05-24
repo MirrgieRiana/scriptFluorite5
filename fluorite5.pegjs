@@ -1029,6 +1029,11 @@
 
               res = getProperty(blessedType.value.members, name) || this.UNDEFINED;
               if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+              if (this.instanceOf(res, this.types.typeVector)) {
+                for (var i = 0; i < res.value.length; i++) {
+                  if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
+                }
+              }
 
               blessedType = blessedType.value.supertype;
             }
@@ -1036,12 +1041,27 @@
 
           res = this.scope.getOrUndefined("method_" + name);
           if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+          if (this.instanceOf(res, this.types.typeVector)) {
+            for (var i = 0; i < res.value.length; i++) {
+              if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
+            }
+          }
 
           res = this.scope.getOrUndefined("function_" + name);
           if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+          if (this.instanceOf(res, this.types.typeVector)) {
+            for (var i = 0; i < res.value.length; i++) {
+              if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
+            }
+          }
 
           res = this.scope.getOrUndefined(name);
           if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+          if (this.instanceOf(res, this.types.typeVector)) {
+            for (var i = 0; i < res.value.length; i++) {
+              if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
+            }
+          }
 
           return this.UNDEFINED;
         };
