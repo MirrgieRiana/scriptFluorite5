@@ -308,23 +308,6 @@
 
             return vm.UNDEFINED;
           }
-          function searchVariableWithType(keyword, blessedsTypes)
-          {
-            var variable;
-
-            for (var i = 0; i < blessedsTypes.length; i++) {
-              var blessedType = blessedsTypes[i];
-              while (blessedType !== null) {
-
-                variable = getProperty(blessedType.value.members, keyword) || vm.UNDEFINED;
-                if (!vm.instanceOf(variable, vm.types.typeUndefined)) return variable;
-
-                blessedType = blessedType.value.supertype;
-              }
-            }
-
-            return searchVariable(["method", "function"], keyword);
-          }
           function getMethodsOfTypeTree(keyword, blessedType)
           {
             var f;
@@ -341,22 +324,6 @@
             }
 
             return functions;
-          }
-          function getMethodOfBlessed(blessed, blessedName)
-          {
-            if (vm.instanceOf(blessedName, vm.types.typeKeyword)) blessedName = searchVariableWithType(blessedName.value, [blessed.type]);
-            if (vm.instanceOf(blessedName, vm.types.typeFunction)) {
-              return vm.createFunction([], function(vm, context, args) {
-                var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
-                array.unshift(blessed);
-                return vm.callFunction(blessedName, array);
-              }, vm.scope);
-            }
-            throw "Type Error: " + blessed.type.value.name + "." + blessedName.type.value.name;
-          }
-          function callMethodOfBlessed(blessed, blessedName, blessedArgs)
-          {
-            return vm.callFunction(getMethodOfBlessed(blessed, blessedName), vm.unpackVector(blessedArgs));
           }
 
           vm.initBootstrap();
@@ -912,17 +879,6 @@
             var blessedsArgs = codes.map(function(code) { return code(vm, "get", []); });
             blessedsArgs.unshift(vm.createObject(vm.types.typeString, context));
             var blessedsTypes = blessedsArgs.map(function(blessed) { return blessed.type; });
-
-            function tryCallMethodFromScopeAndType(name)
-            {
-              var blessedFunction = searchVariableWithType(name, blessedsTypes);
-              if (vm.instanceOf(blessedFunction, vm.types.typeUndefined)) return false;
-              if (vm.instanceOf(blessedFunction, vm.types.typeFunction)) {
-                return vm.callFunction(blessedFunction, blessedsArgs);
-              } else {
-                throw "`" + name + "` is not a function";
-              }
-            }
 
             res = tryCallMethodOfOperator("_" + context + "_" + operator, blessedsArgs);
             if (res !== false) return res;
