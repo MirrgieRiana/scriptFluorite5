@@ -282,15 +282,6 @@
             //############################################################## TODO ###############################################################
             if (context === "get") {
 
-              if (operator === "operatorTilde") {
-                var left = codes[0](vm, "get", []).value;
-                var right = codes[1](vm, "get", []).value;
-                var array = [];
-                for (var i = left; i <= right; i++) {
-                  array.push(vm.createObject(vm.types.typeNumber, i));
-                }
-                return vm.packVector(array);
-              }
               if (operator === "enumerateComma") return vm.packVector(codes.map(function(code) { return code(vm, "get", []); }));
               if (operator === "bracketsSquare") {
                 return vm.createObject(vm.types.typeArray, vm.unpackVector(codes[0](vm, "get", [])));
@@ -1355,6 +1346,22 @@
             var a = vm.scope.getOrUndefined("a");
             var b = vm.scope.getOrUndefined("b");
             return vm.createObject(vm.types.typeBoolean, a.value && b.value);
+          }, vm.scope));
+
+          vm.scope.setOrDefine("_get_operatorTilde", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            var array = [];
+            if (a.value < b.value) {
+	          for (var i = a.value; i <= b.value; i++) {
+	            array.push(vm.createObject(vm.types.typeNumber, i));
+	          }
+            } else {
+              for (var i = a.value; i >= b.value; i--) {
+	            array.push(vm.createObject(vm.types.typeNumber, i));
+	          }
+            }
+            return vm.packVector(array);
           }, vm.scope));
 
           function dice(count, faces)
