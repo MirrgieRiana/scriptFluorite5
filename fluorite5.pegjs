@@ -282,17 +282,6 @@
             //############################################################## TODO ###############################################################
             if (context === "get") {
 
-              if (operator === "leftPlus") return vm.createObject(vm.types.typeNumber, codes[0](vm, "get", []).value);
-              if (operator === "leftMinus") return vm.createObject(vm.types.typeNumber, -codes[0](vm, "get", []).value);
-              if (operator === "leftExclamation") return vm.getBoolean(!vm.toBoolean(codes[0](vm, "get", [])));
-              if (operator === "operatorGreater") return vm.getBoolean(codes[0](vm, "get", []).value > codes[1](vm, "get", []).value);
-              if (operator === "operatorGreaterEqual") return vm.getBoolean(codes[0](vm, "get", []).value >= codes[1](vm, "get", []).value);
-              if (operator === "operatorLess") return vm.getBoolean(codes[0](vm, "get", []).value < codes[1](vm, "get", []).value);
-              if (operator === "operatorLessEqual") return vm.getBoolean(codes[0](vm, "get", []).value <= codes[1](vm, "get", []).value);
-              if (operator === "operatorEqual2") return vm.getBoolean(codes[0](vm, "get", []).value === codes[1](vm, "get", []).value);
-              if (operator === "operatorExclamationEqual") return vm.getBoolean(codes[0](vm, "get", []).value !== codes[1](vm, "get", []).value);
-              if (operator === "operatorPipe2") return vm.getBoolean(vm.toBoolean(codes[0](vm, "get", [])) || vm.toBoolean(codes[1](vm, "get", [])));
-              if (operator === "operatorAmpersand2") return vm.getBoolean(vm.toBoolean(codes[0](vm, "get", [])) && vm.toBoolean(codes[1](vm, "get", [])));
               if (operator === "operatorTilde") {
                 var left = codes[0](vm, "get", []).value;
                 var right = codes[1](vm, "get", []).value;
@@ -1312,6 +1301,60 @@
             var a = vm.scope.getOrUndefined("a");
             var b = vm.scope.getOrUndefined("b");
             return vm.createObject(vm.types.typeNumber, Math.pow(a.value, b.value));
+          }, vm.scope));
+
+          vm.scope.setOrDefine("_get_leftPlus", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            return a;
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_leftMinus", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            return vm.createObject(vm.types.typeNumber, -a.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_leftExclamation", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeBoolean]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            return vm.createObject(vm.types.typeBoolean, !a.value);
+          }, vm.scope));
+
+          vm.scope.setOrDefine("_get_operatorGreater", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeBoolean, a.value > b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorGreaterEqual", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeBoolean, a.value >= b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorLess", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeBoolean, a.value < b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorLessEqual", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeBoolean, a.value <= b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorEqual2", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeValue], ["b", vm.types.typeValue]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeBoolean, a.value === b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorExclamationEqual", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeValue], ["b", vm.types.typeValue]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeBoolean, a.value !== b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorPipe2", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeBoolean], ["b", vm.types.typeBoolean]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeBoolean, a.value || b.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorAmpersand2", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeBoolean], ["b", vm.types.typeBoolean]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeBoolean, a.value && b.value);
           }, vm.scope));
 
           function dice(count, faces)
