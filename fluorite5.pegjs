@@ -282,20 +282,6 @@
             //############################################################## TODO ###############################################################
             if (context === "get") {
 
-              if (operator === "enumerateComma") return vm.packVector(codes.map(function(code) { return code(vm, "get", []); }));
-              if (operator === "bracketsSquare") {
-                return vm.createObject(vm.types.typeArray, vm.unpackVector(codes[0](vm, "get", [])));
-              }
-              if (operator === "rightbracketsSquare") {
-                var value = codes[0](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeArray)) return value.value[codes[1](vm, "get", []).value] || vm.UNDEFINED;
-                throw "Type Error: " + operator + "/" + value.type.value.name;
-              }
-              if (operator === "leftAtsign") {
-                var value = codes[0](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeArray)) return vm.createObject(vm.types.typeVector, value.value);
-                throw "Type Error: " + operator + "/" + value.type.value.name;
-              }
               if (operator === "operatorMinus2Greater"
                 || operator === "operatorEqual2Greater") 	{
                 var minus = operator == "operatorMinus2Greater";
@@ -332,10 +318,6 @@
                 }
                 throw "Type Error: " + operator + "/" + right.type.value.name;
               }
-              if (operator === "operatorColon") return vm.createObject(vm.types.typeEntry, {
-                key: codes[0](vm, "get", []),
-                value: codes[1](vm, "get", []),
-              });
               if (operator === "leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get", []).value);
               if (operator === "rightbracketsRound") {
                 var value = codes[0](vm, "get", []);
@@ -601,17 +583,6 @@
                 throw "Unknown command: " + command.value;
               }
               if (operator === "leftAmpersand") return vm.createPointer(codes[0], vm.scope);
-              if (operator === "bracketsCurly") {
-                var hash = {};
-                vm.unpackVector(codes[0](vm, "get", [])).forEach(function(item) {
-                  if (vm.instanceOf(item, vm.types.typeEntry)) {
-                    hash[item.value.key.value] = item.value.value;
-                    return;
-                  }
-                  throw "Type Error: " + item.type.value.name + " is not a Entry";
-                });
-                return vm.createObject(vm.types.typeHash, hash);
-              }
               if (operator === "operatorColon2") {
                 var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
                 var key = codes[1](vm, "get", []);
@@ -662,12 +633,6 @@
               if (operator === "operatorColonGreater") {
                 var array = codes[0](vm, "arguments").value.map(function(item) { return [item[0].value, item[1]]; });
                 return vm.createFunction(array, codes[1], vm.scope);
-              }
-              if (operator === "concatenateLiteral") {
-                return vm.createObject(vm.types.typeString, codes.map(function(code) { return vm.toString(code(vm, "get", [])); }).join(""));
-              }
-              if (operator === "concatenateHereDocument") {
-                return vm.createObject(vm.types.typeString, codes.map(function(code) { return vm.toString(code(vm, "get", [])); }).join(""));
               }
               if (operator === "enumerateSemicolon") {
                 for (var i = 0; i < codes.length - 1; i++) {
@@ -1362,6 +1327,71 @@
 	          }
             }
             return vm.packVector(array);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_enumerateComma", vm.createFunction([["env", vm.types.typeValue]], function(vm, context) {
+            return vm.scope.getOrUndefined("_");
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_bracketsSquare", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeValue]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            return vm.createObject(vm.types.typeArray, vm.unpackVector(a));
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_rightbracketsSquare", vm.packVector([
+            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeArray], ["b", vm.types.typeNumber]], function(vm, context) {
+              var a = vm.scope.getOrUndefined("a");
+              var b = vm.scope.getOrUndefined("b");
+              return a.value[b.value];
+            }, vm.scope),
+            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeHash], ["b", vm.types.typeValue]], function(vm, context) {
+              var a = vm.scope.getOrUndefined("a");
+              var b = vm.scope.getOrUndefined("b");
+              return a.value[vm.toString(b)];
+            }, vm.scope),
+          ]));
+          /* TODO
+          vm.scope.setOrDefine("_get_operatorColon2", vm.packVector([
+            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeArray], ["b", vm.types.typeNumber]], function(vm, context) {
+              var a = vm.scope.getOrUndefined("a");
+              var b = vm.scope.getOrUndefined("b");
+              return a.value[b.value];
+            }, vm.scope),
+            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeHash], ["b", vm.types.typeValue]], function(vm, context) {
+              var a = vm.scope.getOrUndefined("a");
+              var b = vm.scope.getOrUndefined("b");
+              return a.value[vm.toString(b)];
+            }, vm.scope),
+          ]));
+          */
+          vm.scope.setOrDefine("_get_leftAtsign", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeArray]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            return vm.packVector(a.value);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorColon", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeValue], ["b", vm.types.typeValue]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var b = vm.scope.getOrUndefined("b");
+            return vm.createObject(vm.types.typeEntry, {
+              key: vm.createObject(vm.types.typeKeyword, vm.toString(a)),
+              value: b,
+            });
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_bracketsCurly", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeValue]], function(vm, context) {
+            var a = vm.scope.getOrUndefined("a");
+            var hash = {};
+            vm.unpackVector(a).forEach(function(item) {
+              if (vm.instanceOf(item, vm.types.typeEntry)) {
+                hash[item.value.key.value] = item.value.value;
+                return;
+              }
+              throw "Type Error: " + item.type.value.name + " is not a Entry";
+            });
+            return vm.createObject(vm.types.typeHash, hash);
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_concatenateLiteral", vm.createFunction([["env", vm.types.typeValue]], function(vm, context) {
+            var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
+            return vm.createObject(vm.types.typeString, array.map(function(item) { return vm.toString(item); }).join(""));
+          }, vm.scope));
+          vm.scope.setOrDefine("_get_concatenateHereDocument", vm.createFunction([["env", vm.types.typeValue]], function(vm, context) {
+            var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
+            return vm.createObject(vm.types.typeString, array.map(function(item) { return vm.toString(item); }).join(""));
           }, vm.scope));
 
           function dice(count, faces)
