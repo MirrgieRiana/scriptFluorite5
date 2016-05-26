@@ -858,13 +858,6 @@
             message: message,
           });
         };
-        VMStandard.prototype.createFunction = function(args, code, scope) {
-          return this.createObject(this.types.typeFunction, {
-            args: args,
-            code: code,
-            scope: scope,
-          });
-        };
         VMStandard.prototype.createPointer = function(code, scope) {
           return this.createObject(this.types.typePointer, {
             code: code,
@@ -917,28 +910,6 @@
           try {
             res = blessedPointer.value.code(this, context, args);
           } finally {
-            this.popStack();
-          }
-          return res;
-        };
-        VMStandard.prototype.isCallableFunction = function(blessedFunction, blessedsArgs) {
-          for (var i = 0; i < blessedFunction.value.args.length; i++) {
-            if (!this.instanceOf(blessedsArgs[i] || this.UNDEFINED, blessedFunction.value.args[i][1])) return false;
-          }
-          return true;
-        };
-        VMStandard.prototype.callFunction = function(blessedFunction, blessedsArgs) {
-          this.pushStack(blessedFunction.value.scope);
-          this.pushFrame();
-          for (var i = 0; i < blessedFunction.value.args.length; i++) {
-            this.scope.defineOrSet(blessedFunction.value.args[i][0], blessedsArgs[i] || this.UNDEFINED);
-          }
-          this.scope.defineOrSet("_", this.packVector(blessedsArgs.slice(i, blessedsArgs.length)));
-          var res;
-          try {
-            res = blessedFunction.value.code(this, "get", []);
-          } finally {
-            this.popFrame();
             this.popStack();
           }
           return res;
@@ -1029,6 +1000,45 @@
           var blesseds = this.unpackVector(blessedArgs);
           blesseds.unshift(blessedObject);
           return this.callMethod(name, [blessedObject.type], blesseds);
+        };
+
+        function VMSFunction(args, code, scope)
+        {
+          this.args = args;
+          this.code = code;
+          this.scope = scope;
+        }
+        VMSFunction.prototype.isCallable = function(vm, blessedsArgs) {
+          for (var i = 0; i < this.args.length; i++) {
+            if (!vm.instanceOf(blessedsArgs[i] || vm.UNDEFINED, this.args[i][1])) return false;
+          }
+          return true;
+        };
+        VMSFunction.prototype.call = function(vm, blessedsArgs) {
+          vm.pushStack(this.scope);
+          vm.pushFrame();
+          for (var i = 0; i < this.args.length; i++) {
+            vm.scope.defineOrSet(this.args[i][0], blessedsArgs[i] || vm.UNDEFINED);
+          }
+          vm.scope.defineOrSet("_", vm.packVector(blessedsArgs.slice(i, blessedsArgs.length)));
+          var res;
+          try {
+            res = this.code(vm, "get", []);
+          } finally {
+            vm.popFrame();
+            vm.popStack();
+          }
+          return res;
+        };
+
+        VMStandard.prototype.createFunction = function(args, code, scope) {
+          return this.createObject(this.types.typeFunction, new VMSFunction(args, code, scope));
+        };
+        VMStandard.prototype.isCallableFunction = function(blessedFunction, blessedsArgs) {
+          return blessedFunction.value.isCallable(this, blessedsArgs);
+        };
+        VMStandard.prototype.callFunction = function(blessedFunction, blessedsArgs) {
+          return blessedFunction.value.call(this, blessedsArgs);
         };
 
         VMStandard.prototype.initBootstrap = function() {
