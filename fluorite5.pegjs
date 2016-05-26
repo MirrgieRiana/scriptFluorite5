@@ -1130,59 +1130,41 @@
         VMStandard.prototype.initLibrary = function() {
           var vm = this;
 
-          vm.types.typeValue.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, "<" + value.type.value.name + ">");
+          vm.types.typeValue.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "<" + blessedsArgs[0].type.value.name + ">");
+          });
+          vm.types.typeNumber.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "" + blessedsArgs[0].value);
           }, vm.scope);
-          vm.types.typeNumber.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, "" + value.value);
+          vm.types.typeString.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, blessedsArgs[0].value);
           }, vm.scope);
-          vm.types.typeString.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, value.value);
+          vm.types.typeBoolean.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "" + blessedsArgs[0].value);
           }, vm.scope);
-          vm.types.typeBoolean.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, "" + value.value);
+          vm.types.typeArray.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "[" + blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
           }, vm.scope);
-          vm.types.typeArray.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, "[" + value.value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
-          }, vm.scope);
-          vm.types.typeHash.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, "{" + Object.keys(value.value).map(function(key) {
-              return key + ": " + vm.toString(value.value[key]);
+          vm.types.typeHash.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "{" + Object.keys(blessedsArgs[0].value).map(function(key) {
+              return key + ": " + vm.toString(blessedsArgs[0].value[key]);
             }).join(", ") + "}");
           }, vm.scope);
-          vm.types.typeEntry.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, vm.toString(value.value.key) + ": " + vm.toString(value.value.value));
+          vm.types.typeEntry.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, vm.toString(blessedsArgs[0].value.key) + ": " + vm.toString(blessedsArgs[0].value.value));
           }, vm.scope);
-          vm.types.typeVector.value.members["toString"] = vm.createFunction([], function(vm, context) {
-            var value = vm.scope.getOrUndefined("_");
-            if (value.value.length == 0) return vm.createObject(vm.types.typeString, "<Void>");
-            return vm.createObject(vm.types.typeString, value.value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
+          vm.types.typeVector.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            if (blessedsArgs[0].value.length == 0) return vm.createObject(vm.types.typeString, "<Void>");
+            return vm.createObject(vm.types.typeString, blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
           }, vm.scope);
-          vm.types.typeType.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, "<Type: " + value.value.name + ">");
+          vm.types.typeType.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "<Type: " + blessedsArgs[0].value.name + ">");
           }, vm.scope);
-          vm.types.typeFunction.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            if (value.value.args.length === 0) return vm.createObject(vm.types.typeString, "<Function>");
-            return vm.createObject(vm.types.typeString, "<Function: " + value.value.args.map(function(arg) {
-              if ((typeof arg) === "string") { // TODO
-                return arg;
-              } else {
-                return "" + arg[0] + " : " + arg[1].value.name;
-              }
-            }).join(", ") + ">");
+          vm.types.typeFunction.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, blessedsArgs[0].value.toStringVMS());
           }, vm.scope);
-          vm.types.typeException.value.members["toString"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.createObject(vm.types.typeString, "<Exception: '" + value.value.message + "'>");
+          vm.types.typeException.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "<Exception: '" + blessedsArgs[0].value.message + "'>");
           }, vm.scope);
 
           vm.types.typeValue.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
