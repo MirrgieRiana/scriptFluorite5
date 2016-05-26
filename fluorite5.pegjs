@@ -1002,6 +1002,9 @@
           return this.callMethod(name, [blessedObject.type], blesseds);
         };
 
+        /**
+         * @param args example: [["a", vm.types.typeValue], ["b", vm.types.typeValue]]
+         */
         function VMSFunction(args, code, scope)
         {
           this.args = args;
@@ -1030,9 +1033,42 @@
           }
           return res;
         };
+        VMSFunction.prototype.toStringVMS = function() {
+          if (this.args.length === 0) return vm.createObject(vm.types.typeString, "<Function>");
+          return "<Function: " + this.args.map(function(arg) {
+            return "" + arg[0] + " : " + arg[1].value.name;
+          }).join(", ") + ">";
+        };
+
+        /**
+         * @param args example: [vm.types.typeValue, vm.types.typeValue]
+         */
+        function VMSFunctionNative(args, code)
+        {
+          this.args = args;
+          this.code = code;
+        }
+        VMSFunctionNative.prototype.isCallable = function(vm, blessedsArgs) {
+          for (var i = 0; i < this.args.length; i++) {
+            if (!vm.instanceOf(blessedsArgs[i] || vm.UNDEFINED, this.args[i])) return false;
+          }
+          return true;
+        };
+        VMSFunctionNative.prototype.call = function(vm, blessedsArgs) {
+          return this.code(vm, blessedsArgs);
+        };
+        VMSFunctionNative.prototype.toStringVMS = function() {
+          if (this.args.length === 0) return vm.createObject(vm.types.typeString, "<FunctionNative>");
+          return "<FunctionNative: " + this.args.map(function(arg) {
+            return "" + arg.value.name;
+          }).join(", ") + ">";
+        };
 
         VMStandard.prototype.createFunction = function(args, code, scope) {
           return this.createObject(this.types.typeFunction, new VMSFunction(args, code, scope));
+        };
+        VMStandard.prototype.createFunctionNative = function(args, code) {
+          return this.createObject(this.types.typeFunction, new VMSFunctionNative(args, code));
         };
         VMStandard.prototype.isCallableFunction = function(blessedFunction, blessedsArgs) {
           return blessedFunction.value.isCallable(this, blessedsArgs);
