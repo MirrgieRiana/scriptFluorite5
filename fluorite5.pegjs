@@ -1167,31 +1167,27 @@
             return vm.createObject(vm.types.typeString, "<Exception: '" + blessedsArgs[0].value.message + "'>");
           });
 
-          vm.types.typeValue.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
+          vm.types.typeValue.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.TRUE;
-          }, vm.scope);
-          vm.types.typeUndefined.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
+          });
+          vm.types.typeUndefined.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.FALSE;
-          }, vm.scope);
-          vm.types.typeNull.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
+          });
+          vm.types.typeNull.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.FALSE;
-          }, vm.scope);
-          vm.types.typeNumber.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.getBoolean(value.value != 0);
-          }, vm.scope);
-          vm.types.typeString.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.getBoolean(value.value !== "");
-          }, vm.scope);
-          vm.types.typeBoolean.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return value;
-          }, vm.scope);
-          vm.types.typeArray.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
-            var value = vm.scope.getOrUndefined("this");
-            return vm.getBoolean(value.value.length > 0);
-          }, vm.scope);
+          });
+          vm.types.typeNumber.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.getBoolean(blessedsArgs[0].value != 0);
+          });
+          vm.types.typeString.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.getBoolean(blessedsArgs[0].value !== "");
+          });
+          vm.types.typeBoolean.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return blessedsArgs[0];
+          });
+          vm.types.typeArray.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.getBoolean(blessedsArgs[0].value.length > 0);
+          });
 
           {
             var hash = {};
