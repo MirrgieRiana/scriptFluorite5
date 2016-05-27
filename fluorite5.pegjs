@@ -1204,17 +1204,17 @@
           function createNativeBridge(func, argumentCount)
           {
             if (argumentCount == 0) {
-              return vm.createFunction([], function(vm, context) {
+              return vm.createFunctionNative([], function(vm, blessedsArgs) {
                 return vm.createObject(vm.types.typeNumber, func());
-              }, vm.scope);
+              });
             } else if (argumentCount == 1) {
-              return vm.createFunction([["x", vm.types.typeValue]], function(vm, context) {
-                return vm.createObject(vm.types.typeNumber, func(vm.scope.getOrUndefined("x").value));
-              }, vm.scope);
+              return vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+                return vm.createObject(vm.types.typeNumber, func(blessedsArgs[0].value));
+              });
             } else if (argumentCount == 2) {
-              return vm.createFunction([["x", vm.types.typeValue], ["y", vm.types.typeValue]], function(vm, context) {
-                return vm.createObject(vm.types.typeNumber, func(vm.scope.getOrUndefined("x").value, vm.scope.getOrUndefined("y").value));
-              }, vm.scope);
+              return vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+                return vm.createObject(vm.types.typeNumber, func(blessedsArgs[0].value, blessedsArgs[1].value));
+              });
             } else {
               throw "TODO"; // TODO
             }
