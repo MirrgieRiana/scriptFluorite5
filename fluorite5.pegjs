@@ -1135,37 +1135,37 @@
           });
           vm.types.typeNumber.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "" + blessedsArgs[0].value);
-          }, vm.scope);
+          });
           vm.types.typeString.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, blessedsArgs[0].value);
-          }, vm.scope);
+          });
           vm.types.typeBoolean.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "" + blessedsArgs[0].value);
-          }, vm.scope);
+          });
           vm.types.typeArray.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "[" + blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
-          }, vm.scope);
+          });
           vm.types.typeHash.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "{" + Object.keys(blessedsArgs[0].value).map(function(key) {
               return key + ": " + vm.toString(blessedsArgs[0].value[key]);
             }).join(", ") + "}");
-          }, vm.scope);
+          });
           vm.types.typeEntry.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, vm.toString(blessedsArgs[0].value.key) + ": " + vm.toString(blessedsArgs[0].value.value));
-          }, vm.scope);
+          });
           vm.types.typeVector.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             if (blessedsArgs[0].value.length == 0) return vm.createObject(vm.types.typeString, "<Void>");
             return vm.createObject(vm.types.typeString, blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
-          }, vm.scope);
+          });
           vm.types.typeType.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "<Type: " + blessedsArgs[0].value.name + ">");
-          }, vm.scope);
+          });
           vm.types.typeFunction.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, blessedsArgs[0].value.toStringVMS());
-          }, vm.scope);
+          });
           vm.types.typeException.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "<Exception: '" + blessedsArgs[0].value.message + "'>");
-          }, vm.scope);
+          });
 
           vm.types.typeValue.value.members["toBoolean"] = vm.createFunction([["this", vm.types.typeValue]], function(vm, context) {
             return vm.TRUE;
