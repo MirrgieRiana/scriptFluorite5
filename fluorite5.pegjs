@@ -321,7 +321,16 @@
               if (operator === "leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get", []).value);
               if (operator === "rightbracketsRound") {
                 var value = codes[0](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return vm.callFunction(value, vm.unpackVector(codes[1](vm, "get", [])));
+                if (vm.instanceOf(value, vm.types.typeFunction)) {
+                  return vm.callFunction(value, vm.unpackVector(codes[1](vm, "get", [])));
+                } else if (vm.instanceOf(value, vm.types.typeVector)) {
+                  var array = vm.unpackVector(codes[1](vm, "get", []));
+                  for (var i = 0; i < value.value.length; i++) {
+                    if (vm.isCallableFunction(value.value[i], array)) {
+                      return vm.callFunction(value.value[i], array);
+                    }
+                  }
+                }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "statement") {
