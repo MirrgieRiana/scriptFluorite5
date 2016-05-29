@@ -1257,7 +1257,7 @@
           vm.scope.setOrDefine("_get_operatorAsterisk", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value * blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorPercent", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumbe]], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorPercent", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumbe], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value % blessedsArgs[2].value);
           }));
           vm.scope.setOrDefine("_get_operatorSlash", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
