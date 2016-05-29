@@ -1214,43 +1214,38 @@
           Object.keys(vm.types).forEach(function(key) {
             vm.scope.setOrDefine("class_" + vm.types[key].value.name, vm.types[key]);
           });
-          function createNativeBridge(func, argumentCount)
+          function createNativeBridge(restype, args, func)
           {
-            if (argumentCount == 0) {
-              return vm.createFunctionNative([], function(vm, blessedsArgs) {
-                return vm.createObject(vm.types.typeNumber, func());
-              });
-            } else if (argumentCount == 1) {
-              return vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
-                return vm.createObject(vm.types.typeNumber, func(blessedsArgs[0].value));
-              });
-            } else if (argumentCount == 2) {
-              return vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
-                return vm.createObject(vm.types.typeNumber, func(blessedsArgs[0].value, blessedsArgs[1].value));
-              });
-            } else {
-              throw "TODO"; // TODO
-            }
+            return vm.createFunctionNative(args, function(vm, blessedsArgs) {
+              return vm.createObject(restype, func.apply(vm, blessedsArgs.map(function (item) { return item.value; })));
+            });
           }
           vm.scope.setOrDefine("Math", vm.createObject(vm.types.typeHash, {
             "PI": vm.createObject(vm.types.typeNumber, Math.PI),
             "E": vm.createObject(vm.types.typeNumber, Math.E),
-            "abs": createNativeBridge(Math.abs, 1),
-            "sin": createNativeBridge(Math.sin, 1),
-            "cos": createNativeBridge(Math.cos, 1),
-            "tan": createNativeBridge(Math.tan, 1),
-            "asin": createNativeBridge(Math.asin, 1),
-            "acos": createNativeBridge(Math.acos, 1),
-            "atan": createNativeBridge(Math.atan, 1),
-            "atan2": createNativeBridge(Math.atan2, 2),
-            "log": createNativeBridge(Math.log, 1),
-            "ceil": createNativeBridge(Math.ceil, 1),
-            "floor": createNativeBridge(Math.floor, 1),
-            "exp": createNativeBridge(Math.exp, 1),
-            "pow": createNativeBridge(Math.pow, 2),
-            "random": createNativeBridge(Math.random, 0),
-            "randomBetween": createNativeBridge(function(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }, 2),
-            "sqrt": createNativeBridge(Math.sqrt, 1),
+            "abs": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.abs),
+            "sin": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.sin),
+            "cos": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.cos),
+            "tan": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.tan),
+            "asin": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.asin),
+            "acos": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.acos),
+            "atan": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.atan),
+            "atan2": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber, vm.types.typeNumber], Math.atan2),
+            "log": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.log),
+            "ceil": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.ceil),
+            "floor": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.floor),
+            "exp": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.exp),
+            "pow": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber, vm.types.typeNumber], Math.pow),
+            "random": vm.packVector([
+              createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber, vm.types.typeNumber], function(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+              }),
+              createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], function(patterns) {
+                return Math.floor(Math.random() * patterns);
+              }),
+              createNativeBridge(vm.types.typeNumber, [], Math.random),
+            ]),
+            "sqrt": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.sqrt),
           }));
 
           vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
