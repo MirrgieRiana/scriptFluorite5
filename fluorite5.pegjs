@@ -330,6 +330,8 @@
                       return vm.callFunction(value.value[i], array);
                     }
                   }
+                } else if (vm.instanceOf(value, vm.types.typeString)) {
+                  return vm.callMethod(value.value, [], vm.unpackVector(codes[1](vm, "get", [])));
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
