@@ -1267,18 +1267,15 @@
             return vm.createObject(vm.types.typeNumber, Math.pow(blessedsArgs[1].value, blessedsArgs[2].value));
           }));
 
-          vm.scope.setOrDefine("_get_leftPlus", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber]], function(vm, context) {
-            var a = vm.scope.getOrUndefined("a");
-            return a;
-          }, vm.scope));
-          vm.scope.setOrDefine("_get_leftMinus", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber]], function(vm, context) {
-            var a = vm.scope.getOrUndefined("a");
-            return vm.createObject(vm.types.typeNumber, -a.value);
-          }, vm.scope));
-          vm.scope.setOrDefine("_get_leftExclamation", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeBoolean]], function(vm, context) {
-            var a = vm.scope.getOrUndefined("a");
-            return vm.createObject(vm.types.typeBoolean, !a.value);
-          }, vm.scope));
+          vm.scope.setOrDefine("_get_leftPlus", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
+            return blessedsArgs[1];
+          }));
+          vm.scope.setOrDefine("_get_leftMinus", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeNumber, -blessedsArgs[1].value);
+          }));
+          vm.scope.setOrDefine("_get_leftExclamation", vm.createFunctionNative([vm.types.typeValue, vm.types.typeBoolean], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeBoolean, !blessedsArgs[1].value);
+          }));
 
           vm.scope.setOrDefine("_get_operatorGreater", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
             var a = vm.scope.getOrUndefined("a");
