@@ -1241,47 +1241,31 @@
           }));
 
           vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
-            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
-              var a = vm.scope.getOrUndefined("a");
-              var b = vm.scope.getOrUndefined("b");
-              return vm.createObject(vm.types.typeNumber, a.value + b.value);
-            }, vm.scope),
-            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeString], ["b", vm.types.typeValue]], function(vm, context) {
-              var a = vm.scope.getOrUndefined("a");
-              var b = vm.scope.getOrUndefined("b");
-              return vm.createObject(vm.types.typeString, a.value + vm.toString(b));
-            }, vm.scope),
-            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeValue], ["b", vm.types.typeString]], function(vm, context) {
-              var a = vm.scope.getOrUndefined("a");
-              var b = vm.scope.getOrUndefined("b");
-              return vm.createObject(vm.types.typeString, vm.toString(a) + b.value);
-            }, vm.scope),
+            vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+              return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value + blessedsArgs[2].value);
+            }),
+            vm.createFunctionNative([vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
+              return vm.createObject(vm.types.typeString, blessedsArgs[1].value + vm.toString(blessedsArgs[2]));
+            }),
+            vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) {
+              return vm.createObject(vm.types.typeString, vm.toString(blessedsArgs[1]) + blessedsArgs[2].value);
+            }),
           ]));
-          vm.scope.setOrDefine("_get_operatorMinus", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
-            var a = vm.scope.getOrUndefined("a");
-            var b = vm.scope.getOrUndefined("b");
-            return vm.createObject(vm.types.typeNumber, a.value - b.value);
-          }, vm.scope));
-          vm.scope.setOrDefine("_get_operatorAsterisk", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
-            var a = vm.scope.getOrUndefined("a");
-            var b = vm.scope.getOrUndefined("b");
-            return vm.createObject(vm.types.typeNumber, a.value * b.value);
-          }, vm.scope));
-          vm.scope.setOrDefine("_get_operatorPercent", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
-            var a = vm.scope.getOrUndefined("a");
-            var b = vm.scope.getOrUndefined("b");
-            return vm.createObject(vm.types.typeNumber, a.value % b.value);
-          }, vm.scope));
-          vm.scope.setOrDefine("_get_operatorSlash", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
-            var a = vm.scope.getOrUndefined("a");
-            var b = vm.scope.getOrUndefined("b");
-            return vm.createObject(vm.types.typeNumber, a.value / b.value);
-          }, vm.scope));
-          vm.scope.setOrDefine("_get_operatorCaret", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber], ["b", vm.types.typeNumber]], function(vm, context) {
-            var a = vm.scope.getOrUndefined("a");
-            var b = vm.scope.getOrUndefined("b");
-            return vm.createObject(vm.types.typeNumber, Math.pow(a.value, b.value));
-          }, vm.scope));
+          vm.scope.setOrDefine("_get_operatorMinus", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value - blessedsArgs[2].value);
+          }));
+          vm.scope.setOrDefine("_get_operatorAsterisk", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value * blessedsArgs[2].value);
+          }));
+          vm.scope.setOrDefine("_get_operatorPercent", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumbe]], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value % blessedsArgs[2].value);
+          }));
+          vm.scope.setOrDefine("_get_operatorSlash", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value / blessedsArgs[2].value);
+          }));
+          vm.scope.setOrDefine("_get_operatorCaret", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeNumber, Math.pow(blessedsArgs[1].value, blessedsArgs[2].value));
+          }));
 
           vm.scope.setOrDefine("_get_leftPlus", vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeNumber]], function(vm, context) {
             var a = vm.scope.getOrUndefined("a");
