@@ -1391,6 +1391,18 @@
             if (blessedsArgs[0].value > 20) throw vm.createException("Illegal argument[0]: " + blessedsArgs[0].value + " > 20");
             return vm.createObject(vm.types.typeNumber, dice(blessedsArgs[0].value, blessedsArgs[1].value));
           }));
+          vm.types.typeArray.value.members.random = vm.packVector([
+            vm.createFunctionNative([vm.types.typeArray, vm.types.typeNumber], function(vm, blessedsArgs) {
+              var array = blessedsArgs[0].value.slice(0);
+              while (array.length > blessedsArgs[1].value) {
+                array.splice(Math.floor(Math.random() * array.length), 1);
+              }
+              return vm.createObject(vm.types.typeArray, array);
+            }),
+            vm.createFunctionNative([vm.types.typeArray], function(vm, blessedsArgs) {
+              return blessedsArgs[0].value[Math.floor(Math.random() * blessedsArgs[0].value.length)];
+            }),
+          ]);
 
           vm.scope.setOrDefine("_get_leftMultibyte_√", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, Math.sqrt(blessedsArgs[1].value));
