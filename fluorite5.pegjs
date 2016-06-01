@@ -834,6 +834,7 @@
                 return vm.createObject(vm.types.typeKeyword, value);
               }
               if (type === "Void") return vm.VOID;
+              if (type === "HeredocumentVoid") return vm.NULL;
               if (type === "Boolean") return vm.getBoolean(value);
             } else if (context === "invoke") {
               return vm.createLiteral(type, value, "get", []);
@@ -1869,7 +1870,7 @@ ContentStringReplaceableReplacement
 
 HereDocument
   = "%" head:(head:Identifier "(" _ tail:(Formula / Void) _ ")" { return [head, tail]; })? tail:(
-      ";" { return createCodeFromLiteral("Void", "void"); }
+      ";" { return createCodeFromLiteral("HeredocumentVoid", "void"); }
     / (
         begin:HereDocumentDelimiter main:(
           "{" main:(
