@@ -258,10 +258,14 @@
               var blessedFunction = vm.scope.getOrUndefined(name);
               if (vm.instanceOf(blessedFunction, vm.types.typeUndefined)) return false;
               if (vm.instanceOf(blessedFunction, vm.types.typeFunction)) {
-                var array = [vm.createObject(vm.types.typeString, context)];
-                Array.prototype.push.apply(array, codes.map(function(code) { return vm.createPointer(code, vm.scope); }));
+                var array = [vm.createObject(vm.types.typeHash, {
+                  context: vm.createObject(vm.types.typeString, context),
+                  args: vm.createObject(vm.types.typeArray, args.slice(0)),
+                  scope: vm.createObject(vm.types.typeScope, vm.scope),
+                })];
+                Array.prototype.push.apply(array, codes.map(function(code) { return vm.createObject(vm.types.typeCode, code); }));
                 var blessedPointer = vm.callFunction(blessedFunction, array);
-                if (!vm.instanceOf(blessedPointer, vm.types.typePointer)) throw "Illegal type of operation result: " + blessedPointer.type.value.name;
+                if (!vm.instanceOf(blessedPointer, vm.types.typePointer)) throw "Illegal type of operation result: " + blessedPointer.type.value.name + " != Pointer";
                 return vm.callPointer(blessedPointer, context, args);
               } else {
                 throw "`" + name + "` is not a function";
