@@ -1942,6 +1942,7 @@ CharacterIdentifier
   / CharacterKatakana
   / CharacterCJKUnifiedIdeographsExtensionA
   / CharacterCJKUnifiedIdeographs
+  / CharacterGreekAndCoptic
 
 CharacterNumber
   = [0-9]
@@ -1963,6 +1964,9 @@ CharacterCJKUnifiedIdeographsExtensionA
 
 CharacterCJKUnifiedIdeographs
   = [\u4E00-\u9FFF]
+
+CharacterGreekAndCoptic
+  = [\u0370-\u03FF]
 
 CharacterSurrogates
   = CharacterContectSurrogates CharacterContectSurrogates { return text(); }
