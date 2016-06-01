@@ -652,7 +652,7 @@
               if (operator === "enumerateSemicolon") {
                 var result = vm.VOID;
                 for (var i = 0; i < codes.length; i++) {
-                  var res = codes[i](vm, "invoke");
+                  var res = codes[i](vm, "get_line", []);
                   if (vm.instanceOf(res, vm.types.typeObject)) {
                     if (res.value === "VOID") {
                       continue;
@@ -738,6 +738,8 @@
               }
               vm.callOperator(operator, codes, "get", []);
               return;
+            } else if (context === "get_line") {
+              return vm.callOperator(operator, codes, "get", args);
             } else if (context === "contentStatement") {
               if (operator === "bracketsRound") return ["round", codes[0], undefined, createCodeFromMethod(operator, codes)];
               if (operator === "bracketsSquare") return ["square", codes[0], undefined, createCodeFromMethod(operator, codes)];
@@ -834,8 +836,10 @@
               if (type === "Void") return vm.VOID;
               if (type === "Boolean") return vm.getBoolean(value);
             } else if (context === "invoke") {
-              if (type === "Void") return vm.createObject(vm.types.typeObject, "VOID");
               return vm.createLiteral(type, value, "get", []);
+            } else if (context === "get_line") {
+              if (type === "Void") return vm.createObject(vm.types.typeObject, "VOID");
+              return vm.createLiteral(type, value, "get", args);
             } else if (context === "contentStatement") {
               if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value), value, createCodeFromLiteral(type, value)];
               return ["normal", createCodeFromLiteral(type, value), undefined, createCodeFromLiteral(type, value)];
