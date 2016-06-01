@@ -650,10 +650,17 @@
                 return vm.createFunction(array, codes[1], vm.scope);
               }
               if (operator === "enumerateSemicolon") {
-                for (var i = 0; i < codes.length - 1; i++) {
-                  codes[i](vm, "invoke");
+                var result = vm.VOID;
+                for (var i = 0; i < codes.length; i++) {
+                  var res = codes[i](vm, "invoke");
+                  if (vm.instanceOf(res, vm.types.typeObject)) {
+                    if (res.value === "VOID") {
+                      continue;
+                    }
+                  }
+                  result = res;
                 }
-                return codes[codes.length - 1](vm, "get", []);
+                return result;
               }
               if (operator === "operatorEqual") return codes[0](vm, "set", [codes[1](vm, "get", [])]);
               if (operator === "rightPlus2") {
@@ -827,6 +834,7 @@
               if (type === "Void") return vm.VOID;
               if (type === "Boolean") return vm.getBoolean(value);
             } else if (context === "invoke") {
+              if (type === "Void") return vm.createObject(vm.types.typeObject, "VOID");
               return vm.createLiteral(type, value, "get", []);
             } else if (context === "contentStatement") {
               if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value), value, createCodeFromLiteral(type, value)];
@@ -1599,7 +1607,8 @@ Formula
   = Line
 
 Line
-  = head:Arrows tail:(_ (";") _ Arrows)* (_ ";")? { return enumerate(head, tail, "Semicolon"); }
+  = head:Arrows tail:(_ (";") _ (Arrows / Void))* { return enumerate(head, tail, "Semicolon"); }
+  / head:Void tail:(_ (";") _ (Arrows / Void))+ { return enumerate(head, tail, "Semicolon"); }
 
 Arrows
   = head:(
@@ -1624,7 +1633,8 @@ Arrows
     }
 
 Vector
-  = head:Entry tail:(_ (",") _ Entry)* (_ ",")? { return enumerate(head, tail, "Comma"); }
+  = head:Entry tail:(_ (",") _ (Entry / Void))* { return enumerate(head, tail, "Comma"); }
+  / head:Void tail:(_ (",") _ (Entry / Void))+ { return enumerate(head, tail, "Comma"); }
 
 Entry
   = head:Iif tail:(_ (
