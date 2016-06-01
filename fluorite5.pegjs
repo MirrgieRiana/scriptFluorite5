@@ -1303,11 +1303,11 @@
           vm.scope.setOrDefine("_get_operatorExclamationEqual", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value !== blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorPipe2", vm.createFunctionNative([vm.types.typeValue, vm.types.typeBoolean, vm.types.typeBoolean], function(vm, blessedsArgs) {
-            return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value || blessedsArgs[2].value);
+          vm.scope.setOrDefine("_get_operatorPipe2", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            return blessedsArgs[vm.toBoolean(blessedsArgs[1]) ? 1 : 2];
           }));
-          vm.scope.setOrDefine("_get_operatorAmpersand2", vm.createFunctionNative([vm.types.typeValue, vm.types.typeBoolean, vm.types.typeBoolean], function(vm, blessedsArgs) {
-            return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value && blessedsArgs[2].value);
+          vm.scope.setOrDefine("_get_operatorAmpersand2", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            return blessedsArgs[!vm.toBoolean(blessedsArgs[1]) ? 1 : 2];
           }));
 
           vm.scope.setOrDefine("_get_operatorTilde", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
