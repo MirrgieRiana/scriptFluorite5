@@ -562,7 +562,7 @@
                 if (minus) {
                   return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
                     if (vm.instanceOf(right, vm.types.typeString)) {
-                      return vm.callMethodOfBlessed(scalar, right.value, vm.VOID);
+                      return vm.callMethodOfBlessed(scalar, ["method", "function"], right.value, vm.VOID);
                     } else if (vm.instanceOf(right, vm.types.typeFunction)) {
                       return vm.callFunction(right, [scalar]);
                     } else {
@@ -571,7 +571,7 @@
                   }));
                 } else {
                   if (vm.instanceOf(right, vm.types.typeString)) {
-                    return vm.callMethodOfBlessed(codes[0](vm, "get", []), right.value, vm.VOID);
+                    return vm.callMethodOfBlessed(codes[0](vm, "get", []), ["method", "function"], right.value, vm.VOID);
                   } else if (vm.instanceOf(right, vm.types.typeFunction)) {
                     return vm.callFunction(right, [codes[0](vm, "get", [])]);
                   } else {
@@ -593,7 +593,7 @@
                     }
                   }
                 } else if (vm.instanceOf(value, vm.types.typeString)) {
-                  return vm.callMethod(value.value, [], vm.unpackVector(codes[1](vm, "get", [])));
+                  return vm.callMethod(value.value, ["method", "function"], [], vm.unpackVector(codes[1](vm, "get", [])));
                 }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
@@ -632,7 +632,7 @@
                 if (vm.instanceOf(right, vm.types.typeString)) {
                   var left = codes[0](vm, "get", []);
                   return vm.createFunction([], function(vm, context, args) {
-                      return vm.callMethodOfBlessed(left, right.value, vm.scope.getOrUndefined("_"));
+                      return vm.callMethodOfBlessed(left, ["method", "function"], right.value, vm.scope.getOrUndefined("_"));
                   }, vm.scope)
                 } else if (vm.instanceOf(right, vm.types.typeFunction)) {
                   var left = codes[0](vm, "get", []);
@@ -682,8 +682,19 @@
                 return !vm.instanceOf(res, vm.types.typeUndefined) ? res : codes[1](vm, "get", []);
               }
               if (operator === "hereDocumentFunction") {
-                var value = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "decoration"), vm.createObject(vm.types.typeKeyword, "function")]);
-                if (vm.instanceOf(value, vm.types.typeFunction)) return vm.callFunction(value, [vm.createPointer(codes[1], vm.scope), vm.createPointer(codes[2], vm.scope)]);
+                var value = codes[0](vm, "get", []);
+                if (vm.instanceOf(value, vm.types.typeFunction)) {
+                  return vm.callFunction(value, vm.unpackVector(vm.packVector([codes[2](vm, "get", []), codes[1](vm, "get", [])])));
+                } else if (vm.instanceOf(value, vm.types.typeVector)) {
+                  var array = vm.unpackVector(vm.packVector([codes[2](vm, "get", []), codes[1](vm, "get", [])]));
+                  for (var i = 0; i < value.value.length; i++) {
+                    if (vm.isCallableFunction(value.value[i], array)) {
+                      return vm.callFunction(value.value[i], array);
+                    }
+                  }
+                } else if (vm.instanceOf(value, vm.types.typeString)) {
+                  return vm.callMethod(value.value, ["decoration", "function"], [], vm.unpackVector(vm.packVector([codes[2](vm, "get", []), codes[1](vm, "get", [])])));
+                }
                 throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "leftMultibyte") {
@@ -780,7 +791,7 @@
           this.toString = function(value) {
             vm.consumeLoopCapacity();
             if (vm.instanceOf(value, vm.types.typeValue)) {
-              return "" + vm.callMethodOfBlessed(value, "toString", vm.VOID).value;
+              return "" + vm.callMethodOfBlessed(value, ["method", "function"], "toString", vm.VOID).value;
             } else {
               return "" + value;
             }
@@ -799,7 +810,7 @@
           this.toBoolean = function(value) {
             vm.consumeLoopCapacity();
             if (vm.instanceOf(value, vm.types.typeValue)) {
-              return !!vm.callMethodOfBlessed(value, "toBoolean", vm.VOID).value;
+              return !!vm.callMethodOfBlessed(value, ["method", "function"], "toBoolean", vm.VOID).value;
             } else {
               return !!value;
             }
@@ -955,7 +966,7 @@
 
           return false;
         };
-        VMStandard.prototype.getMethodOfCall = function(name, blessedsTypes, predicate) {
+        VMStandard.prototype.getMethodOfCall = function(name, accesses, blessedsTypes, predicate) {
           var res;
 
           for (var i = 0; i < blessedsTypes.length; i++) {
@@ -974,20 +985,16 @@
             }
           }
 
-          res = this.scope.getOrUndefined("method_" + name);
-          if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
-          if (this.instanceOf(res, this.types.typeVector)) {
-            for (var i = 0; i < res.value.length; i++) {
-              if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
-            }
-          }
+          for (var i = 0; i < accesses.length; i++) {
 
-          res = this.scope.getOrUndefined("function_" + name);
-          if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
-          if (this.instanceOf(res, this.types.typeVector)) {
-            for (var i = 0; i < res.value.length; i++) {
-              if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
+            res = this.scope.getOrUndefined(accesses[i] + "_" + name);
+            if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
+            if (this.instanceOf(res, this.types.typeVector)) {
+              for (var i = 0; i < res.value.length; i++) {
+                if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
+              }
             }
+
           }
 
           res = this.scope.getOrUndefined(name);
@@ -1000,9 +1007,9 @@
 
           return this.UNDEFINED;
         };
-        VMStandard.prototype.tryCallMethod = function(name, blessedsTypes, blessedsArgs) {
+        VMStandard.prototype.tryCallMethod = function(name, accesses, blessedsTypes, blessedsArgs) {
           var vm = this;
-          var res = this.getMethodOfCall(name, blessedsTypes, function(blessedFunction) {
+          var res = this.getMethodOfCall(name, accesses, blessedsTypes, function(blessedFunction) {
             return vm.isCallableFunction(blessedFunction, blessedsArgs);
           });
           if (this.instanceOf(res, this.types.typeFunction)) {
@@ -1011,11 +1018,11 @@
           return false;
         };
         VMStandard.prototype.tryCallMethodOfOperator = function(name, blessedsArgs) {
-          return this.tryCallMethod(name, blessedsArgs.map(function(blessedArg) { return blessedArg.type; }), blessedsArgs);
+          return this.tryCallMethod(name, [], blessedsArgs.map(function(blessedArg) { return blessedArg.type; }), blessedsArgs);
         };
-        VMStandard.prototype.callMethod = function(name, blessedsTypes, blessedsArgs) {
+        VMStandard.prototype.callMethod = function(name, accesses, blessedsTypes, blessedsArgs) {
           var vm = this;
-          var res = this.getMethodOfCall(name, blessedsTypes, function(blessedFunction) {
+          var res = this.getMethodOfCall(name, accesses, blessedsTypes, function(blessedFunction) {
             return vm.isCallableFunction(blessedFunction, blessedsArgs);
           });
           if (this.instanceOf(res, this.types.typeFunction)) {
@@ -1024,10 +1031,10 @@
           throw "No such method: " + name + "(" + blessedsArgs.map(function(blessedArg) { return blessedArg.type.value.name; }).join(", ") + ")/"
             + blessedsTypes.map(function(blessedType) { return blessedType.value.name; }).join(", ");
         };
-        VMStandard.prototype.callMethodOfBlessed = function(blessedObject, name, blessedArgs) {
+        VMStandard.prototype.callMethodOfBlessed = function(blessedObject, accessess, name, blessedArgs) {
           var blesseds = this.unpackVector(blessedArgs);
           blesseds.unshift(blessedObject);
-          return this.callMethod(name, [blessedObject.type], blesseds);
+          return this.callMethod(name, accessess, [blessedObject.type], blesseds);
         };
 
         /**
