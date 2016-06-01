@@ -1125,6 +1125,7 @@
                  this.types.typeHash = this.createType("Hash", this.types.typeObject);
                  this.types.typeEntry = this.createType("Entry", this.types.typeObject);
                  this.types.typeException = this.createType("Exception", this.types.typeObject);
+               this.types.typeCode = this.createType("Code", this.types.typeDefined);
 
           this.UNDEFINED = this.createObject(this.types.typeUndefined, undefined);
           this.NULL = this.createObject(this.types.typeNull, null);
@@ -1409,6 +1410,9 @@
               return blessedsArgs[0].value[Math.floor(Math.random() * blessedsArgs[0].value.length)];
             }),
           ]);
+          vm.types.typeCode.value.members.bind = vm.createFunctionNative([vm.types.typeCode, vm.types.typeScope], function(vm, blessedsArgs) {
+            return vm.createPointer(blessedsArgs[0].value, blessedsArgs[1].value);
+          });
 
           vm.scope.setOrDefine("_get_leftMultibyte_√", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, Math.sqrt(blessedsArgs[1].value));
