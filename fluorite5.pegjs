@@ -286,59 +286,6 @@
             //############################################################## TODO ###############################################################
             if (context === "get") {
 
-              if (operator === "operatorMinus2Greater"
-                || operator === "operatorEqual2Greater") 	{
-                var minus = operator == "operatorMinus2Greater";
-                if (minus) {
-                  return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
-                    return vm.callFunction(vm.createFunction([], codes[1], vm.scope), [scalar]);
-                  }));
-                } else {
-                  return vm.callFunction(vm.createFunction([], codes[1], vm.scope), vm.unpackVector(codes[0](vm, "get", [])));
-                }
-              }
-              if (operator === "operatorMinusGreater"
-                || operator === "operatorEqualGreater") 	{
-                var minus = operator == "operatorMinusGreater";
-                var right = codes[1](vm, "get", []);
-                if (minus) {
-                  return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
-                    if (vm.instanceOf(right, vm.types.typeString)) {
-                      return vm.callMethodOfBlessed(scalar, right.value, vm.VOID);
-                    } else if (vm.instanceOf(right, vm.types.typeFunction)) {
-                      return vm.callFunction(right, [scalar]);
-                    } else {
-                      throw "Type Error: " + right.type.value.name + " != String, Function";
-                    }
-                  }));
-                } else {
-                  if (vm.instanceOf(right, vm.types.typeString)) {
-                    return vm.callMethodOfBlessed(codes[0](vm, "get", []), right.value, vm.VOID);
-                  } else if (vm.instanceOf(right, vm.types.typeFunction)) {
-                    return vm.callFunction(right, [codes[0](vm, "get", [])]);
-                  } else {
-                    throw "Type Error: " + right.type.value.name + " != String, Function";
-                  }
-                }
-                throw "Type Error: " + operator + "/" + right.type.value.name;
-              }
-              if (operator === "leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get", []).value);
-              if (operator === "rightbracketsRound") {
-                var value = codes[0](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeFunction)) {
-                  return vm.callFunction(value, vm.unpackVector(codes[1](vm, "get", [])));
-                } else if (vm.instanceOf(value, vm.types.typeVector)) {
-                  var array = vm.unpackVector(codes[1](vm, "get", []));
-                  for (var i = 0; i < value.value.length; i++) {
-                    if (vm.isCallableFunction(value.value[i], array)) {
-                      return vm.callFunction(value.value[i], array);
-                    }
-                  }
-                } else if (vm.instanceOf(value, vm.types.typeString)) {
-                  return vm.callMethod(value.value, [], vm.unpackVector(codes[1](vm, "get", [])));
-                }
-                throw "Type Error: " + operator + "/" + value.type.value.name;
-              }
               if (operator === "statement") {
                 var command = codes[0](vm, "get", []);
                 if (!vm.instanceOf(command, vm.types.typeKeyword)) throw "Type Error: " + command.type.value.name + " != String";
@@ -596,6 +543,59 @@
                   return blessedArguments;
                 }
                 throw "Unknown command: " + command.value;
+              }
+              if (operator === "operatorMinus2Greater"
+                || operator === "operatorEqual2Greater") 	{
+                var minus = operator == "operatorMinus2Greater";
+                if (minus) {
+                  return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
+                    return vm.callFunction(vm.createFunction([], codes[1], vm.scope), [scalar]);
+                  }));
+                } else {
+                  return vm.callFunction(vm.createFunction([], codes[1], vm.scope), vm.unpackVector(codes[0](vm, "get", [])));
+                }
+              }
+              if (operator === "operatorMinusGreater"
+                || operator === "operatorEqualGreater") 	{
+                var minus = operator == "operatorMinusGreater";
+                var right = codes[1](vm, "get", []);
+                if (minus) {
+                  return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
+                    if (vm.instanceOf(right, vm.types.typeString)) {
+                      return vm.callMethodOfBlessed(scalar, right.value, vm.VOID);
+                    } else if (vm.instanceOf(right, vm.types.typeFunction)) {
+                      return vm.callFunction(right, [scalar]);
+                    } else {
+                      throw "Type Error: " + right.type.value.name + " != String, Function";
+                    }
+                  }));
+                } else {
+                  if (vm.instanceOf(right, vm.types.typeString)) {
+                    return vm.callMethodOfBlessed(codes[0](vm, "get", []), right.value, vm.VOID);
+                  } else if (vm.instanceOf(right, vm.types.typeFunction)) {
+                    return vm.callFunction(right, [codes[0](vm, "get", [])]);
+                  } else {
+                    throw "Type Error: " + right.type.value.name + " != String, Function";
+                  }
+                }
+                throw "Type Error: " + operator + "/" + right.type.value.name;
+              }
+              if (operator === "leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get", []).value);
+              if (operator === "rightbracketsRound") {
+                var value = codes[0](vm, "get", []);
+                if (vm.instanceOf(value, vm.types.typeFunction)) {
+                  return vm.callFunction(value, vm.unpackVector(codes[1](vm, "get", [])));
+                } else if (vm.instanceOf(value, vm.types.typeVector)) {
+                  var array = vm.unpackVector(codes[1](vm, "get", []));
+                  for (var i = 0; i < value.value.length; i++) {
+                    if (vm.isCallableFunction(value.value[i], array)) {
+                      return vm.callFunction(value.value[i], array);
+                    }
+                  }
+                } else if (vm.instanceOf(value, vm.types.typeString)) {
+                  return vm.callMethod(value.value, [], vm.unpackVector(codes[1](vm, "get", [])));
+                }
+                throw "Type Error: " + operator + "/" + value.type.value.name;
               }
               if (operator === "leftAmpersand") return vm.createPointer(codes[0], vm.scope);
               if (operator === "operatorColon2") {
