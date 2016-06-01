@@ -1057,7 +1057,7 @@
           return res;
         };
         VMSFunction.prototype.toStringVMS = function() {
-          if (this.args.length === 0) return vm.createObject(vm.types.typeString, "<Function>");
+          if (this.args.length === 0) return "<Function>";
           return "<Function: " + this.args.map(function(arg) {
             return "" + arg[0] + " : " + arg[1].value.name;
           }).join(", ") + ">";
@@ -1081,7 +1081,7 @@
           return this.code(vm, blessedsArgs);
         };
         VMSFunctionNative.prototype.toStringVMS = function() {
-          if (this.args.length === 0) return vm.createObject(vm.types.typeString, "<FunctionNative>");
+          if (this.args.length === 0) return "<FunctionNative>";
           return "<FunctionNative: " + this.args.map(function(arg) {
             return "" + arg.value.name;
           }).join(", ") + ">";
