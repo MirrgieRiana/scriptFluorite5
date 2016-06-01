@@ -1587,7 +1587,7 @@ Message
 MessageText
   = main:(
       [^\\]
-    / "\\\\" { return "\\"; }
+    / "\\" _ "\\" { return "\\"; }
     )* { return main.join(""); }
 
 MessageFormula
