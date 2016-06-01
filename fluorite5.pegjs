@@ -1131,6 +1131,7 @@
                this.types.typeNumber = this.createType("Number", this.types.typeDefined); listeners.push(createConstructor(this.types.typeNumber));
                this.types.typeString = this.createType("String", this.types.typeDefined); listeners.push(createConstructor(this.types.typeString));
                  this.types.typeKeyword = this.createType("Keyword", this.types.typeString);
+                 this.types.typeText = this.createType("Text", this.types.typeString);
                this.types.typeBoolean = this.createType("Boolean", this.types.typeDefined); listeners.push(createConstructor(this.types.typeBoolean));
                this.types.typeFunction = this.createType("Function", this.types.typeDefined); listeners.push(createConstructor(this.types.typeFunction));
                // this.types.typeFunctionNative = this.createType("FunctionNative", this.types.typeDefined); TODO
@@ -1393,7 +1394,7 @@
             return vm.createObject(vm.types.typeString, blessedsArgs.slice(1).map(function(item) { return vm.toString(item); }).join(""));
           }));
           vm.scope.setOrDefine("_get_concatenateHereDocument", vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
-            return vm.createObject(vm.types.typeString, blessedsArgs.slice(1).map(function(item) { return vm.toString(item); }).join(""));
+            return vm.createObject(vm.types.typeText, blessedsArgs.slice(1).map(function(item) { return vm.toString(item); }).join(""));
           }));
 
           function dice(count, faces)
