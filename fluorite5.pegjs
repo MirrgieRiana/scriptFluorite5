@@ -817,6 +817,7 @@
           };
           this.createLiteral = function(type, value, context, args) {
             vm.consumeLoopCapacity();
+            //############################################################## TODO ###############################################################
             if (context === "get") {
               if (type === "Integer") return vm.createObject(vm.types.typeNumber, value);
               if (type === "Float") return vm.createObject(vm.types.typeNumber, value);
@@ -863,6 +864,7 @@
             } else if (context === "argumentName") {
               if (type === "Identifier") return vm.createObject(vm.types.typeKeyword, value);
             }
+            //############################################################## TODO ###############################################################
             throw "Unknown Literal Type: " + context + "/" + type;
           };
         }
