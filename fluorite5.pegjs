@@ -1418,6 +1418,29 @@
           vm.types.typeCode.value.members.bind = vm.createFunctionNative([vm.types.typeCode, vm.types.typeScope], function(vm, blessedsArgs) {
             return vm.createPointer(blessedsArgs[0].value, blessedsArgs[1].value);
           });
+          vm.types.typePointer.value.members.code = vm.createFunctionNative([vm.types.typePointer], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeCode, blessedsArgs[0].value.code);
+          });
+          vm.types.typePointer.value.members.scope = vm.createFunctionNative([vm.types.typePointer], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeScope, blessedsArgs[0].value.scope);
+          });
+          vm.types.typeEntry.value.members.key = vm.createFunctionNative([vm.types.typeEntry], function(vm, blessedsArgs) {
+            return blessedsArgs[0].value.key;
+          });
+          vm.types.typeEntry.value.members.value = vm.createFunctionNative([vm.types.typeEntry], function(vm, blessedsArgs) {
+            return blessedsArgs[0].value.value;
+          });
+          vm.types.typeArray.value.members.length = vm.createFunctionNative([vm.types.typeArray], function(vm, blessedsArgs) {
+            return blessedsArgs[0].value.length;
+          });
+          vm.types.typeString.value.members.length = vm.createFunctionNative([vm.types.typeString], function(vm, blessedsArgs) {
+            return blessedsArgs[0].value.length;
+          });
+          vm.types.typeHash.value.members.keys = vm.createFunctionNative([vm.types.typeHash], function(vm, blessedsArgs) {
+            return vm.packVector(Object.keys(blessedsArgs[0].value).map(function(key) {
+              return vm.createObject(vm.types.typeKeyword, key);
+            }));
+          });
 
           vm.scope.setOrDefine("_get_leftMultibyte_√", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, Math.sqrt(blessedsArgs[1].value));
