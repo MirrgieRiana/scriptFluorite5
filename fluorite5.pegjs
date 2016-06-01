@@ -1733,12 +1733,9 @@ Left
 
 Right
   = head:Variable tail:(_ (
-      "(" _ main:Formula _ ")" { return ["rightbracketsRound", [main]]; }
-    / "[" _ main:Formula _ "]" { return ["rightbracketsSquare", [main]]; }
-    / "{" _ main:Formula _ "}" { return ["rightbracketsCurly", [main]]; }
-    / "(" _ ")" { return ["rightbracketsRound", [createCodeFromLiteral("Void", "void")]]; }
-    / "[" _ "]" { return ["rightbracketsSquare", [createCodeFromLiteral("Void", "void")]]; }
-    / "{" _ "}" { return ["rightbracketsCurly", [createCodeFromLiteral("Void", "void")]]; }
+      "(" _ main:(Formula / Void) _ ")" { return ["rightbracketsRound", [main]]; }
+    / "[" _ main:(Formula / Void) _ "]" { return ["rightbracketsSquare", [main]]; }
+    / "{" _ main:(Formula / Void) _ "}" { return ["rightbracketsCurly", [main]]; }
     / "::" _ main:Variable { return ["operatorColon2", [main]]; }
     / "." _ main:Variable { return ["operatorPeriod", [main]]; }
     / "#" _ main:Variable { return ["operatorHash", [main]]; }
@@ -1753,12 +1750,9 @@ Variable
     ) _)* tail:Factor { return left(head, tail); }
 
 Factor
-  = "(" _ main:Formula _ ")" { return createCodeFromMethod("bracketsRound", [main]); }
-  / "[" _ main:Formula _ "]" { return createCodeFromMethod("bracketsSquare", [main]); }
-  / "{" _ main:Formula _ "}" { return createCodeFromMethod("bracketsCurly", [main]); }
-  / "(" _ ")" { return createCodeFromMethod("bracketsRound", [createCodeFromLiteral("Void", "void")]); }
-  / "[" _ "]" { return createCodeFromMethod("bracketsSquare", [createCodeFromLiteral("Void", "void")]); }
-  / "{" _ "}" { return createCodeFromMethod("bracketsCurly", [createCodeFromLiteral("Void", "void")]); }
+  = "(" _ main:(Formula / Void) _ ")" { return createCodeFromMethod("bracketsRound", [main]); }
+  / "[" _ main:(Formula / Void) _ "]" { return createCodeFromMethod("bracketsSquare", [main]); }
+  / "{" _ main:(Formula / Void) _ "}" { return createCodeFromMethod("bracketsCurly", [main]); }
   / Composite
   / Identifier
   / String
@@ -1854,15 +1848,12 @@ ContentStringReplaceableText
     )* { return createCodeFromLiteral("String", main.join("")); }
 
 ContentStringReplaceableReplacement
-  = "$" "(" main:Formula ")" { return main; }
-  / "$" "{" main:Formula "}" { return createCodeFromMethod("leftDollar", [main]); }
+  = "$" "(" main:(Formula / Void) ")" { return main; }
+  / "$" "{" main:(Formula / Void) "}" { return createCodeFromMethod("leftDollar", [main]); }
   / "$" main:(Integer / Identifier) { return createCodeFromMethod("leftDollar", [main]); }
 
 HereDocument
-  = "%" head:(
-      head:Identifier "(" _ tail:Formula _ ")" { return [head, tail]; }
-    / head:Identifier "(" _ ")" { return [head, createCodeFromLiteral("Void", "void")]; }
-    )? tail:(
+  = "%" head:(head:Identifier "(" _ tail:(Formula / Void) _ ")" { return [head, tail]; })? tail:(
       ";" { return createCodeFromLiteral("Void", "void"); }
     / (
         begin:HereDocumentDelimiter main:(
@@ -1923,11 +1914,8 @@ HereDocument
         return tail;
       }
     }
-  / "%" head:(
-      "(" _ tail:Formula _ ")" { return tail; }
-    / "(" _ ")" { return createCodeFromLiteral("Void", "void"); }
-    ) {
-      return head;
+  / "%" "(" _ tail:(Formula / Void) _ ")" {
+      return tail;
     }
 
 HereDocumentDelimiter
@@ -1935,6 +1923,9 @@ HereDocumentDelimiter
 
 HereDocumentDelimiter2
   = [!"#$%&'*+,\-./:=?@\\^_`|~] { return text(); }
+
+Void "Void"
+  = ((! "a") "a")? { return createCodeFromLiteral("Void", "void"); }
 
 _ "Comments"
   = (
