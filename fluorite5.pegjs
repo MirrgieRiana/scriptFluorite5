@@ -1126,6 +1126,7 @@
                  this.types.typeEntry = this.createType("Entry", this.types.typeObject);
                  this.types.typeException = this.createType("Exception", this.types.typeObject);
                this.types.typeCode = this.createType("Code", this.types.typeDefined);
+               this.types.typeScope = this.createType("Scope", this.types.typeDefined);
 
           this.UNDEFINED = this.createObject(this.types.typeUndefined, undefined);
           this.NULL = this.createObject(this.types.typeNull, null);
