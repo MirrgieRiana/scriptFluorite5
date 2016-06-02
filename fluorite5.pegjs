@@ -1476,6 +1476,13 @@
               return vm.createObject(vm.types.typeKeyword, key);
             }));
           });
+          vm.types.typeType.value.members.super = VMSFunctionNative.create(vm, [vm.types.typeType], function(vm, blessedsArgs) {
+            var result = blessedsArgs[0].value.supertype;
+            return result === null ? vm.NULL : result;
+          });
+          vm.types.typeType.value.members.name = VMSFunctionNative.create(vm, [vm.types.typeType], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, blessedsArgs[0].value.name);
+          });
 
           vm.scope.setOrDefine("_get_leftMultibyte_√", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, Math.sqrt(blessedsArgs[1].value));
