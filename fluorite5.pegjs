@@ -237,7 +237,6 @@
           var vm = this;
 
           vm.initBootstrap();
-
           vm.initLibrary();
 
           this.callOperator = function(operator, codes, context, args) {
