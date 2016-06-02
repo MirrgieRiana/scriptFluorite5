@@ -243,6 +243,9 @@
             this.code = code;
             this.scope = scope;
           }
+          VMSFunction.create = function(vm, args, code, scope) {
+            return vm.createObject(vm.types.typeFunction, new VMSFunction(args, code, scope));
+          };
           VMSFunction.prototype.isCallable = function(vm, blessedsArgs) {
             for (var i = 0; i < this.args.length; i++) {
               if (!vm.instanceOf(blessedsArgs[i] || vm.UNDEFINED, this.args[i][1])) return false;
@@ -285,6 +288,9 @@
             this.args = args;
             this.code = code;
           }
+          VMSFunctionNative.create = function(vm, args, code) {
+            return vm.createObject(vm.types.typeFunction, new VMSFunctionNative(args, code));
+          };
           VMSFunctionNative.prototype.isCallable = function(vm, blessedsArgs) {
             for (var i = 0; i < this.args.length; i++) {
               if (!vm.instanceOf(blessedsArgs[i] || vm.UNDEFINED, this.args[i])) return false;
@@ -303,13 +309,6 @@
 
           return VMSFunctionNative;
         })();
-
-        VMStandard.prototype.createFunction = function(args, code, scope) {
-          return this.createObject(this.types.typeFunction, new VMSFunction(args, code, scope));
-        };
-        VMStandard.prototype.createFunctionNative = function(args, code) {
-          return this.createObject(this.types.typeFunction, new VMSFunctionNative(args, code));
-        };
 
         function VMStandard()
         {
@@ -618,10 +617,10 @@
               var minus = operator == "operatorMinus2Greater";
               if (minus) {
                 return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
-                  return vm.createFunction([], codes[1], vm.scope).value.call(vm, [scalar]);
+                  return VMSFunction.create(vm, [], codes[1], vm.scope).value.call(vm, [scalar]);
                 }));
               } else {
-                return vm.createFunction([], codes[1], vm.scope).value.call(vm, vm.unpackVector(codes[0](vm, "get", [])));
+                return VMSFunction.create(vm, [], codes[1], vm.scope).value.call(vm, vm.unpackVector(codes[0](vm, "get", [])));
               }
             }
             if (operator === "operatorMinusGreater"
@@ -700,12 +699,12 @@
               var right = codes[1](vm, "get", []);
               if (vm.instanceOf(right, vm.types.typeString)) {
                 var left = codes[0](vm, "get", []);
-                return vm.createFunction([], function(vm, context, args) {
+                return VMSFunction.create(vm, [], function(vm, context, args) {
                     return vm.callMethodOfBlessed(left, ["method", "function"], right.value, vm.scope.getOrUndefined("_"));
                 }, vm.scope)
               } else if (vm.instanceOf(right, vm.types.typeFunction)) {
                 var left = codes[0](vm, "get", []);
-                return vm.createFunction([], function(vm, context, args) {
+                return VMSFunction.create(vm, [], function(vm, context, args) {
                     var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
                     array.unshift(left);
                     return right.value.call(vm, array);
@@ -716,7 +715,7 @@
             }
             if (operator === "operatorColonGreater") {
               var array = codes[0](vm, "arguments").value.map(function(item) { return [item[0].value, item[1]]; });
-              return vm.createFunction(array, codes[1], vm.scope);
+              return VMSFunction.create(vm, array, codes[1], vm.scope);
             }
             if (operator === "enumerateSemicolon") {
               var result = vm.VOID;
@@ -1115,7 +1114,7 @@
           function createConstructor(blessedType)
           {
             return function() {
-              blessedType.value.members["new"] = vm.createFunction([["type", vm.types.typeValue]], function(vm, context) {
+              blessedType.value.members["new"] = VMSFunction.create(vm, [["type", vm.types.typeValue]], function(vm, context) {
                 var blessedValue = vm.scope.getOrUndefined("type");
                 if (vm.instanceOf(blessedValue, blessedType)) return blessedValue;
                 throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
@@ -1177,62 +1176,62 @@
         VMStandard.prototype.initLibrary = function() {
           var vm = this;
 
-          vm.types.typeValue.value.members["toString"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.types.typeValue.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "<" + blessedsArgs[0].type.value.name + ">");
           });
-          vm.types.typeNumber.value.members["toString"] = vm.createFunctionNative([vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.types.typeNumber.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "" + blessedsArgs[0].value);
           });
-          vm.types.typeString.value.members["toString"] = vm.createFunctionNative([vm.types.typeString], function(vm, blessedsArgs) {
+          vm.types.typeString.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeString], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, blessedsArgs[0].value);
           });
-          vm.types.typeBoolean.value.members["toString"] = vm.createFunctionNative([vm.types.typeBoolean], function(vm, blessedsArgs) {
+          vm.types.typeBoolean.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeBoolean], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "" + blessedsArgs[0].value);
           });
-          vm.types.typeArray.value.members["toString"] = vm.createFunctionNative([vm.types.typeArray], function(vm, blessedsArgs) {
+          vm.types.typeArray.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeArray], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "[" + blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
           });
-          vm.types.typeHash.value.members["toString"] = vm.createFunctionNative([vm.types.typeHash], function(vm, blessedsArgs) {
+          vm.types.typeHash.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeHash], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "{" + Object.keys(blessedsArgs[0].value).map(function(key) {
               return key + ": " + vm.toString(blessedsArgs[0].value[key]);
             }).join(", ") + "}");
           });
-          vm.types.typeEntry.value.members["toString"] = vm.createFunctionNative([vm.types.typeEntry], function(vm, blessedsArgs) {
+          vm.types.typeEntry.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeEntry], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, vm.toString(blessedsArgs[0].value.key) + ": " + vm.toString(blessedsArgs[0].value.value));
           });
-          vm.types.typeVector.value.members["toString"] = vm.createFunctionNative([vm.types.typeVector], function(vm, blessedsArgs) {
+          vm.types.typeVector.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeVector], function(vm, blessedsArgs) {
             if (blessedsArgs[0].value.length == 0) return vm.createObject(vm.types.typeString, "<Void>");
             return vm.createObject(vm.types.typeString, blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
           });
-          vm.types.typeType.value.members["toString"] = vm.createFunctionNative([vm.types.typeType], function(vm, blessedsArgs) {
+          vm.types.typeType.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeType], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "<Type: " + blessedsArgs[0].value.name + ">");
           });
-          vm.types.typeFunction.value.members["toString"] = vm.createFunctionNative([vm.types.typeFunction], function(vm, blessedsArgs) {
+          vm.types.typeFunction.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeFunction], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, blessedsArgs[0].value.toStringVMS());
           });
-          vm.types.typeException.value.members["toString"] = vm.createFunctionNative([vm.types.typeException], function(vm, blessedsArgs) {
+          vm.types.typeException.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeException], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "<Exception: '" + blessedsArgs[0].value.message + "'>");
           });
 
-          vm.types.typeValue.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.types.typeValue.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.TRUE;
           });
-          vm.types.typeUndefined.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeUndefined], function(vm, blessedsArgs) {
+          vm.types.typeUndefined.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeUndefined], function(vm, blessedsArgs) {
             return vm.FALSE;
           });
-          vm.types.typeNull.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeNull], function(vm, blessedsArgs) {
+          vm.types.typeNull.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeNull], function(vm, blessedsArgs) {
             return vm.FALSE;
           });
-          vm.types.typeNumber.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.types.typeNumber.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.getBoolean(blessedsArgs[0].value != 0);
           });
-          vm.types.typeString.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeString], function(vm, blessedsArgs) {
+          vm.types.typeString.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeString], function(vm, blessedsArgs) {
             return vm.getBoolean(blessedsArgs[0].value !== "");
           });
-          vm.types.typeBoolean.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeBoolean], function(vm, blessedsArgs) {
+          vm.types.typeBoolean.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeBoolean], function(vm, blessedsArgs) {
             return blessedsArgs[0];
           });
-          vm.types.typeArray.value.members["toBoolean"] = vm.createFunctionNative([vm.types.typeArray], function(vm, blessedsArgs) {
+          vm.types.typeArray.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeArray], function(vm, blessedsArgs) {
             return vm.getBoolean(blessedsArgs[0].value.length > 0);
           });
 
@@ -1250,7 +1249,7 @@
           });
           function createNativeBridge(restype, args, func)
           {
-            return vm.createFunctionNative(args, function(vm, blessedsArgs) {
+            return VMSFunctionNative.create(vm, args, function(vm, blessedsArgs) {
               return vm.createObject(restype, func.apply(vm, blessedsArgs.map(function (item) { return item.value; })));
             });
           }
@@ -1283,68 +1282,68 @@
           }));
 
           vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
-            vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
               return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value + blessedsArgs[2].value);
             }),
-            vm.createFunctionNative([vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
               return vm.createObject(vm.types.typeString, blessedsArgs[1].value + vm.toString(blessedsArgs[2]));
             }),
-            vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) {
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) {
               return vm.createObject(vm.types.typeString, vm.toString(blessedsArgs[1]) + blessedsArgs[2].value);
             }),
           ]));
-          vm.scope.setOrDefine("_get_operatorMinus", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorMinus", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value - blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorAsterisk", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorAsterisk", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value * blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorPercent", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorPercent", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value % blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorSlash", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorSlash", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value / blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorCaret", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorCaret", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, Math.pow(blessedsArgs[1].value, blessedsArgs[2].value));
           }));
 
-          vm.scope.setOrDefine("_get_leftPlus", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_leftPlus", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return blessedsArgs[1];
           }));
-          vm.scope.setOrDefine("_get_leftMinus", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_leftMinus", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, -blessedsArgs[1].value);
           }));
-          vm.scope.setOrDefine("_get_leftExclamation", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_leftExclamation", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeBoolean, !vm.toBoolean(blessedsArgs[1]));
           }));
 
-          vm.scope.setOrDefine("_get_operatorGreater", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorGreater", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value > blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorGreaterEqual", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorGreaterEqual", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value >= blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorLess", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorLess", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value < blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorLessEqual", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorLessEqual", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value <= blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorEqual2", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorEqual2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value === blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorExclamationEqual", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorExclamationEqual", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeBoolean, blessedsArgs[1].value !== blessedsArgs[2].value);
           }));
-          vm.scope.setOrDefine("_get_operatorPipe2", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorPipe2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return blessedsArgs[vm.toBoolean(blessedsArgs[1]) ? 1 : 2];
           }));
-          vm.scope.setOrDefine("_get_operatorAmpersand2", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorAmpersand2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return blessedsArgs[!vm.toBoolean(blessedsArgs[1]) ? 1 : 2];
           }));
 
-          vm.scope.setOrDefine("_get_operatorTilde", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorTilde", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             var array = [];
             if (blessedsArgs[1].value < blessedsArgs[2].value) {
               for (var i = blessedsArgs[1].value; i <= blessedsArgs[2].value; i++) {
@@ -1357,44 +1356,44 @@
             }
             return vm.packVector(array);
           }));
-          vm.scope.setOrDefine("_get_enumerateComma", vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_enumerateComma", VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.packVector(blessedsArgs.slice(1));
           }));
-          vm.scope.setOrDefine("_get_bracketsSquare", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_bracketsSquare", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeArray, vm.unpackVector(blessedsArgs[1]));
           }));
           vm.scope.setOrDefine("_get_rightbracketsSquare", vm.packVector([
-            vm.createFunctionNative([vm.types.typeValue, vm.types.typeArray, vm.types.typeNumber], function(vm, blessedsArgs) {
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeArray, vm.types.typeNumber], function(vm, blessedsArgs) {
               return blessedsArgs[1].value[blessedsArgs[2].value];
             }),
-            vm.createFunctionNative([vm.types.typeValue, vm.types.typeHash, vm.types.typeValue], function(vm, blessedsArgs) {
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeHash, vm.types.typeValue], function(vm, blessedsArgs) {
               return blessedsArgs[1].value[vm.toString(blessedsArgs[2])];
             }),
           ]));
           /* TODO
           vm.scope.setOrDefine("_get_operatorColon2", vm.packVector([
-            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeArray], ["b", vm.types.typeNumber]], function(vm, context) {
+            VMSFunction.create(vm, [["env", vm.types.typeValue], ["a", vm.types.typeArray], ["b", vm.types.typeNumber]], function(vm, context) {
               var a = vm.scope.getOrUndefined("a");
               var b = vm.scope.getOrUndefined("b");
               return a.value[b.value];
             }, vm.scope),
-            vm.createFunction([["env", vm.types.typeValue], ["a", vm.types.typeHash], ["b", vm.types.typeValue]], function(vm, context) {
+            VMSFunction.create(vm, [["env", vm.types.typeValue], ["a", vm.types.typeHash], ["b", vm.types.typeValue]], function(vm, context) {
               var a = vm.scope.getOrUndefined("a");
               var b = vm.scope.getOrUndefined("b");
               return a.value[vm.toString(b)];
             }, vm.scope),
           ]));
           */
-          vm.scope.setOrDefine("_get_leftAtsign", vm.createFunctionNative([vm.types.typeValue, vm.types.typeArray], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_leftAtsign", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeArray], function(vm, blessedsArgs) {
             return vm.packVector(blessedsArgs[1].value);
           }));
-          vm.scope.setOrDefine("_get_operatorColon", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_operatorColon", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeEntry, {
               key: vm.createObject(vm.types.typeKeyword, vm.toString(blessedsArgs[1])),
               value: blessedsArgs[2],
             });
           }));
-          vm.scope.setOrDefine("_get_bracketsCurly", vm.createFunctionNative([vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_bracketsCurly", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             var hash = {};
             vm.unpackVector(blessedsArgs[1]).forEach(function(item) {
               if (vm.instanceOf(item, vm.types.typeEntry)) {
@@ -1405,10 +1404,10 @@
             });
             return vm.createObject(vm.types.typeHash, hash);
           }));
-          vm.scope.setOrDefine("_get_concatenateLiteral", vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_concatenateLiteral", VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, blessedsArgs.slice(1).map(function(item) { return vm.toString(item); }).join(""));
           }));
-          vm.scope.setOrDefine("_get_concatenateHereDocument", vm.createFunctionNative([vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_concatenateHereDocument", VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeText, blessedsArgs.slice(1).map(function(item) { return vm.toString(item); }).join(""));
           }));
 
@@ -1423,54 +1422,54 @@
             vm.dices.push(values);
             return t;
           }
-          vm.scope.setOrDefine("rightComposite_d", vm.createFunctionNative([vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("rightComposite_d", VMSFunctionNative.create(vm, [vm.types.typeNumber], function(vm, blessedsArgs) {
             if (blessedsArgs[0].value > 20) throw vm.createException("Illegal argument[0]: " + blessedsArgs[0].value + " > 20");
             return vm.createObject(vm.types.typeNumber, dice(blessedsArgs[0].value, 6));
           }));
-          vm.scope.setOrDefine("function_d", vm.createFunctionNative([vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_d", VMSFunctionNative.create(vm, [vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
             if (blessedsArgs[0].value > 20) throw vm.createException("Illegal argument[0]: " + blessedsArgs[0].value + " > 20");
             return vm.createObject(vm.types.typeNumber, dice(blessedsArgs[0].value, blessedsArgs[1].value));
           }));
           vm.types.typeArray.value.members.random = vm.packVector([
-            vm.createFunctionNative([vm.types.typeArray, vm.types.typeNumber], function(vm, blessedsArgs) {
+            VMSFunctionNative.create(vm, [vm.types.typeArray, vm.types.typeNumber], function(vm, blessedsArgs) {
               var array = blessedsArgs[0].value.slice(0);
               while (array.length > blessedsArgs[1].value) {
                 array.splice(Math.floor(Math.random() * array.length), 1);
               }
               return vm.createObject(vm.types.typeArray, array);
             }),
-            vm.createFunctionNative([vm.types.typeArray], function(vm, blessedsArgs) {
+            VMSFunctionNative.create(vm, [vm.types.typeArray], function(vm, blessedsArgs) {
               return blessedsArgs[0].value[Math.floor(Math.random() * blessedsArgs[0].value.length)];
             }),
           ]);
-          vm.types.typeCode.value.members.bind = vm.createFunctionNative([vm.types.typeCode, vm.types.typeScope], function(vm, blessedsArgs) {
+          vm.types.typeCode.value.members.bind = VMSFunctionNative.create(vm, [vm.types.typeCode, vm.types.typeScope], function(vm, blessedsArgs) {
             return vm.createPointer(blessedsArgs[0].value, blessedsArgs[1].value);
           });
-          vm.types.typePointer.value.members.code = vm.createFunctionNative([vm.types.typePointer], function(vm, blessedsArgs) {
+          vm.types.typePointer.value.members.code = VMSFunctionNative.create(vm, [vm.types.typePointer], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeCode, blessedsArgs[0].value.code);
           });
-          vm.types.typePointer.value.members.scope = vm.createFunctionNative([vm.types.typePointer], function(vm, blessedsArgs) {
+          vm.types.typePointer.value.members.scope = VMSFunctionNative.create(vm, [vm.types.typePointer], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeScope, blessedsArgs[0].value.scope);
           });
-          vm.types.typeEntry.value.members.key = vm.createFunctionNative([vm.types.typeEntry], function(vm, blessedsArgs) {
+          vm.types.typeEntry.value.members.key = VMSFunctionNative.create(vm, [vm.types.typeEntry], function(vm, blessedsArgs) {
             return blessedsArgs[0].value.key;
           });
-          vm.types.typeEntry.value.members.value = vm.createFunctionNative([vm.types.typeEntry], function(vm, blessedsArgs) {
+          vm.types.typeEntry.value.members.value = VMSFunctionNative.create(vm, [vm.types.typeEntry], function(vm, blessedsArgs) {
             return blessedsArgs[0].value.value;
           });
-          vm.types.typeArray.value.members.length = vm.createFunctionNative([vm.types.typeArray], function(vm, blessedsArgs) {
+          vm.types.typeArray.value.members.length = VMSFunctionNative.create(vm, [vm.types.typeArray], function(vm, blessedsArgs) {
             return blessedsArgs[0].value.length;
           });
-          vm.types.typeString.value.members.length = vm.createFunctionNative([vm.types.typeString], function(vm, blessedsArgs) {
+          vm.types.typeString.value.members.length = VMSFunctionNative.create(vm, [vm.types.typeString], function(vm, blessedsArgs) {
             return blessedsArgs[0].value.length;
           });
-          vm.types.typeHash.value.members.keys = vm.createFunctionNative([vm.types.typeHash], function(vm, blessedsArgs) {
+          vm.types.typeHash.value.members.keys = VMSFunctionNative.create(vm, [vm.types.typeHash], function(vm, blessedsArgs) {
             return vm.packVector(Object.keys(blessedsArgs[0].value).map(function(key) {
               return vm.createObject(vm.types.typeKeyword, key);
             }));
           });
 
-          vm.scope.setOrDefine("_get_leftMultibyte_√", vm.createFunctionNative([vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_leftMultibyte_√", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeNumber, Math.sqrt(blessedsArgs[1].value));
           }));
           function joinImpl(vm, separator, blesseds)
@@ -1481,19 +1480,19 @@
               }).join(separator);
             }).join(separator));
           }
-          vm.scope.setOrDefine("function_join", vm.createFunctionNative([vm.types.typeString], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_join", VMSFunctionNative.create(vm, [vm.types.typeString], function(vm, blessedsArgs) {
             return joinImpl(vm, blessedsArgs[0].value, blessedsArgs.slice(1));
           }));
-          vm.scope.setOrDefine("function_join1", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_join1", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             return joinImpl(vm, "", blessedsArgs);
           }));
-          vm.scope.setOrDefine("function_join2", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_join2", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             return joinImpl(vm, ", ", blessedsArgs);
           }));
-          vm.scope.setOrDefine("function_join3", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_join3", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             return joinImpl(vm, "\n", blessedsArgs);
           }));
-          vm.scope.setOrDefine("function_sum", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_sum", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             var value = 0;
             blessedsArgs.forEach(function(item) {
               return vm.unpackVector(item).forEach(function(item2) {
@@ -1503,7 +1502,7 @@
             });
             return vm.createObject(vm.types.typeNumber, value);
           }));
-          vm.scope.setOrDefine("function_average", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_average", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             var value = 0;
             var count = 0;
             blessedsArgs.forEach(function(item) {
@@ -1516,14 +1515,14 @@
             if (count == 0) return vm.NAN;
             return vm.createObject(vm.types.typeNumber, value / count);
           }));
-          vm.scope.setOrDefine("function_count", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_count", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             var count = 0;
             blessedsArgs.forEach(function(item) {
               count += vm.unpackVector(item).length;
             });
             return vm.createObject(vm.types.typeNumber, count);
           }));
-          vm.scope.setOrDefine("function_and", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_and", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             for (var i = 0; i < blessedsArgs.length; i++) {
               var item = vm.unpackVector(blessedsArgs[i]);
               for (var j = 0; j < item.length; j++) {
@@ -1532,7 +1531,7 @@
             }
             return vm.TRUE;
           }));
-          vm.scope.setOrDefine("function_or", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_or", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             for (var i = 0; i < blessedsArgs.length; i++) {
               var item = vm.unpackVector(blessedsArgs[i]);
               for (var j = 0; j < item.length; j++) {
@@ -1541,7 +1540,7 @@
             }
             return vm.FALSE;
           }));
-          vm.scope.setOrDefine("function_max", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_max", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             var value;
             blessedsArgs.forEach(function(item) {
               return vm.unpackVector(item).forEach(function(item2) {
@@ -1552,7 +1551,7 @@
             if (value === undefined) return vm.UNDEFINED;
             return vm.createObject(vm.types.typeNumber, value);
           }));
-          vm.scope.setOrDefine("function_min", vm.createFunctionNative([], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("function_min", VMSFunctionNative.create(vm, [], function(vm, blessedsArgs) {
             var value;
             blessedsArgs.forEach(function(item) {
               return vm.unpackVector(item).forEach(function(item2) {
