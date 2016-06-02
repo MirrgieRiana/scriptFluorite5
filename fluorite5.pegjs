@@ -1159,7 +1159,7 @@
           listeners.map(function(a) { a(); })
 
           this.dices = [];
-          this.loopCapacity = 100000;
+          this.loopCapacity = 50000;
           this.loopCount = 0;
 
         };
