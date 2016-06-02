@@ -310,6 +310,30 @@
           return VMSFunctionNative;
         })();
 
+        var VMSPointer = (function() {
+
+          function VMSPointer()
+          {
+            this.code = code;
+            this.scope = scope;
+          }
+          VMSPointer.create = function(vm, code, scope) {
+            return vm.createObject(vm.types.typePointer, new VMSPointer(code, scope));
+          };
+          VMSPointer.prototype.call = function(vm, context, args) {
+            vm.pushStack(this.scope);
+            var res;
+            try {
+              res = this.code(vm, context, args);
+            } finally {
+              vm.popStack();
+            }
+            return res;
+          };
+
+          return VMSPointer;
+        })();
+
         function VMStandard()
         {
           var vm = this;
@@ -334,7 +358,7 @@
               Array.prototype.push.apply(array, codes.map(function(code) { return vm.createObject(vm.types.typeCode, code); }));
               var blessedPointer = blessedFunction.value.call(vm, array);
               if (!vm.instanceOf(blessedPointer, vm.types.typePointer)) throw "Illegal type of operation result: " + blessedPointer.type.value.name + " != Pointer";
-              return vm.callPointer(blessedPointer, context, args);
+              return blessedPointer.value.call(vm, context, args);
             } else {
               throw "`" + name + "` is not a function";
             }
@@ -382,11 +406,11 @@
                 var blessedOperator = codes[1](vm, "get", []);
                 if (!vm.instanceOf(blessedOperator, vm.types.typeString)) throw "Type Error: " + blessedOperator.type.value.name + " != String";
                 var array = codes.slice(2, codes.length).map(function(item) {
-                  return vm.createPointer(item, vm.scope);
+                  return VMSPointer.create(vm, item, vm.scope);
                 })
                 return vm.callOperator(blessedOperator.value, array.map(function(item) {
                   return function(vm, context, args) {
-                    return vm.callPointer(item, context, args);
+                    return item.value.call(vm, context, args);
                   };
                 }), "get", []);
               }
@@ -665,7 +689,7 @@
               }
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
-            if (operator === "leftAmpersand") return vm.createPointer(codes[0], vm.scope);
+            if (operator === "leftAmpersand") return VMSPointer.create(vm, codes[0], vm.scope);
             if (operator === "operatorColon2") {
               var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
               var key = codes[1](vm, "get", []);
@@ -837,7 +861,7 @@
 
           if (operator === "leftAsterisk") {
             var value = codes[0](vm, "get", []);
-            if (vm.instanceOf(value, vm.types.typePointer)) return vm.callPointer(value, context, args);
+            if (vm.instanceOf(value, vm.types.typePointer)) return value.value.call(vm, context, args);
             throw "Type Error: " + operator + "/" + value.type.value.name;
           }
           if (operator === "ternaryQuestionColon") return codes[vm.toBoolean(codes[0](vm, "get", [])) ? 1 : 2](vm, context, args);
@@ -967,12 +991,6 @@
             message: message,
           });
         };
-        VMStandard.prototype.createPointer = function(code, scope) {
-          return this.createObject(this.types.typePointer, {
-            code: code,
-            scope: scope,
-          });
-        };
         VMStandard.prototype.createType = function(name, supertype) {
           return this.createObject(this.types.typeType, {
             name: name,
@@ -1010,16 +1028,6 @@
             res = code(this, context, args);
           } finally {
             this.popFrame();
-          }
-          return res;
-        };
-        VMStandard.prototype.callPointer = function(blessedPointer, context, args) {
-          this.pushStack(blessedPointer.value.scope);
-          var res;
-          try {
-            res = blessedPointer.value.code(this, context, args);
-          } finally {
-            this.popStack();
           }
           return res;
         };
@@ -1443,7 +1451,7 @@
             }),
           ]);
           vm.types.typeCode.value.members.bind = VMSFunctionNative.create(vm, [vm.types.typeCode, vm.types.typeScope], function(vm, blessedsArgs) {
-            return vm.createPointer(blessedsArgs[0].value, blessedsArgs[1].value);
+            return VMSPointer.create(vm, blessedsArgs[0].value, blessedsArgs[1].value);
           });
           vm.types.typePointer.value.members.code = VMSFunctionNative.create(vm, [vm.types.typePointer], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeCode, blessedsArgs[0].value.code);
