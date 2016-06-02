@@ -240,16 +240,6 @@
 
           vm.initLibrary();
 
-          this.dices = [];
-          this.loopCapacity = 10000;
-          this.loopCount = 0;
-          this.consumeLoopCapacity = function() {
-            vm.loopCount++;
-            if (vm.loopCount >= vm.loopCapacity) {
-              throw "Internal Fluorite Error: Too many calculation(>= " + vm.loopCapacity + " steps)";
-            }
-          };
-
           this.callOperator = function(operator, codes, context, args) {
             vm.consumeLoopCapacity();
 
@@ -1167,6 +1157,17 @@
           this.stack = [];
 
           listeners.map(function(a) { a(); })
+
+          this.dices = [];
+          this.loopCapacity = 100000;
+          this.loopCount = 0;
+
+        };
+        VMStandard.prototype.consumeLoopCapacity = function() {
+          this.loopCount++;
+          if (this.loopCount >= this.loopCapacity) {
+            throw "Internal Fluorite Error: Too many calculation(>= " + this.loopCapacity + " steps)";
+          }
         };
 
         VMStandard.prototype.initLibrary = function() {
