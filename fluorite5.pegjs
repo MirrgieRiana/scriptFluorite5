@@ -1287,11 +1287,11 @@
             "sqrt": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.sqrt),
           }));
 
-          vm.scope.setOrDefine("_get_core_operatorQuestionColon", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_core_operatorQuestionColon", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
             var a = blessedsArgs[1].value(vm, "get", []);
             return vm.toBoolean(a) ? VMSPointer.createFromBlessed(vm, a, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
           }));
-          vm.scope.setOrDefine("_get_core_operatorQuestion2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+          vm.scope.setOrDefine("_get_core_operatorQuestion2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
             var a = blessedsArgs[1].value(vm, "get", []);
             return !vm.instanceOf(a, vm.types.typeUndefined) ? VMSPointer.createFromBlessed(vm, a, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
           }));
