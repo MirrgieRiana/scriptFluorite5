@@ -761,16 +761,6 @@
               return result;
             }
             if (operator === "operatorEqual") return codes[0](vm, "set", [codes[1](vm, "get", [])]);
-            if (operator === "rightPlus2") {
-              var res = codes[0](vm, "get", []);
-              codes[0](vm, "set", [vm.createObject(vm.types.typeNumber, res.value + 1)]);
-              return res;
-            }
-            if (operator === "rightMinus2") {
-              var res = codes[0](vm, "get", []);
-              codes[0](vm, "set", [vm.createObject(vm.types.typeNumber, res.value - 1)]);
-              return res;
-            }
             if (operator === "hereDocumentFunction") {
               var value = codes[0](vm, "get", []);
               if (vm.instanceOf(value, vm.types.typeFunction)) {
@@ -1294,6 +1284,19 @@
           vm.scope.setOrDefine("_get_core_operatorQuestion2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
             var a = blessedsArgs[1].value(vm, "get", []);
             return !vm.instanceOf(a, vm.types.typeUndefined) ? VMSPointer.createFromBlessed(vm, a, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
+          }));
+
+          vm.scope.setOrDefine("_get_core_rightPlus2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode], function(vm, blessedsArgs) {
+            var res = blessedsArgs[1].value(vm, "get", []);
+            if (!vm.instanceOf(res, vm.types.typeNumber)) throw "Illegal type: " + res.type.value.name + " != Number";
+            blessedsArgs[1].value(vm, "set", [vm.createObject(vm.types.typeNumber, res.value + 1)]);
+            return VMSPointer.createFromBlessed(vm, res, vm.scope);
+          }));
+          vm.scope.setOrDefine("_get_core_rightMinus2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode], function(vm, blessedsArgs) {
+            var res = blessedsArgs[1].value(vm, "get", []);
+            if (!vm.instanceOf(res, vm.types.typeNumber)) throw "Illegal type: " + res.type.value.name + " != Number";
+            blessedsArgs[1].value(vm, "set", [vm.createObject(vm.types.typeNumber, res.value - 1)]);
+            return VMSPointer.createFromBlessed(vm, res, vm.scope);
           }));
 
           vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
