@@ -320,6 +320,12 @@
           VMSPointer.create = function(vm, code, scope) {
             return vm.createObject(vm.types.typePointer, new VMSPointer(code, scope));
           };
+          VMSPointer.createFromBlessed = function(vm, blessed, scope) {
+            return VMSPointer.create(vm, function(vm, context, args) {
+              if (context === "get") return blessed;
+              throw "Illegal context: " + context;
+            }, scope);
+          };
           VMSPointer.prototype.call = function(vm, context, args) {
             vm.pushStack(this.scope);
             var res;
@@ -1283,17 +1289,11 @@
 
           vm.scope.setOrDefine("_get_core_operatorQuestionColon", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             var a = blessedsArgs[1].value(vm, "get", []);
-            return vm.toBoolean(a) ? VMSPointer.create(vm, function(vm, context, args) {
-              if (context === "get") return a;
-              throw "Illegal context: " + context;
-            }, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
+            return vm.toBoolean(a) ? VMSPointer.createFromBlessed(vm, a, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
           }));
           vm.scope.setOrDefine("_get_core_operatorQuestion2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             var a = blessedsArgs[1].value(vm, "get", []);
-            return !vm.instanceOf(a, vm.types.typeUndefined) ? VMSPointer.create(vm, function(vm, context, args) {
-              if (context === "get") return a;
-              throw "Illegal context: " + context;
-            }, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
+            return !vm.instanceOf(a, vm.types.typeUndefined) ? VMSPointer.createFromBlessed(vm, a, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
           }));
 
           vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
