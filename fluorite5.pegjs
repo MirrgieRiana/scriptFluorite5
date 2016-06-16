@@ -678,7 +678,6 @@
               }
               throw "Type Error: " + operator + "/" + right.type.value.name;
             }
-            if (operator === "leftDollar") return vm.scope.getOrUndefined(codes[0](vm, "get", []).value);
             if (operator === "rightbracketsRound") {
               var value = codes[0](vm, "get", []);
               if (vm.instanceOf(value, vm.types.typeFunction)) {
@@ -695,7 +694,6 @@
               }
               throw "Type Error: " + operator + "/" + value.type.value.name;
             }
-            if (operator === "leftAmpersand") return VMSPointer.create(vm, codes[0], vm.scope);
             if (operator === "operatorColon2") {
               var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
               var key = codes[1](vm, "get", []);
@@ -743,9 +741,6 @@
                 throw "Type Error: " + right.type.value.name + " != String, Function";
               }
             }
-            if (operator === "operatorColonGreater") {
-              var array = codes[0](vm, "arguments").value.map(function(item) { return [item[0].value, item[1]]; });
-              return VMSFunction.create(vm, array, codes[1], vm.scope);
             }
             if (operator === "enumerateSemicolon") {
               var result = vm.VOID;
@@ -760,7 +755,6 @@
               }
               return result;
             }
-            if (operator === "operatorEqual") return codes[0](vm, "set", [codes[1](vm, "get", [])]);
           } else if (context === "set") {
             if (operator === "leftDollar") {
               var value = args[0];
@@ -1277,6 +1271,19 @@
           }));
           vm.scope.setOrDefine("_get_operatorComposite", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeKeyword, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.callMethod(blessedsArgs[2].value, ["operatorComposite", "composite", "function"], [blessedsArgs[1].type, blessedsArgs[3].type], [blessedsArgs[1], blessedsArgs[3]]);
+          }));
+          vm.scope.setOrDefine("_get_leftDollar", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) {
+            return vm.scope.getOrUndefined(blessedsArgs[1].value);
+          }));
+          vm.scope.setOrDefine("_get_core_leftAmpersand", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode], function(vm, blessedsArgs) {
+            return VMSPointer.createFromBlessed(vm, VMSPointer.create(vm, blessedsArgs[1].value, vm.scope), vm.scope);
+          }));
+          vm.scope.setOrDefine("_get_core_operatorColonGreater", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
+            var array = blessedsArgs[1].value(vm, "arguments").value.map(function(item) { return [item[0].value, item[1]]; });
+            return VMSPointer.createFromBlessed(vm, VMSFunction.create(vm, array, blessedsArgs[2].value, vm.scope), vm.scope);
+          }));
+          vm.scope.setOrDefine("_get_core_operatorEqual", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
+            return VMSPointer.createFromBlessed(vm, blessedsArgs[1].value(vm, "set", [blessedsArgs[2].value(vm, "get", [])]), vm.scope);
           }));
 
           vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
