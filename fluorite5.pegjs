@@ -765,14 +765,6 @@
               codes[0](vm, "set", [vm.createObject(vm.types.typeNumber, res.value - 1)]);
               return res;
             }
-            if (operator === "operatorQuestionColon") {
-              var res = codes[0](vm, "get", []);
-              return vm.toBoolean(res) ? res : codes[1](vm, "get", []);
-            }
-            if (operator === "operatorQuestion2") {
-              var res = codes[0](vm, "get", []);
-              return !vm.instanceOf(res, vm.types.typeUndefined) ? res : codes[1](vm, "get", []);
-            }
             if (operator === "hereDocumentFunction") {
               var value = codes[0](vm, "get", []);
               if (vm.instanceOf(value, vm.types.typeFunction)) {
@@ -1287,6 +1279,21 @@
               createNativeBridge(vm.types.typeNumber, [], Math.random),
             ]),
             "sqrt": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.sqrt),
+          }));
+
+          vm.scope.setOrDefine("_get_core_operatorQuestionColon", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            var a = blessedsArgs[1].value(vm, "get", []);
+            return vm.toBoolean(a) ? VMSPointer.create(vm, function(vm, context, args) {
+              if (context === "get") return a;
+              throw "Illegal context: " + context;
+            }, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
+          }));
+          vm.scope.setOrDefine("_get_core_operatorQuestion2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            var a = blessedsArgs[1].value(vm, "get", []);
+            return !vm.instanceOf(a, vm.types.typeUndefined) ? VMSPointer.create(vm, function(vm, context, args) {
+              if (context === "get") return a;
+              throw "Illegal context: " + context;
+            }, vm.scope) : VMSPointer.create(vm, blessedsArgs[2].value, vm.scope);
           }));
 
           vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
