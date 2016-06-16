@@ -312,7 +312,7 @@
 
         var VMSPointer = (function() {
 
-          function VMSPointer()
+          function VMSPointer(code, scope)
           {
             this.code = code;
             this.scope = scope;
