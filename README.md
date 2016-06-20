@@ -30,3 +30,7 @@ var res = parser.parse(script, {
 `fluorite5 sample.flu5 -g`
 
 `echo 5*20 | fluorite5`
+
+## Wiki
+
+https://github.com/MirrgieRiana/scriptFluorite5/wiki
