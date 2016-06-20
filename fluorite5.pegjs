@@ -678,51 +678,6 @@
               }
               throw "Type Error: " + operator + "/" + right.type.value.name;
             }
-            if (operator === "rightbracketsRound") {
-              var value = codes[0](vm, "get", []);
-              if (vm.instanceOf(value, vm.types.typeFunction)) {
-                return value.value.call(vm, vm.unpackVector(codes[1](vm, "get", [])));
-              } else if (vm.instanceOf(value, vm.types.typeVector)) {
-                var array = vm.unpackVector(codes[1](vm, "get", []));
-                for (var i = 0; i < value.value.length; i++) {
-                  if (value.value[i].value.isCallable(vm, array)) {
-                    return value.value[i].value.call(vm, array);
-                  }
-                }
-              } else if (vm.instanceOf(value, vm.types.typeString)) {
-                return vm.callMethod(value.value, ["method", "function"], [], vm.unpackVector(codes[1](vm, "get", [])));
-              }
-              throw "Type Error: " + operator + "/" + value.type.value.name;
-            }
-            if (operator === "operatorColon2") {
-              var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
-              var key = codes[1](vm, "get", []);
-              if (vm.instanceOf(hash, vm.types.typeHash)) {
-                if (vm.instanceOf(key, vm.types.typeString)) return getProperty(hash.value, key.value) || vm.UNDEFINED;
-                if (vm.instanceOf(key, vm.types.typeKeyword)) return getProperty(hash.value, key.value) || vm.UNDEFINED;
-              }
-              if (vm.instanceOf(hash, vm.types.typeType)) {
-                if (vm.instanceOf(key, vm.types.typeString)) return getProperty(hash.value.members, key.value) || vm.UNDEFINED;
-                if (vm.instanceOf(key, vm.types.typeKeyword)) return getProperty(hash.value.members, key.value) || vm.UNDEFINED;
-              }
-              throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
-            }
-            if (operator === "operatorHash") {
-              var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
-              var key = codes[1](vm, "get", []);
-              if (vm.instanceOf(hash, vm.types.typeType)) {
-                if (vm.instanceOf(key, vm.types.typeString)) {
-                  var value;
-                  while (hash != null) {
-                    value = getProperty(hash.value.members, key.value) || vm.UNDEFINED;
-                    if (!vm.instanceOf(value, vm.types.typeUndefined)) return value;
-                    hash = hash.value.supertype;
-                  }
-                  return vm.UNDEFINED;
-                }
-              }
-              throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
-            }
             if (operator === "operatorPeriod") {
               var right = codes[1](vm, "get", []);
               if (vm.instanceOf(right, vm.types.typeString)) {
@@ -740,20 +695,6 @@
               } else {
                 throw "Type Error: " + right.type.value.name + " != String, Function";
               }
-            }
-            }
-            if (operator === "enumerateSemicolon") {
-              var result = vm.VOID;
-              for (var i = 0; i < codes.length; i++) {
-                var res = codes[i](vm, "get_line", []);
-                if (vm.instanceOf(res, vm.types.typeObject)) {
-                  if (res.value === "VOID") {
-                    continue;
-                  }
-                }
-                result = res;
-              }
-              return result;
             }
           } else if (context === "set") {
             if (operator === "leftDollar") {
@@ -1286,6 +1227,75 @@
             return VMSPointer.createFromBlessed(vm, blessedsArgs[1].value(vm, "set", [blessedsArgs[2].value(vm, "get", [])]), vm.scope);
           }));
 
+          vm.scope.setOrDefine("_get_core_operatorColon2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
+            var hash = blessedsArgs[1].value(vm, "get", [vm.createObject(vm.types.typeKeyword, "class"), vm.createObject(vm.types.typeKeyword, "hash")]);
+            var key = blessedsArgs[2].value(vm, "get", []);
+            if (vm.instanceOf(hash, vm.types.typeHash)) {
+              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value, key.value) || vm.UNDEFINED, vm.scope);
+            }
+            if (vm.instanceOf(hash, vm.types.typeType)) {
+              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value.members, key.value) || vm.UNDEFINED, vm.scope);
+            }
+            throw "Type Error: " + hash.type.value.name + "::" + key.type.value.name;
+          }));
+          vm.scope.setOrDefine("_get_core_rightbracketsSquare", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
+            var hash = blessedsArgs[1].value(vm, "get", [vm.createObject(vm.types.typeKeyword, "array")]);
+            var key = blessedsArgs[2].value(vm, "get", []);
+            if (vm.instanceOf(hash, vm.types.typeArray)) {
+              if (vm.instanceOf(key, vm.types.typeNumber)) return VMSPointer.createFromBlessed(vm, hash.value[key.value] || vm.UNDEFINED, vm.scope);
+            }
+            if (vm.instanceOf(hash, vm.types.typeHash)) {
+              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value, key.value) || vm.UNDEFINED, vm.scope);
+            }
+            throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
+          }));
+          vm.scope.setOrDefine("_get_core_operatorHash", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
+            var hash = blessedsArgs[1].value(vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
+            var key = blessedsArgs[2].value(vm, "get", []);
+            if (vm.instanceOf(hash, vm.types.typeType)) {
+              if (vm.instanceOf(key, vm.types.typeString)) {
+                var value;
+                while (hash != null) {
+                  value = getProperty(hash.value.members, key.value) || vm.UNDEFINED;
+                  if (!vm.instanceOf(value, vm.types.typeUndefined)) return VMSPointer.createFromBlessed(vm, value, vm.scope);
+                  hash = hash.value.supertype;
+                }
+                return VMSPointer.createFromBlessed(vm, vm.UNDEFINED, vm.scope);
+              }
+            }
+            throw "Type Error: " + hash.type.value.name + "#" + key.type.value.name;
+          }));
+          vm.scope.setOrDefine("_get_core_rightbracketsRound", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
+            var hash = blessedsArgs[1].value(vm, "get", [vm.createObject(vm.types.typeKeyword, "function")]);
+            var key = blessedsArgs[2].value(vm, "get", []);
+            if (vm.instanceOf(hash, vm.types.typeFunction)) {
+              return VMSPointer.createFromBlessed(vm, hash.value.call(vm, vm.unpackVector(key)), vm.scope);
+            }
+            if (vm.instanceOf(hash, vm.types.typeVector)) {
+              var array = vm.unpackVector(key);
+              for (var i = 0; i < hash.value.length; i++) {
+                if (hash.value[i].value.isCallable(vm, array)) {
+                  return VMSPointer.createFromBlessed(vm, hash.value[i].value.call(vm, array), vm.scope);
+                }
+              }
+            }
+            throw "Type Error: " + hash.type.value.name + "(" + key.type.value.name + ")";
+          }));
+
+          vm.scope.setOrDefine("_get_core_enumerateSemicolon", VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
+            var result = vm.VOID;
+            for (var i = 1; i < blessedsArgs.length; i++) {
+              var res = blessedsArgs[i].value(vm, "get_line", []);
+              if (vm.instanceOf(res, vm.types.typeObject)) {
+                if (res.value === "VOID") {
+                  continue;
+                }
+              }
+              result = res;
+            }
+            return VMSPointer.createFromBlessed(vm, result, vm.scope);
+          }));
+
           vm.scope.setOrDefine("_get_operatorPlus", vm.packVector([
             VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
               return vm.createObject(vm.types.typeNumber, blessedsArgs[1].value + blessedsArgs[2].value);
@@ -1367,14 +1377,6 @@
           vm.scope.setOrDefine("_get_bracketsSquare", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeArray, vm.unpackVector(blessedsArgs[1]));
           }));
-          vm.scope.setOrDefine("_get_rightbracketsSquare", vm.packVector([
-            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeArray, vm.types.typeNumber], function(vm, blessedsArgs) {
-              return blessedsArgs[1].value[blessedsArgs[2].value];
-            }),
-            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeHash, vm.types.typeValue], function(vm, blessedsArgs) {
-              return blessedsArgs[1].value[vm.toString(blessedsArgs[2])];
-            }),
-          ]));
           /* TODO
           vm.scope.setOrDefine("_get_operatorColon2", vm.packVector([
             VMSFunction.create(vm, [["env", vm.types.typeValue], ["a", vm.types.typeArray], ["b", vm.types.typeNumber]], function(vm, context) {
