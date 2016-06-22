@@ -1896,10 +1896,10 @@ ContentStringReplaceableReplacement
   / "$" main:(Integer / Identifier) { return createCodeFromMethod("leftDollar", [main]); }
 
 HereDocument
-  = "%" head:(head:Identifier "(" _ tail:(Formula / Void) _ ")" { return [head, tail]; })? tail:(
+  = "%" head:(head:Identifier tail:("(" _ main:(Formula / Void) _ ")" { return main; })? { return [head, tail !== null ? tail : createCodeFromLiteral("Void", "void")]; })? tail:(
       ";" { return createCodeFromLiteral("HeredocumentVoid", "void"); }
     / (
-        begin:HereDocumentDelimiter main:(
+        ":" begin:HereDocumentDelimiter main:(
           "{" main:(
 
             main:(! ("}" end:HereDocumentDelimiter & { return begin === end; }) main:(
