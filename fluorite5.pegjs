@@ -1201,12 +1201,22 @@
           vm.scope.setOrDefine("_get_core_operatorMultibyte", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
             return VMSPointer.createFromBlessed(vm, vm.callOperator("operatorMultibyte_" + blessedsArgs[2].value(vm, "get", []).value, [blessedsArgs[1].value, blessedsArgs[3].value], "get", []), vm.scope);
           }));
-          vm.scope.setOrDefine("_get_leftWord", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
-            return vm.callMethod(blessedsArgs[1].value, ["leftWord", "word", "function"], [blessedsArgs[2].type], [blessedsArgs[2]]);
-          }));
-          vm.scope.setOrDefine("_get_operatorWord", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
-            return vm.callMethod(blessedsArgs[2].value, ["operatorWord", "word", "function"], [blessedsArgs[1].type, blessedsArgs[3].type], [blessedsArgs[1], blessedsArgs[3]]);
-          }));
+          vm.scope.setOrDefine("_get_leftWord", vm.packVector([
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeFunction, vm.types.typeValue], function(vm, blessedsArgs) {
+              return blessedsArgs[1].value.call(vm, [blessedsArgs[2]]);
+            }),
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
+              return vm.callMethod(blessedsArgs[1].value, ["leftWord", "word", "function"], [blessedsArgs[2].type], [blessedsArgs[2]]);
+            }),
+          ]));
+          vm.scope.setOrDefine("_get_operatorWord", vm.packVector([
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeFunction, vm.types.typeValue], function(vm, blessedsArgs) {
+              return blessedsArgs[2].value.call(vm, [blessedsArgs[1], blessedsArgs[3]]);
+            }),
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
+              return vm.callMethod(blessedsArgs[2].value, ["operatorWord", "word", "function"], [blessedsArgs[1].type, blessedsArgs[3].type], [blessedsArgs[1], blessedsArgs[3]]);
+            }),
+          ]));
           vm.scope.setOrDefine("_get_rightComposite", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) {
             return vm.callMethod(blessedsArgs[2].value, ["rightComposite", "composite", "function"], [blessedsArgs[1].type], [blessedsArgs[1]]);
           }));
