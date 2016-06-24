@@ -96,7 +96,7 @@
             t += value;
             values.push(value);
           }
-          vm.dices.push(values);
+          vm.dices.push([faces, values]);
           return t;
         }
 
@@ -1436,7 +1436,7 @@
               t += value;
               values.push(value);
             }
-            vm.dices.push(values);
+            vm.dices.push([faces, values]);
             return t;
           }
           vm.scope.setOrDefine("rightComposite_d", VMSFunctionNative.create(vm, [vm.types.typeNumber], function(vm, blessedsArgs) {
