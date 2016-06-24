@@ -1891,8 +1891,8 @@ ContentStringReplaceableText
     )* { return createCodeFromLiteral("String", main.join("")); }
 
 ContentStringReplaceableReplacement
-  = "$" "(" main:(Formula / Void) ")" { return main; }
-  / "$" "{" main:(Formula / Void) "}" { return createCodeFromMethod("leftDollar", [main]); }
+  = "$" "(" _ main:(Formula / Void) _ ")" { return main; }
+  / "$" "{" _ main:(Formula / Void) _ "}" { return createCodeFromMethod("leftDollar", [main]); }
   / "$" main:(Integer / Identifier) { return createCodeFromMethod("leftDollar", [main]); }
 
 HereDocument
