@@ -1791,7 +1791,10 @@ Right
     / "{" _ main:(Formula / Void) _ "}" { return ["rightbracketsCurly", [main]]; }
     / "::" _ main:Variable { return ["operatorColon2", [main]]; }
     / "." _ main:Variable { return ["operatorPeriod", [main]]; }
+    / "!" _ main:Variable { return ["operatorExclamation", [main]]; }
     / "#" _ main:Variable { return ["operatorHash", [main]]; }
+    / "@" _ main:Variable { return ["operatorAtsign", [main]]; }
+    / "$" _ main:Variable { return ["operatorDollar", [main]]; }
     / "++" { return ["rightPlus2", []]; }
     / "--" (! ">") { return ["rightMinus2", []]; }
     / "..." { return ["rightPeriod3", []]; }
