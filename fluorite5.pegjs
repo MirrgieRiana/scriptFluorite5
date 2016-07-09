@@ -235,7 +235,13 @@
         var VMSFunction = (function() {
 
           /**
-           * @param args example: [["a", vm.types.typeValue], ["b", vm.types.typeValue]]
+           * @param args
+           *   example: [["a", vm.types.typeNumber, true], ["b", vm.types.typeString, false]]
+           *   syntax: [[name : string, type : blessed, isVector : boolean]...]
+           *
+           *   (1, 2, 5, "a") -> (1, 2, 5), "a"
+           *   (1, 2, 5, "a", "b") -> not match
+           *   ("a") -> (), "a"
            */
           function VMSFunction(args, code, scope)
           {
@@ -247,18 +253,54 @@
             return vm.createObject(vm.types.typeFunction, new VMSFunction(args, code, scope));
           };
           VMSFunction.prototype.isCallable = function(vm, blessedsArgs) {
+            var j = 0;
             for (var i = 0; i < this.args.length; i++) {
-              if (!vm.instanceOf(blessedsArgs[i] || vm.UNDEFINED, this.args[i][1])) return false;
+              if (this.args[i][2]) {
+                // vector
+
+                while (blessedsArgs[j] != undefined && vm.instanceOf(blessedsArgs[j], this.args[i][1])) {
+                  j++;
+                }
+
+              } else {
+                // scalar
+
+                if (!(blessedsArgs[j] != undefined && vm.instanceOf(blessedsArgs[j], this.args[i][1]))) {
+                  return false;
+                }
+                j++;
+
+              }
             }
             return true;
           };
           VMSFunction.prototype.call = function(vm, blessedsArgs) {
             vm.pushStack(this.scope);
             vm.pushFrame();
+
+            var j = 0;
             for (var i = 0; i < this.args.length; i++) {
-              vm.scope.defineOrSet(this.args[i][0], blessedsArgs[i] || vm.UNDEFINED);
+              if (this.args[i][2]) {
+                // vector
+
+                var t = j;
+                while (blessedsArgs[j] != undefined && vm.instanceOf(blessedsArgs[j], this.args[i][1])) {
+                  j++;
+                }
+                vm.scope.defineOrSet(this.args[i][0], vm.packVector(blessedsArgs.slice(t, j)));
+
+              } else {
+                // scalar
+
+                if (!(blessedsArgs[j] != undefined && vm.instanceOf(blessedsArgs[j], this.args[i][1]))) {
+                  throw "Unexpected Error";
+                }
+                vm.scope.defineOrSet(this.args[i][0], blessedsArgs[j]);
+                j++;
+
+              }
             }
-            vm.scope.defineOrSet("_", vm.packVector(blessedsArgs.slice(i, blessedsArgs.length)));
+
             var res;
             try {
               res = this.code(vm, "get", []);
@@ -271,7 +313,7 @@
           VMSFunction.prototype.toStringVMS = function() {
             if (this.args.length === 0) return "<Function>";
             return "<Function: " + this.args.map(function(arg) {
-              return "" + arg[0] + " : " + arg[1].value.name;
+              return "" + arg[0] + " : " + arg[1].value.name + (arg[2] ? "..." : "");
             }).join(", ") + ">";
           };
 
@@ -647,10 +689,10 @@
               var minus = operator == "operatorMinus2Greater";
               if (minus) {
                 return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
-                  return VMSFunction.create(vm, [], codes[1], vm.scope).value.call(vm, [scalar]);
+                  return VMSFunction.create(vm, [["_", vm.types.typeValue, true]], codes[1], vm.scope).value.call(vm, [scalar]);
                 }));
               } else {
-                return VMSFunction.create(vm, [], codes[1], vm.scope).value.call(vm, vm.unpackVector(codes[0](vm, "get", [])));
+                return VMSFunction.create(vm, [["_", vm.types.typeValue, true]], codes[1], vm.scope).value.call(vm, vm.unpackVector(codes[0](vm, "get", [])));
               }
             }
             if (operator === "operatorMinusGreater"
@@ -682,12 +724,12 @@
               var right = codes[1](vm, "get", []);
               if (vm.instanceOf(right, vm.types.typeString)) {
                 var left = codes[0](vm, "get", []);
-                return VMSFunction.create(vm, [], function(vm, context, args) {
+                return VMSFunction.create(vm, [["_", vm.types.typeValue, true]], function(vm, context, args) {
                     return vm.callMethodOfBlessed(left, ["method", "function"], right.value, vm.scope.getOrUndefined("_"));
                 }, vm.scope)
               } else if (vm.instanceOf(right, vm.types.typeFunction)) {
                 var left = codes[0](vm, "get", []);
-                return VMSFunction.create(vm, [], function(vm, context, args) {
+                return VMSFunction.create(vm, [["_", vm.types.typeValue, true]], function(vm, context, args) {
                     var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
                     array.unshift(left);
                     return right.value.call(vm, array);
@@ -1003,7 +1045,7 @@
           function createConstructor(blessedType)
           {
             return function() {
-              blessedType.value.members["new"] = VMSFunction.create(vm, [["type", vm.types.typeValue]], function(vm, context) {
+              blessedType.value.members["new"] = VMSFunction.create(vm, [["type", vm.types.typeValue, false]], function(vm, context) {
                 var blessedValue = vm.scope.getOrUndefined("type");
                 if (vm.instanceOf(blessedValue, blessedType)) return blessedValue;
                 throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
@@ -1230,7 +1272,7 @@
             return VMSPointer.createFromBlessed(vm, VMSPointer.create(vm, blessedsArgs[1].value, vm.scope), vm.scope);
           }));
           vm.scope.setOrDefine("_get_core_operatorColonGreater", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
-            var array = blessedsArgs[1].value(vm, "arguments").value.map(function(item) { return [item[0].value, item[1]]; });
+            var array = blessedsArgs[1].value(vm, "arguments").value.map(function(item) { return [item[0].value, item[1], false]; });
             return VMSPointer.createFromBlessed(vm, VMSFunction.create(vm, array, blessedsArgs[2].value, vm.scope), vm.scope);
           }));
           vm.scope.setOrDefine("_get_core_operatorEqual", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
