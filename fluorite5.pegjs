@@ -434,10 +434,9 @@
                 return value.type;
               }
               if (command.value === "var") {
-                var array = codes[1](vm, "arguments").value;
+                var array = codes[1](vm, "arguments");
                 array.map(function(item) {
-                  if (!vm.instanceOf(item[0], vm.types.typeKeyword)) throw "Type Error: " + item[0].type.value.name + " != Keyword";
-                  vm.scope.defineOrSet(item[0].value, vm.UNDEFINED);
+                  vm.scope.defineOrSet(item[0], vm.UNDEFINED);
                 });
                 return vm.UNDEFINED;
               }
@@ -543,10 +542,7 @@
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                 if (!(value !== undefined && value[0] === "round")) throw "Illegal command argument";
-                var arg = value[1](vm, "arguments").value;
-                if (arg.length != 1) throw "Illegal number of arguments: " + arg.length + " != 1";
-                arg = arg[0];
-                arg = [arg[0].value, arg[1]];
+                var arg = value[1](vm, "argument");
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                 if (!(value !== undefined && value[0] === "curly")) throw "Illegal command argument";
@@ -771,15 +767,24 @@
             if (operator === "bracketsSquare") return ["square", codes[0], undefined, createCodeFromMethod(operator, codes)];
             if (operator === "bracketsCurly") return ["curly", codes[0], undefined, createCodeFromMethod(operator, codes)];
             return ["normal", createCodeFromMethod(operator, codes), undefined, createCodeFromMethod(operator, codes)];
-          } else if (context === "arguments") {
-            if (operator === "leftDollar") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), vm.types.typeValue]]);
-            if (operator === "operatorColon") return vm.createObject(vm.types.typeObject, [[codes[0](vm, "argumentName"), codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")])]]);
-            if (operator === "enumerateComma") return vm.createObject(vm.types.typeObject, codes.map(function(code) { return code(vm, "argument").value; }));
-          } else if (context === "argument") {
-            if (operator === "leftDollar") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), vm.types.typeValue]);
-            if (operator === "operatorColon") return vm.createObject(vm.types.typeObject, [codes[0](vm, "argumentName"), codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")])]);
-          } else if (context === "argumentName") {
-            if (operator === "leftDollar") return codes[0](vm, "argumentName");
+
+          } else if (context === "arguments") { // undefined -> [[name, blessedType, isVector]...]
+            if (operator === "bracketsRound") return codes[0](vm, "arguments");
+            if (operator === "enumerateComma") return codes.map(function(code) { return code(vm, "argument"); });
+            return [vm.callOperator(operator, codes, "argument")];
+          } else if (context === "argument") { // undefined -> [name, blessedType, isVector]
+            if (operator === "operatorColon") {
+              var argumentType = codes[1](vm, "argumentType");
+              return [codes[0](vm, "argumentName"), argumentType[0], argumentType[1]];
+            }
+            return [vm.callOperator(operator, codes, "argumentName"), vm.types.typeValue, false];
+          } else if (context === "argumentType") { // undefined -> [blessedType, isVector]
+            if (operator === "rightPeriod3") return [codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]), true];
+            return [vm.callOperator(operator, codes, "get", [vm.createObject(vm.types.typeKeyword, "class")]), false];
+          } else if (context === "argumentName") { // undefined -> name
+            if (operator === "leftDollar") return codes[0](vm, "get", []).value;
+            return vm.callOperator(operator, codes, "get", []).value;
+
           }
 
           if (operator === "leftAsterisk") {
@@ -872,13 +877,17 @@
           } else if (context === "contentStatement") {
             if (type === "Identifier") return ["keyword", createCodeFromLiteral(type, value), value, createCodeFromLiteral(type, value)];
             return ["normal", createCodeFromLiteral(type, value), undefined, createCodeFromLiteral(type, value)];
-          } else if (context === "arguments") {
-            if (type === "Identifier") return vm.createObject(vm.types.typeObject, [[vm.createObject(vm.types.typeKeyword, value), vm.types.typeValue]]);
-            if (type === "Void") return vm.createObject(vm.types.typeObject, []);
-          } else if (context === "argument") {
-            if (type === "Identifier") return vm.createObject(vm.types.typeObject, [vm.createObject(vm.types.typeKeyword, value), vm.types.typeValue]);
-          } else if (context === "argumentName") {
-            if (type === "Identifier") return vm.createObject(vm.types.typeKeyword, value);
+
+          } else if (context === "arguments") { // undefined -> [[name, blessedType, isVector]...]
+            if (type === "Void") return [];
+            return [vm.createLiteral(type, value, "argument")];
+          } else if (context === "argument") { // undefined -> [name, blessedType, isVector]
+            return [vm.createLiteral(type, value, "argumentName"), vm.types.typeValue, false];
+          } else if (context === "argumentType") { // undefined -> [blessedType, isVector]
+            return [vm.createLiteral(type, value, "get", [vm.createObject(vm.types.typeKeyword, "class")]), false];
+          } else if (context === "argumentName") { // undefined -> name
+            return vm.createLiteral(type, value, "get", []).value;
+
           }
           //############################################################## TODO ###############################################################
           throw "Unknown Literal Type: " + context + "/" + type;
@@ -1272,8 +1281,7 @@
             return VMSPointer.createFromBlessed(vm, VMSPointer.create(vm, blessedsArgs[1].value, vm.scope), vm.scope);
           }));
           vm.scope.setOrDefine("_get_core_operatorColonGreater", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
-            var array = blessedsArgs[1].value(vm, "arguments").value.map(function(item) { return [item[0].value, item[1], false]; });
-            return VMSPointer.createFromBlessed(vm, VMSFunction.create(vm, array, blessedsArgs[2].value, vm.scope), vm.scope);
+            return VMSPointer.createFromBlessed(vm, VMSFunction.create(vm, blessedsArgs[1].value(vm, "arguments"), blessedsArgs[2].value, vm.scope), vm.scope);
           }));
           vm.scope.setOrDefine("_get_core_operatorEqual", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
             return VMSPointer.createFromBlessed(vm, blessedsArgs[1].value(vm, "set", [blessedsArgs[2].value(vm, "get", [])]), vm.scope);
