@@ -272,7 +272,7 @@
 
               }
             }
-            return true;
+            return j == blessedsArgs.length;
           };
           VMSFunction.prototype.call = function(vm, blessedsArgs) {
             vm.pushStack(this.scope);
@@ -396,20 +396,16 @@
           function tryCallFromScope(name)
           {
             var blessedFunction = vm.scope.getOrUndefined(name);
-            if (vm.instanceOf(blessedFunction, vm.types.typeUndefined)) return false;
-            if (vm.instanceOf(blessedFunction, vm.types.typeFunction)) {
-              var array = [vm.createObject(vm.types.typeHash, {
-                context: vm.createObject(vm.types.typeString, context),
-                args: vm.createObject(vm.types.typeArray, args.slice(0)),
-                scope: vm.createObject(vm.types.typeScope, vm.scope),
-              })];
-              Array.prototype.push.apply(array, codes.map(function(code) { return vm.createObject(vm.types.typeCode, code); }));
-              var blessedPointer = blessedFunction.value.call(vm, array);
-              if (!vm.instanceOf(blessedPointer, vm.types.typePointer)) throw "Illegal type of operation result: " + blessedPointer.type.value.name + " != Pointer";
-              return blessedPointer.value.call(vm, context, args);
-            } else {
-              throw "`" + name + "` is not a function";
-            }
+            var array = [vm.createObject(vm.types.typeHash, {
+              context: vm.createObject(vm.types.typeString, context),
+              args: vm.createObject(vm.types.typeArray, args == undefined ? [] : args.slice(0)),
+              scope: vm.createObject(vm.types.typeScope, vm.scope),
+            })];
+            Array.prototype.push.apply(array, codes.map(function(code) { return vm.createObject(vm.types.typeCode, code); }));
+            var res = vm.tryCallBlessed(blessedFunction, [], array, false);
+            if (res === false) return false;
+            if (!vm.instanceOf(res, vm.types.typePointer)) throw "Illegal type of core operation result: " + res.type.value.name + " != Pointer";
+            return res.value.call(vm, context, args);
           }
 
           var res;
@@ -452,14 +448,7 @@
               if (command.value === "call") {
                 var blessedOperator = codes[1](vm, "get", []);
                 if (!vm.instanceOf(blessedOperator, vm.types.typeString)) throw "Type Error: " + blessedOperator.type.value.name + " != String";
-                var array = codes.slice(2, codes.length).map(function(item) {
-                  return VMSPointer.create(vm, item, vm.scope);
-                })
-                return vm.callOperator(blessedOperator.value, array.map(function(item) {
-                  return function(vm, context, args) {
-                    return item.value.call(vm, context, args);
-                  };
-                }), "get", []);
+                return vm.callOperator(blessedOperator.value, codes.slice(2, codes.length), "get", []);
               }
               if (command.value === "instanceof") {
                 if (codes.length != 3) throw "Illegal command argument: " + command.value;
@@ -666,14 +655,14 @@
                 var blessedsNew = getMethodsOfTypeTree("new", blessedType);
 
                 for (i = 0; i < blessedsNew.length; i++) {
-                   blessedArguments = blessedsNew[i].value.call(vm, vm.unpackVector(blessedArguments));
+                   blessedArguments = vm.callBlessed(blessedsNew[i], ["constructor", "function"], vm.unpackVector(blessedArguments), false);
                 }
 
                 blessedArguments.type = blessedType;
 
                 var blessedsInit = getMethodsOfTypeTree("init", blessedType);
                 for (i = blessedsInit.length - 1; i >= 0; i--) {
-                  blessedsInit[i].value.call(vm, vm.unpackVector(blessedArguments));
+                  vm.callBlessed(blessedsInit[i], ["constructor", "function"], vm.unpackVector(blessedArguments), false);
                 }
 
                 return blessedArguments;
@@ -683,55 +672,27 @@
             if (operator === "operatorMinus2Greater"
               || operator === "operatorEqual2Greater") 	{
               var minus = operator == "operatorMinus2Greater";
+              var array = vm.unpackVector(codes[0](vm, "get", []));
+              var blessedFunction = VMSFunction.create(vm, [["_", vm.types.typeValue, true]], codes[1], vm.scope);
               if (minus) {
-                return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
-                  return VMSFunction.create(vm, [["_", vm.types.typeValue, true]], codes[1], vm.scope).value.call(vm, [scalar]);
+                return vm.packVector(array.map(function(scalar) {
+                  return vm.callBlessed(blessedFunction, [], [scalar], false);
                 }));
               } else {
-                return VMSFunction.create(vm, [["_", vm.types.typeValue, true]], codes[1], vm.scope).value.call(vm, vm.unpackVector(codes[0](vm, "get", [])));
+                return vm.callBlessed(blessedFunction, [], array, false);
               }
             }
             if (operator === "operatorMinusGreater"
               || operator === "operatorEqualGreater") 	{
               var minus = operator == "operatorMinusGreater";
-              var right = codes[1](vm, "get", []);
+              var array = vm.unpackVector(codes[0](vm, "get", []));
+              var blessedFunction = codes[1](vm, "get", [vm.createObject(vm.types.typeKeyword, "collector"), vm.createObject(vm.types.typeKeyword, "function")]);
               if (minus) {
-                return vm.packVector(vm.unpackVector(codes[0](vm, "get", [])).map(function(scalar) {
-                  if (vm.instanceOf(right, vm.types.typeString)) {
-                    return vm.callMethodOfBlessed(scalar, ["method", "function"], right.value, vm.VOID);
-                  } else if (vm.instanceOf(right, vm.types.typeFunction)) {
-                    return right.value.call(vm, [scalar]);
-                  } else {
-                    throw "Type Error: " + right.type.value.name + " != String, Function";
-                  }
+                return vm.packVector(array.map(function(scalar) {
+                  return vm.callBlessed(blessedFunction, ["collector", "function"], [scalar], false);
                 }));
               } else {
-                if (vm.instanceOf(right, vm.types.typeString)) {
-                  return vm.callMethodOfBlessed(codes[0](vm, "get", []), ["method", "function"], right.value, vm.VOID);
-                } else if (vm.instanceOf(right, vm.types.typeFunction)) {
-                  return right.value.call(vm, [codes[0](vm, "get", [])]);
-                } else {
-                  throw "Type Error: " + right.type.value.name + " != String, Function";
-                }
-              }
-              throw "Type Error: " + operator + "/" + right.type.value.name;
-            }
-            if (operator === "operatorPeriod") {
-              var right = codes[1](vm, "get", []);
-              if (vm.instanceOf(right, vm.types.typeString)) {
-                var left = codes[0](vm, "get", []);
-                return VMSFunction.create(vm, [["_", vm.types.typeValue, true]], function(vm, context, args) {
-                    return vm.callMethodOfBlessed(left, ["method", "function"], right.value, vm.scope.getOrUndefined("_"));
-                }, vm.scope)
-              } else if (vm.instanceOf(right, vm.types.typeFunction)) {
-                var left = codes[0](vm, "get", []);
-                return VMSFunction.create(vm, [["_", vm.types.typeValue, true]], function(vm, context, args) {
-                    var array = vm.unpackVector(vm.scope.getOrUndefined("_"));
-                    array.unshift(left);
-                    return right.value.call(vm, array);
-                }, vm.scope)
-              } else {
-                throw "Type Error: " + right.type.value.name + " != String, Function";
+                return vm.callBlessed(blessedFunction, ["collector", "function"], array, false);
               }
             }
           } else if (context === "set") {
@@ -800,10 +761,10 @@
           blessedsArgs.unshift(vm.createObject(vm.types.typeString, context));
           var blessedsTypes = blessedsArgs.map(function(blessed) { return blessed.type; });
 
-          res = vm.tryCallMethodOfOperator("_" + context + "_" + operator, blessedsArgs);
+          res = vm.tryCallName("_" + context + "_" + operator, [], blessedsArgs, true);
           if (res !== false) return res;
 
-          res = vm.tryCallMethodOfOperator("_" + operator, blessedsArgs);
+          res = vm.tryCallName("_" + operator, [], blessedsArgs, true);
           if (res !== false) return res;
 
           throw "Unknown operator: " + operator + "/" + context;
@@ -811,7 +772,7 @@
         VMStandard.prototype.toString = function(value) {
           this.consumeLoopCapacity();
           if (this.instanceOf(value, this.types.typeValue)) {
-            return "" + this.callMethodOfBlessed(value, ["method", "function"], "toString", this.VOID).value;
+            return "" + this.callName("toString", ["method", "function"], [value], true).value;
           } else {
             return "" + value;
           }
@@ -830,7 +791,7 @@
         VMStandard.prototype.toBoolean = function(value) {
           this.consumeLoopCapacity();
           if (this.instanceOf(value, this.types.typeValue)) {
-            return !!this.callMethodOfBlessed(value, ["method", "function"], "toBoolean", this.VOID).value;
+            return !!this.callName("toBoolean", ["method", "function"], [value], true).value;
           } else {
             return !!value;
           }
@@ -976,75 +937,107 @@
 
           return false;
         };
-        VMStandard.prototype.getMethodOfCall = function(name, accesses, blessedsTypes, predicate) {
-          var res;
 
+        VMStandard.prototype.tryCallBlessed = function(blessed, accesses, blessedsArgs) {
+          var blesseds = this.unpackVector(blessed);
+          for (var i = 0; i < blesseds.length; i++) {
+            
+            if (this.instanceOf(blesseds[i], this.types.typeFunction)) {
+              if (blesseds[i].value.isCallable(this, blessedsArgs)) {
+                return blesseds[i].value.call(this, blessedsArgs);
+              }
+            }
+            if (this.instanceOf(blesseds[i], this.types.typeKeyword)) {
+              var res = this.tryCallName(blesseds[i].value, accesses, blessedsArgs, false);
+              if (res !== false) return res;
+            }
+            
+          }
+          return false;
+        };
+        VMStandard.prototype.callBlessed = function(blessed, accesses, blessedsArgs) {
+          var res = this.tryCallBlessed(blessed, accesses, blessedsArgs);
+          if (res === false) throw "No such method: ("
+            + this.toString(blessed) + ")("
+            + blessedsArgs.map(function(arg) { return arg.type.value.name; }).join(", ") + ") in ["
+            + accesses.join(", ") + "]";
+          return res;
+        };
+        /**
+         * isOperatorが真であればblessedsArgsのすべてのblessed、
+         * 偽でありblessedsArgsに要素があれば最初の要素
+         * そうでなければから配列について、
+         * 各要素で定義されたまたは継承されたメンバまたはスコープ内から
+         * nameに該当する関数をaccesses付きで検索し、
+         * 順番にblessedsArgsを受理可能か判定し、
+         * できれば戻り値をblessedで、できなければfalseを返す。
+         */
+        VMStandard.prototype.tryCallName = function(name, accesses, blessedsArgs, isOperator) {
+          // TODO: 関数型でのアクセス接頭辞の対応
+
+          var blessedsTypes = isOperator
+            ? blessedsArgs.map(function(arg) { return arg.type; })
+            : blessedsArgs.length >= 1
+              ? [blessedsArgs[0].type]
+              : [];
+
+          // 関連型＋親型から
           for (var i = 0; i < blessedsTypes.length; i++) {
             var blessedType = blessedsTypes[i];
             while (blessedType !== null) {
 
-              res = getProperty(blessedType.value.members, name) || this.UNDEFINED;
-              if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
-              if (this.instanceOf(res, this.types.typeVector)) {
-                for (var i = 0; i < res.value.length; i++) {
-                  if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
+              var array = this.unpackVector(getProperty(blessedType.value.members, name) || this.VOID);
+              for (var j = 0; j < array.length; j++) {
+
+                if (this.instanceOf(array[j], this.types.typeFunction)) {
+                  if (array[j].value.isCallable(this, blessedsArgs)) {
+                    return array[j].value.call(this, blessedsArgs);
+                  }
                 }
+
               }
 
               blessedType = blessedType.value.supertype;
             }
           }
 
+          // スコープ＋アクセサから
           for (var i = 0; i < accesses.length; i++) {
+            
+            var array = this.unpackVector(this.scope.getOrUndefined(accesses[i] + "_" + name));
+            for (var j = 0; j < array.length; j++) {
 
-            res = this.scope.getOrUndefined(accesses[i] + "_" + name);
-            if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
-            if (this.instanceOf(res, this.types.typeVector)) {
-              for (var i = 0; i < res.value.length; i++) {
-                if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
+              if (this.instanceOf(array[j], this.types.typeFunction)) {
+                if (array[j].value.isCallable(this, blessedsArgs)) {
+                  return array[j].value.call(this, blessedsArgs);
+                }
+              }
+
+            }
+            
+          }
+
+          // スコープから
+          var array = this.unpackVector(this.scope.getOrUndefined(name));
+          for (var j = 0; j < array.length; j++) {
+
+            if (this.instanceOf(array[j], this.types.typeFunction)) {
+              if (array[j].value.isCallable(this, blessedsArgs)) {
+                return array[j].value.call(this, blessedsArgs);
               }
             }
 
           }
 
-          res = this.scope.getOrUndefined(name);
-          if (this.instanceOf(res, this.types.typeFunction)) if (predicate(res)) return res;
-          if (this.instanceOf(res, this.types.typeVector)) {
-            for (var i = 0; i < res.value.length; i++) {
-              if (this.instanceOf(res.value[i], this.types.typeFunction)) if (predicate(res.value[i])) return res.value[i];
-            }
-          }
-
-          return this.UNDEFINED;
-        };
-        VMStandard.prototype.tryCallMethod = function(name, accesses, blessedsTypes, blessedsArgs) {
-          var vm = this;
-          var res = this.getMethodOfCall(name, accesses, blessedsTypes, function(blessedFunction) {
-            return blessedFunction.value.isCallable(vm, blessedsArgs);
-          });
-          if (this.instanceOf(res, this.types.typeFunction)) {
-            return res.value.call(this, blessedsArgs);
-          }
           return false;
         };
-        VMStandard.prototype.tryCallMethodOfOperator = function(name, blessedsArgs) {
-          return this.tryCallMethod(name, [], blessedsArgs.map(function(blessedArg) { return blessedArg.type; }), blessedsArgs);
-        };
-        VMStandard.prototype.callMethod = function(name, accesses, blessedsTypes, blessedsArgs) {
-          var vm = this;
-          var res = this.getMethodOfCall(name, accesses, blessedsTypes, function(blessedFunction) {
-            return blessedFunction.value.isCallable(vm, blessedsArgs);
-          });
-          if (this.instanceOf(res, this.types.typeFunction)) {
-            return res.value.call(this, blessedsArgs);
-          }
-          throw "No such method: " + name + "(" + blessedsArgs.map(function(blessedArg) { return blessedArg.type.value.name; }).join(", ") + ")/"
-            + blessedsTypes.map(function(blessedType) { return blessedType.value.name; }).join(", ");
-        };
-        VMStandard.prototype.callMethodOfBlessed = function(blessedObject, accessess, name, blessedArgs) {
-          var blesseds = this.unpackVector(blessedArgs);
-          blesseds.unshift(blessedObject);
-          return this.callMethod(name, accessess, [blessedObject.type], blesseds);
+        VMStandard.prototype.callName = function(name, accesses, blessedsArgs, isOperator) {
+          var res = this.tryCallName(name, accesses, blessedsArgs, isOperator);
+          if (res === false) throw "No such method: " + name + "("
+            + blessedsArgs.map(function(arg) { return arg.type.value.name; }).join(", ") + ") in ["
+            + accesses.join(", ") + "]/"
+            + (isOperator ? "operator" : "method");
+          return res;
         };
 
         VMStandard.prototype.initBootstrap = function() {
@@ -1243,8 +1236,8 @@
             return VMSPointer.createFromBlessed(vm, res, vm.scope);
           }));
 
-          vm.scope.setOrDefine("_get_hereDocumentFunction", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString, vm.types.typeValue, vm.types.typeText], function(vm, blessedsArgs) {
-            return vm.callMethod(blessedsArgs[1].value, ["decoration", "function"], [], vm.unpackVector(vm.packVector([blessedsArgs[3], blessedsArgs[2]])));
+          vm.scope.setOrDefine("_get_hereDocumentFunction", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.callBlessed(blessedsArgs[1], ["decoration", "function"], vm.unpackVector(vm.packVector([blessedsArgs[3], blessedsArgs[2]])), false);
           }));
           vm.scope.setOrDefine("_get_core_leftMultibyte", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
             return VMSPointer.createFromBlessed(vm, vm.callOperator("leftMultibyte_" + blessedsArgs[1].value(vm, "get", []).value, [blessedsArgs[2].value], "get", []), vm.scope);
@@ -1252,27 +1245,17 @@
           vm.scope.setOrDefine("_get_core_operatorMultibyte", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
             return VMSPointer.createFromBlessed(vm, vm.callOperator("operatorMultibyte_" + blessedsArgs[2].value(vm, "get", []).value, [blessedsArgs[1].value, blessedsArgs[3].value], "get", []), vm.scope);
           }));
-          vm.scope.setOrDefine("_get_leftWord", vm.packVector([
-            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeFunction, vm.types.typeValue], function(vm, blessedsArgs) {
-              return blessedsArgs[1].value.call(vm, [blessedsArgs[2]]);
-            }),
-            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
-              return vm.callMethod(blessedsArgs[1].value, ["leftWord", "word", "function"], [blessedsArgs[2].type], [blessedsArgs[2]]);
-            }),
-          ]));
-          vm.scope.setOrDefine("_get_operatorWord", vm.packVector([
-            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeFunction, vm.types.typeValue], function(vm, blessedsArgs) {
-              return blessedsArgs[2].value.call(vm, [blessedsArgs[1], blessedsArgs[3]]);
-            }),
-            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
-              return vm.callMethod(blessedsArgs[2].value, ["operatorWord", "word", "function"], [blessedsArgs[1].type, blessedsArgs[3].type], [blessedsArgs[1], blessedsArgs[3]]);
-            }),
-          ]));
+          vm.scope.setOrDefine("_get_leftWord", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.callBlessed(blessedsArgs[1], ["leftWord", "word", "method", "function"], vm.unpackVector(vm.packVector([blessedsArgs[2]])), false);
+          }));
+          vm.scope.setOrDefine("_get_operatorWord", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            return vm.callBlessed(blessedsArgs[2], ["operatorWord", "word", "method", "function"], vm.unpackVector(vm.packVector([blessedsArgs[1], blessedsArgs[3]])), false);
+          }));
           vm.scope.setOrDefine("_get_rightComposite", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) {
-            return vm.callMethod(blessedsArgs[2].value, ["rightComposite", "composite", "function"], [blessedsArgs[1].type], [blessedsArgs[1]]);
+            return vm.callBlessed(blessedsArgs[2], ["rightComposite", "composite", "function"], vm.unpackVector(vm.packVector([blessedsArgs[1]])), false);
           }));
           vm.scope.setOrDefine("_get_operatorComposite", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) {
-            return vm.callMethod(blessedsArgs[2].value, ["operatorComposite", "composite", "function"], [blessedsArgs[1].type, blessedsArgs[3].type], [blessedsArgs[1], blessedsArgs[3]]);
+            return vm.callBlessed(blessedsArgs[2], ["operatorComposite", "composite", "function"], vm.unpackVector(vm.packVector([blessedsArgs[1], blessedsArgs[3]])), false);
           }));
           vm.scope.setOrDefine("_get_leftDollar", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) {
             return vm.scope.getOrUndefined(blessedsArgs[1].value);
@@ -1326,20 +1309,9 @@
             throw "Type Error: " + hash.type.value.name + "#" + key.type.value.name;
           }));
           vm.scope.setOrDefine("_get_core_rightbracketsRound", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
-            var hash = blessedsArgs[1].value(vm, "get", [vm.createObject(vm.types.typeKeyword, "function")]);
-            var key = blessedsArgs[2].value(vm, "get", []);
-            if (vm.instanceOf(hash, vm.types.typeFunction)) {
-              return VMSPointer.createFromBlessed(vm, hash.value.call(vm, vm.unpackVector(key)), vm.scope);
-            }
-            if (vm.instanceOf(hash, vm.types.typeVector)) {
-              var array = vm.unpackVector(key);
-              for (var i = 0; i < hash.value.length; i++) {
-                if (hash.value[i].value.isCallable(vm, array)) {
-                  return VMSPointer.createFromBlessed(vm, hash.value[i].value.call(vm, array), vm.scope);
-                }
-              }
-            }
-            throw "Type Error: " + hash.type.value.name + "(" + key.type.value.name + ")";
+            var left = blessedsArgs[1].value(vm, "get", [vm.createObject(vm.types.typeKeyword, "function")]);
+            var right = blessedsArgs[2].value(vm, "get", []);
+            return VMSPointer.createFromBlessed(vm, vm.callBlessed(left, ["method", "function"], vm.unpackVector(right), false), vm.scope);
           }));
 
           vm.scope.setOrDefine("_get_core_enumerateSemicolon", VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
@@ -1476,6 +1448,24 @@
           }));
           vm.scope.setOrDefine("_get_concatenateHereDocument", VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeText, blessedsArgs.slice(1).map(function(item) { return vm.toString(item); }).join(""));
+          }));
+          vm.scope.setOrDefine("_get_operatorPeriod", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            var blessedsLeft = vm.unpackVector(blessedsArgs[1]);
+            return VMSFunctionNative.create(vm, [], function(vm, blessedsArgs2) {
+              var array = [];
+              Array.prototype.push.apply(array, blessedsLeft);
+              Array.prototype.push.apply(array, blessedsArgs2);
+              return vm.callBlessed(blessedsArgs[2], ["method", "function"], array, false);
+            }, vm.scope);
+          }));
+          vm.scope.setOrDefine("_get_operatorExclamation", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
+            var blessedsLeft = vm.unpackVector(blessedsArgs[1]);
+            return VMSFunctionNative.create(vm, [], function(vm, blessedsArgs2) {
+              var array = [];
+              Array.prototype.push.apply(array, blessedsArgs2);
+              Array.prototype.push.apply(array, blessedsLeft);
+              return vm.callBlessed(blessedsArgs[2], ["method", "function"], array, false);
+            }, vm.scope);
           }));
 
           function dice(count, faces)
