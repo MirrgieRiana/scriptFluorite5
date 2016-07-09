@@ -1479,14 +1479,16 @@
             vm.dices.push([faces, values]);
             return t;
           }
-          vm.scope.setOrDefine("rightComposite_d", VMSFunctionNative.create(vm, [vm.types.typeNumber], function(vm, blessedsArgs) {
-            if (blessedsArgs[0].value > 20) throw vm.createException("Illegal argument[0]: " + blessedsArgs[0].value + " > 20");
-            return vm.createObject(vm.types.typeNumber, dice(blessedsArgs[0].value, 6));
-          }));
-          vm.scope.setOrDefine("function_d", VMSFunctionNative.create(vm, [vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
-            if (blessedsArgs[0].value > 20) throw vm.createException("Illegal argument[0]: " + blessedsArgs[0].value + " > 20");
-            return vm.createObject(vm.types.typeNumber, dice(blessedsArgs[0].value, blessedsArgs[1].value));
-          }));
+          vm.scope.setOrDefine("function_d", vm.packVector([
+            VMSFunctionNative.create(vm, [vm.types.typeNumber, vm.types.typeNumber], function(vm, blessedsArgs) {
+              if (blessedsArgs[0].value > 20) throw vm.createException("Illegal argument[0]: " + blessedsArgs[0].value + " > 20");
+              return vm.createObject(vm.types.typeNumber, dice(blessedsArgs[0].value, blessedsArgs[1].value));
+            }),
+            VMSFunctionNative.create(vm, [vm.types.typeNumber], function(vm, blessedsArgs) {
+              if (blessedsArgs[0].value > 20) throw vm.createException("Illegal argument[0]: " + blessedsArgs[0].value + " > 20");
+              return vm.createObject(vm.types.typeNumber, dice(blessedsArgs[0].value, 6));
+            }),
+          ]));
           vm.types.typeArray.value.members.random = vm.packVector([
             VMSFunctionNative.create(vm, [vm.types.typeArray, vm.types.typeNumber], function(vm, blessedsArgs) {
               var array = blessedsArgs[0].value.slice(0);
