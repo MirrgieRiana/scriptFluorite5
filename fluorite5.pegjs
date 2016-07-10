@@ -412,8 +412,48 @@
               this.scope.setOrDefine(this.value, blessed);
             }
           };
+          VMSKeywordScope.prototype.isNamespaced = function() {
+            return false;
+          };
 
           return VMSKeywordScope;
+        })();
+
+        var VMSKeywordObject = (function() {
+
+          function VMSKeywordObject(value, hash)
+          {
+            this.value = value;
+            this.hash = hash;
+          }
+          VMSKeywordObject.create = function(vm, value, hash) {
+            return vm.createObject(vm.types.typeKeyword, new VMSKeywordObject(value, hash));
+          };
+          VMSKeywordObject.prototype.getOrUndefined = function(vm, accesses) {
+            var res;
+
+            for (var i = 0; i < accesses.length; i++) {
+              res = getProperty(this.hash, accesses[i] + "_" + this.value) || vm.UNDEFINED;
+              if (!vm.instanceOf(res, vm.types.typeUndefined)) return res;
+            }
+
+            res = getProperty(this.hash, this.value) || vm.UNDEFINED;
+            if (!vm.instanceOf(res, vm.types.typeUndefined)) return res;
+
+            return vm.types.typeUndefined;
+          };
+          VMSKeywordObject.prototype.set = function(vm, access, blessed) {
+            if (access) {
+              this.hash[access + "_" + this.value] = blessed;
+            } else {
+              this.hash[this.value] = blessed;
+            }
+          };
+          VMSKeywordObject.prototype.isNamespaced = function() {
+            return true;
+          };
+
+          return VMSKeywordObject;
         })();
 
         function VMStandard()
@@ -431,7 +471,7 @@
           {
             var blessedFunction = vm.scope.getOrUndefined(name);
             var array = [vm.createObject(vm.types.typeDictionary, {
-              context: vm.createObject(vm.types.typeString, context), // TODO_KEYWORD
+              context: vm.createObject(vm.types.typeString, context),
               args: vm.createObject(vm.types.typeTuple, args == undefined ? [] : args.slice(0)),
               scope: vm.createObject(vm.types.typeScope, vm.scope),
             })];
@@ -458,7 +498,8 @@
 
             if (operator === "statement") {
               var command = codes[0](vm, "get");
-              if (!vm.instanceOf(command, vm.types.typeString)) throw "Type Error: " + command.type.value.name + " != String"; // TODO_KEYWORD
+              if (vm.instanceOf(command, vm.types.typeKeyword)) command = vm.createObject(vm.types.typeString, command.value.value); // TODO refactor
+              if (!vm.instanceOf(command, vm.types.typeString)) throw "Type Error: " + command.type.value.name + " != String";
               if (command.value === "typeof") {
                 var value = codes[1](vm, "get");
                 return value.type;
@@ -481,7 +522,8 @@
               }
               if (command.value === "call") {
                 var blessedOperator = codes[1](vm, "get");
-                if (!vm.instanceOf(blessedOperator, vm.types.typeString)) throw "Type Error: " + blessedOperator.type.value.name + " != String"; // TODO_KEYWORD
+                if (vm.instanceOf(blessedOperator, vm.types.typeKeyword)) blessedOperator = vm.createObject(vm.types.typeString, blessedOperator.value.value); // TODO refactor
+                if (!vm.instanceOf(blessedOperator, vm.types.typeString)) throw "Type Error: " + blessedOperator.type.value.name + " != String";
                 return vm.callOperator(blessedOperator.value, codes.slice(2, codes.length), "get");
               }
               if (command.value === "instanceof") {
@@ -491,30 +533,30 @@
                 if (!vm.instanceOf(type, vm.types.typeType)) throw "Type Error: " + type.type.value.name + " != Type";
                 return vm.getBoolean(vm.instanceOf(value, type));
               }
-              if (command.value === "length") {
+              if (command.value === "length") { // TODO delete
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeList)) return vm.createObject(vm.types.typeNumber, value.value.length);
-                if (vm.instanceOf(value, vm.types.typeString)) return vm.createObject(vm.types.typeNumber, value.value.length); // TODO_KEYWORD
+                if (vm.instanceOf(value, vm.types.typeString)) return vm.createObject(vm.types.typeNumber, value.value.length);
                 throw "Illegal Argument: " + value.type.value.name;
               }
-              if (command.value === "keys") {
+              if (command.value === "keys") { // TODO delete
                 var value = codes[1](vm, "get");
                 if (vm.instanceOf(value, vm.types.typeMap)) return vm.packVector(Object.keys(value.value).map(function(key) {
-                  return vm.createObject(vm.types.typeString, key); // TODO_KEYWORD
+                  return vm.createObject(vm.types.typeString, key);
                 }));
                 throw "Illegal Argument: " + value.type.value.name;
               }
-              if (command.value === "entry_key") {
+              if (command.value === "entry_key") { // TODO delete
                 var value = codes[1](vm, "get");
                 if (!vm.instanceOf(value, vm.types.typeEntry)) throw "Type Error: " + value.type.value.name + " != Entry";
                 return value.value.key;
               }
-              if (command.value === "entry_value") {
+              if (command.value === "entry_value") { // TODO delete
                 var value = codes[1](vm, "get");
                 if (!vm.instanceOf(value, vm.types.typeEntry)) throw "Type Error: " + value.type.value.name + " != Entry";
                 return value.value.value;
               }
-              if (command.value === "size") {
+              if (command.value === "size") { // TODO delete
                 var value = codes[1](vm, "get");
                 return vm.createObject(vm.types.typeNumber, vm.unpackVector(value).length);
               }
@@ -607,12 +649,12 @@
                 var isNamed;
                 if (value !== undefined && !((value[0] === "keyword" && value[2] === "extends") || value[0] === "curly")) {
                   blessedName = value[1](vm, "get");
-                  if (!vm.instanceOf(blessedName, vm.types.typeKeyword)) throw "Type Error: " + blessedName.type.value.name + " != Keyword"; // TODO_KEYWORD
+                  if (!vm.instanceOf(blessedName, vm.types.typeKeyword)) throw "Type Error: " + blessedName.type.value.name + " != Keyword";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
                   isNamed = true;
                 } else {
-                  blessedName = vm.createObject(vm.types.typeKeyword, "Class" + Math.floor(Math.random() * 90000000 + 10000000)); // TODO_KEYWORD
+                  blessedName = SVMKeywordScope.create(vm, "Class" + Math.floor(Math.random() * 90000000 + 10000000), vm.scope);
                   isNamed = false;
                 }
 
@@ -622,7 +664,8 @@
                   // dummy
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
-                  blessedExtends = value[1](vm, "get"); // TODO_ACCESSOR class
+                  blessedExtends = value[1](vm, "get");
+                  if (vm.instanceOf(blessedExtends, vm.types.typeKeyword)) blessedExtends = blessedExtends.value.getOrUndefined(vm, ["class"]);
                   if (!vm.instanceOf(blessedExtends, vm.types.typeType)) throw "Type Error: " + blessedExtends.type.value.name + " != Type";
                   value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
@@ -630,7 +673,7 @@
                   blessedExtends = vm.types.typeHash;
                 }
 
-                var blessedResult = vm.createType(blessedName.value, blessedExtends);
+                var blessedResult = vm.createType(blessedName.value.value, blessedExtends);
 
                 if (value !== undefined && value[0] === "curly") {
                   vm.pushFrame();
@@ -648,7 +691,7 @@
 
                 // parse end
 
-                if (isNamed) vm.scope.defineOrSet("class_" + blessedName.value, blessedResult);
+                if (isNamed) blessedName.value.set(vm, "class", blessedResult);
                 return blessedResult;
               }
               if (command.value === "new") {
@@ -674,7 +717,8 @@
                 var i = 1, value;
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
-                var blessedType = value[1](vm, "get"); // TODO_ACCESSOR class
+                var blessedType = value[1](vm, "get");
+                if (vm.instanceOf(blessedType, vm.types.typeKeyword)) blessedType = blessedType.value.getOrUndefined(vm, ["class"]);
                 if (!vm.instanceOf(blessedType, vm.types.typeType)) throw "Type Error: " + blessedType.type.value.name + " != Type";
                 value = codes[i] !== undefined ? codes[i](vm, "contentStatement") : undefined; i++;
 
@@ -719,7 +763,8 @@
               || operator === "operatorEqualGreater") 	{
               var minus = operator == "operatorMinusGreater";
               var array = vm.unpackVector(codes[0](vm, "get"));
-              var blessedFunction = codes[1](vm, "get"); // TODO_ACCESSOR collector function
+              var blessedFunction = codes[1](vm, "get");
+              if (vm.instanceOf(blessedFunction, vm.types.typeKeyword)) blessedFunction = blessedFunction.value.getOrUndefined(vm, ["collector", "function"]);
               if (minus) {
                 return vm.packVector(array.map(function(scalar) {
                   return vm.callBlessed(blessedFunction, ["collector", "function"], [scalar], false);
@@ -735,15 +780,16 @@
               return value;
             }
             if (operator === "operatorColon2") {
-              var hash = codes[0](vm, "get"); // TODO_ACCESSOR class
+              var hash = codes[0](vm, "get");
+              if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = hash.value.getOrUndefined(vm, ["class", "hash"]);
               var key = codes[1](vm, "get");
               if (vm.instanceOf(hash, vm.types.typeMap)) {
-                if (vm.instanceOf(key, vm.types.typeString)) return hash.value[key.value] = args[0]; // TODO_KEYWORD
-                if (vm.instanceOf(key, vm.types.typeKeyword)) return hash.value[key.value] = args[0]; // TODO_KEYWORD
+                if (vm.instanceOf(key, vm.types.typeString)) return hash.value[key.value] = args[0];
+                if (vm.instanceOf(key, vm.types.typeKeyword)) return hash.value[key.value.value] = args[0];
               }
               if (vm.instanceOf(hash, vm.types.typeType)) {
-                if (vm.instanceOf(key, vm.types.typeString)) return hash.value.members[key.value] = args[0]; // TODO_KEYWORD
-                if (vm.instanceOf(key, vm.types.typeKeyword)) return hash.value.members[key.value] = args[0]; // TODO_KEYWORD
+                if (vm.instanceOf(key, vm.types.typeString)) return hash.value.members[key.value] = args[0];
+                if (vm.instanceOf(key, vm.types.typeKeyword)) return hash.value.members[key.value.value] = args[0];
               }
               throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
             }
@@ -773,8 +819,14 @@
             }
             return [vm.callOperator(operator, codes, "argumentName"), vm.types.typeScalar, false];
           } else if (context === "argumentType") { // undefined -> [blessedType, isVector]
-            if (operator === "rightPeriod3") return [codes[0](vm, "get"), true]; // TODO_ACCESSOR class
-            return [vm.callOperator(operator, codes, "get"), false]; // TODO_ACCESSOR class
+            if (operator === "rightPeriod3") {
+              var res = codes[0](vm, "get");
+              if (vm.instanceOf(res, vm.types.typeKeyword)) res = res.value.getOrUndefined(vm, ["class"]);
+              return [res, true];
+            }
+            var res = vm.callOperator(operator, codes, "get");
+            if (vm.instanceOf(res, vm.types.typeKeyword)) res = res.value.getOrUndefined(vm, ["class"]);
+            return [res, false];
           } else if (context === "argumentName") { // undefined -> name
             if (operator === "leftDollar") return codes[0](vm, "get").value;
             return vm.callOperator(operator, codes, "get").value;
@@ -792,7 +844,7 @@
 
           var blessedsArgs = codes.map(function(code) { return code(vm, "get"); });
           blessedsArgs.unshift(vm.createObject(vm.types.typeDictionary, {
-            context: vm.createObject(vm.types.typeString, context), // TODO_KEYWORD
+            context: vm.createObject(vm.types.typeString, context),
           }));
           var blessedsTypes = blessedsArgs.map(function(blessed) { return blessed.type; });
 
@@ -838,7 +890,7 @@
           if (context === "get") {
             if (type === "Integer") return vm.createObject(vm.types.typeNumber, value);
             if (type === "Float") return vm.createObject(vm.types.typeNumber, value);
-            if (type === "String") return vm.createObject(vm.types.typeString, value); // TODO_KEYWORD
+            if (type === "String") return vm.createObject(vm.types.typeString, value);
             if (type === "Affix" || type === "Identifier") {
               if (value === "true") return vm.TRUE;
               if (value === "false") return vm.FALSE;
@@ -866,7 +918,9 @@
           } else if (context === "argument") { // undefined -> [name, blessedType, isVector]
             return [vm.createLiteral(type, value, "argumentName"), vm.types.typeScalar, false];
           } else if (context === "argumentType") { // undefined -> [blessedType, isVector]
-            return [vm.createLiteral(type, value, "get"), false]; // TODO_ACCESSOR class
+            var res = vm.createLiteral(type, value, "get");
+            if (vm.instanceOf(res, vm.types.typeKeyword)) res = res.value.getOrUndefined(vm, ["class"]);
+            return [res, false];
           } else if (context === "argumentName") { // undefined -> name
             return vm.createLiteral(type, value, "get").value;
 
@@ -968,9 +1022,14 @@
                 return blesseds[i].value.call(this, blessedsArgs);
               }
             }
-            if (this.instanceOf(blesseds[i], this.types.typeKeyword)) { // TODO_KEYWORD
-              var res = this.tryCallName(blesseds[i].value, accesses, blessedsArgs, false);
-              if (res !== false) return res;
+            if (this.instanceOf(blesseds[i], this.types.typeKeyword)) {
+              if (blesseds[i].value.isNamespaced()) {
+                var res = this.tryCallKeywordNamespaced(blesseds[i].value, accesses, blessedsArgs);
+                if (res !== false) return res;
+              } else {
+                var res = this.tryCallName(blesseds[i].value.value, accesses, blessedsArgs, false);
+                if (res !== false) return res;
+              }
             }
             
           }
@@ -983,6 +1042,38 @@
             + blessedsArgs.map(function(arg) { return arg.type.value.name; }).join(", ") + ") in ["
             + accesses.join(", ") + "]";
           return res;
+        };
+        VMStandard.prototype.tryCallKeywordNamespaced = function(keyword, accesses, blessedsArgs) {
+
+          // スコープ＋アクセサから
+          for (var i = 0; i < accesses.length; i++) {
+            
+            var array = this.unpackVector(keyword.getOrUndefined(accesses[i] + "_" + name));
+            for (var j = 0; j < array.length; j++) {
+
+              if (this.instanceOf(array[j], this.types.typeFunction)) {
+                if (array[j].value.isCallable(this, blessedsArgs)) {
+                  return array[j].value.call(this, blessedsArgs);
+                }
+              }
+
+            }
+            
+          }
+
+          // スコープから
+          var array = this.unpackVector(keyword.getOrUndefined(name));
+          for (var j = 0; j < array.length; j++) {
+
+            if (this.instanceOf(array[j], this.types.typeFunction)) {
+              if (array[j].value.isCallable(this, blessedsArgs)) {
+                return array[j].value.call(this, blessedsArgs);
+              }
+            }
+
+          }
+
+          return false;
         };
         /**
          * isOperatorが真であればblessedsArgsのすべてのblessed、
@@ -1172,7 +1263,9 @@
           vm.types.typeType.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeType], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "<Type: " + blessedsArgs[0].value.name + ">");
           });
-           // TODO_KEYWORD
+          vm.types.typeKeyword.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeKeyword], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, blessedsArgs[0].value.value);
+          });
           vm.types.typeEntry.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeEntry], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, vm.toString(blessedsArgs[0].value.key) + ": " + vm.toString(blessedsArgs[0].value.value));
           });
@@ -1280,7 +1373,7 @@
             return VMSPointer.createFromBlessed(vm, res, vm.scope);
           }));
 
-          vm.scope.setOrDefine("_get_hereDocumentFunction", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) { // TODO_KEYWORD
+          vm.scope.setOrDefine("_get_hereDocumentFunction", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.callBlessed(blessedsArgs[1], ["decoration", "function"], vm.unpackVector(vm.packVector([blessedsArgs[3], blessedsArgs[2]])), false);
           }));
           vm.scope.setOrDefine("_get_core_leftMultibyte", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
@@ -1295,15 +1388,20 @@
           vm.scope.setOrDefine("_get_operatorWord", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.callBlessed(blessedsArgs[2], ["operatorWord", "word", "method", "function"], vm.unpackVector(vm.packVector([blessedsArgs[1], blessedsArgs[3]])), false);
           }));
-          vm.scope.setOrDefine("_get_rightComposite", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) { // TODO_KEYWORD
+          vm.scope.setOrDefine("_get_rightComposite", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.callBlessed(blessedsArgs[2], ["rightComposite", "composite", "function"], vm.unpackVector(vm.packVector([blessedsArgs[1]])), false);
           }));
-          vm.scope.setOrDefine("_get_operatorComposite", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeString, vm.types.typeValue], function(vm, blessedsArgs) { // TODO_KEYWORD
+          vm.scope.setOrDefine("_get_operatorComposite", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeValue, vm.types.typeValue, vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.callBlessed(blessedsArgs[2], ["operatorComposite", "composite", "function"], vm.unpackVector(vm.packVector([blessedsArgs[1], blessedsArgs[3]])), false);
           }));
-          vm.scope.setOrDefine("_get_leftDollar", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) { // TODO_KEYWORD
-            return vm.scope.getOrUndefined(blessedsArgs[1].value);
-          }));
+          vm.scope.setOrDefine("_get_leftDollar", vm.packVector([
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeString], function(vm, blessedsArgs) {
+              return vm.scope.getOrUndefined(blessedsArgs[1].value);
+            }),
+            VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeKeyword], function(vm, blessedsArgs) {
+              return vm.scope.getOrUndefined(blessedsArgs[1].value.value);
+            }),
+          ]));
           vm.scope.setOrDefine("_get_core_leftAmpersand", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode], function(vm, blessedsArgs) {
             return VMSPointer.createFromBlessed(vm, VMSPointer.create(vm, blessedsArgs[1].value, vm.scope), vm.scope);
           }));
@@ -1315,29 +1413,35 @@
           }));
 
           vm.scope.setOrDefine("_get_core_operatorColon2", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
-            var hash = blessedsArgs[1].value(vm, "get"); // TODO_ACCESSOR class hash
+            var hash = blessedsArgs[1].value(vm, "get");
+            if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = hash.value.getOrUndefined(vm, ["class", "hash"]);
             var key = blessedsArgs[2].value(vm, "get");
             if (vm.instanceOf(hash, vm.types.typeHash)) {
-              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value, key.value) || vm.UNDEFINED, vm.scope); // TODO_KEYWORD
+              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value, key.value) || vm.UNDEFINED, vm.scope);
+              if (vm.instanceOf(key, vm.types.typeKeyword)) return VMSPointer.createFromBlessed(vm, VMSKeywordObject(vm, key.value.value, hash.value), vm.scope);
             }
             if (vm.instanceOf(hash, vm.types.typeType)) {
-              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value.members, key.value) || vm.UNDEFINED, vm.scope); // TODO_KEYWORD
+              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value.members, key.value) || vm.UNDEFINED, vm.scope);
+              if (vm.instanceOf(key, vm.types.typeKeyword)) return VMSPointer.createFromBlessed(vm, VMSKeywordObject(vm, key.value.value, hash.value.members), vm.scope);
             }
             throw "Type Error: " + hash.type.value.name + "::" + key.type.value.name;
           }));
           vm.scope.setOrDefine("_get_core_rightbracketsSquare", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
-            var hash = blessedsArgs[1].value(vm, "get"); // TODO_ACCESSOR array
+            var hash = blessedsArgs[1].value(vm, "get");
+            if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = hash.value.getOrUndefined(vm, ["array"]);
             var key = blessedsArgs[2].value(vm, "get");
             if (vm.instanceOf(hash, vm.types.typeArray)) {
               if (vm.instanceOf(key, vm.types.typeNumber)) return VMSPointer.createFromBlessed(vm, hash.value[key.value] || vm.UNDEFINED, vm.scope);
             }
             if (vm.instanceOf(hash, vm.types.typeHash)) {
-              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value, key.value) || vm.UNDEFINED, vm.scope); // TODO_KEYWORD
+              if (vm.instanceOf(key, vm.types.typeString)) return VMSPointer.createFromBlessed(vm, getProperty(hash.value, key.value) || vm.UNDEFINED, vm.scope);
+              if (vm.instanceOf(key, vm.types.typeKeyword)) return VMSPointer.createFromBlessed(vm, VMSKeywordObject(vm, key.value.value, hash.value), vm.scope);
             }
             throw "Type Error: " + hash.type.value.name + "[" + key.type.value.name + "]";
           }));
           vm.scope.setOrDefine("_get_core_operatorHash", VMSFunctionNative.create(vm, [vm.types.typeValue, vm.types.typeCode, vm.types.typeCode], function(vm, blessedsArgs) {
-            var hash = blessedsArgs[1].value(vm, "get"); // TODO_ACCESSOR class
+            var hash = blessedsArgs[1].value(vm, "get");
+            if (vm.instanceOf(hash, vm.types.typeKeyword)) hash = hash.value.getOrUndefined(vm, ["class"]);
             var key = blessedsArgs[2].value(vm, "get");
             if (vm.instanceOf(hash, vm.types.typeType)) {
               if (vm.instanceOf(key, vm.types.typeString)) { // TODO_KEYWORD
