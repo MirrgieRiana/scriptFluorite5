@@ -396,9 +396,9 @@
           function tryCallFromScope(name)
           {
             var blessedFunction = vm.scope.getOrUndefined(name);
-            var array = [vm.createObject(vm.types.typeHash, {
+            var array = [vm.createObject(vm.types.typeDictionary, {
               context: vm.createObject(vm.types.typeString, context),
-              args: vm.createObject(vm.types.typeArray, args == undefined ? [] : args.slice(0)),
+              args: vm.createObject(vm.types.typeTuple, args == undefined ? [] : args.slice(0)),
               scope: vm.createObject(vm.types.typeScope, vm.scope),
             })];
             Array.prototype.push.apply(array, codes.map(function(code) { return vm.createObject(vm.types.typeCode, code); }));
@@ -424,7 +424,7 @@
 
             if (operator === "statement") {
               var command = codes[0](vm, "get", []);
-              if (!vm.instanceOf(command, vm.types.typeKeyword)) throw "Type Error: " + command.type.value.name + " != String";
+              if (!vm.instanceOf(command, vm.types.typeString)) throw "Type Error: " + command.type.value.name + " != String";
               if (command.value === "typeof") {
                 var value = codes[1](vm, "get", []);
                 return value.type;
@@ -459,17 +459,16 @@
               }
               if (command.value === "length") {
                 var value = codes[1](vm, "get", []);
-                if (vm.instanceOf(value, vm.types.typeArray)) return vm.createObject(vm.types.typeNumber, value.value.length);
-                if (vm.instanceOf(value, vm.types.typeVector)) return vm.createObject(vm.types.typeNumber, value.value.length);
+                if (vm.instanceOf(value, vm.types.typeList)) return vm.createObject(vm.types.typeNumber, value.value.length);
                 if (vm.instanceOf(value, vm.types.typeString)) return vm.createObject(vm.types.typeNumber, value.value.length);
-                throw "Illegal Argument: " + value.type.value;
+                throw "Illegal Argument: " + value.type.value.name;
               }
               if (command.value === "keys") {
                 var value = codes[1](vm, "get", []);
-                if (!vm.instanceOf(value, vm.types.typeHash)) throw "Type Error: " + value.type.value.name + " != Hash";
-                return vm.packVector(Object.keys(value.value).map(function(key) {
-                  return vm.createObject(vm.types.typeKeyword, key);
+                if (vm.instanceOf(value, vm.types.typeMap)) return vm.packVector(Object.keys(value.value).map(function(key) {
+                  return vm.createObject(vm.types.typeString, key);
                 }));
+                throw "Illegal Argument: " + value.type.value.name;
               }
               if (command.value === "entry_key") {
                 var value = codes[1](vm, "get", []);
@@ -673,7 +672,7 @@
               || operator === "operatorEqual2Greater") 	{
               var minus = operator == "operatorMinus2Greater";
               var array = vm.unpackVector(codes[0](vm, "get", []));
-              var blessedFunction = VMSFunction.create(vm, [["_", vm.types.typeValue, true]], codes[1], vm.scope);
+              var blessedFunction = VMSFunction.create(vm, [["_", vm.types.typeScalar, true]], codes[1], vm.scope);
               if (minus) {
                 return vm.packVector(array.map(function(scalar) {
                   return vm.callBlessed(blessedFunction, [], [scalar], false);
@@ -704,7 +703,7 @@
             if (operator === "operatorColon2") {
               var hash = codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]);
               var key = codes[1](vm, "get", []);
-              if (vm.instanceOf(hash, vm.types.typeHash)) {
+              if (vm.instanceOf(hash, vm.types.typeMap)) {
                 if (vm.instanceOf(key, vm.types.typeString)) return hash.value[key.value] = args[0];
                 if (vm.instanceOf(key, vm.types.typeKeyword)) return hash.value[key.value] = args[0];
               }
@@ -738,7 +737,7 @@
               var argumentType = codes[1](vm, "argumentType");
               return [codes[0](vm, "argumentName"), argumentType[0], argumentType[1]];
             }
-            return [vm.callOperator(operator, codes, "argumentName"), vm.types.typeValue, false];
+            return [vm.callOperator(operator, codes, "argumentName"), vm.types.typeScalar, false];
           } else if (context === "argumentType") { // undefined -> [blessedType, isVector]
             if (operator === "rightPeriod3") return [codes[0](vm, "get", [vm.createObject(vm.types.typeKeyword, "class")]), true];
             return [vm.callOperator(operator, codes, "get", [vm.createObject(vm.types.typeKeyword, "class")]), false];
@@ -758,7 +757,9 @@
           //############################################################## TODO ###############################################################
 
           var blessedsArgs = codes.map(function(code) { return code(vm, "get", []); });
-          blessedsArgs.unshift(vm.createObject(vm.types.typeString, context));
+          blessedsArgs.unshift(vm.createObject(vm.types.typeDictionary, {
+            context: vm.createObject(vm.types.typeString, context),
+          }));
           var blessedsTypes = blessedsArgs.map(function(blessed) { return blessed.type; });
 
           res = vm.tryCallName("_" + context + "_" + operator, [], blessedsArgs, true);
@@ -780,10 +781,10 @@
         VMStandard.prototype.toNative = function(value) {
           this.consumeLoopCapacity();
           var vm = this;
-          if (this.instanceOf(value, this.types.typeVector)) {
+          if (this.instanceOf(value, this.types.typeVector)) { // TODO
             return value.value.map(function(scalar) { return vm.toNative(scalar); });
           }
-          if (this.instanceOf(value, this.types.typeArray)) {
+          if (this.instanceOf(value, this.types.typeList)) {
             return value.value.map(function(scalar) { return vm.toNative(scalar); });
           }
           return value.value;
@@ -809,8 +810,8 @@
               if (value === "false") return vm.FALSE;
               if (value === "undefined") return vm.UNDEFINED;
               if (value === "null") return vm.NULL;
-              if (value === "Infinity") return vm.createObject(vm.types.typeNumber, Infinity);
-              if (value === "NaN") return vm.createObject(vm.types.typeNumber, NaN);
+              if (value === "Infinity") return vm.INFINITY;
+              if (value === "NaN") return vm.NAN;
 
               if (args.length > 0) {
                 var accesses = args.map(function(arg) { return arg.value; });
@@ -843,7 +844,7 @@
             if (type === "Void") return [];
             return [vm.createLiteral(type, value, "argument")];
           } else if (context === "argument") { // undefined -> [name, blessedType, isVector]
-            return [vm.createLiteral(type, value, "argumentName"), vm.types.typeValue, false];
+            return [vm.createLiteral(type, value, "argumentName"), vm.types.typeScalar, false];
           } else if (context === "argumentType") { // undefined -> [blessedType, isVector]
             return [vm.createLiteral(type, value, "get", [vm.createObject(vm.types.typeKeyword, "class")]), false];
           } else if (context === "argumentName") { // undefined -> name
@@ -1047,11 +1048,9 @@
           function createConstructor(blessedType)
           {
             return function() {
-              blessedType.value.members["new"] = VMSFunction.create(vm, [["type", vm.types.typeValue, false]], function(vm, context) {
-                var blessedValue = vm.scope.getOrUndefined("type");
-                if (vm.instanceOf(blessedValue, blessedType)) return blessedValue;
-                throw "Construct Error: Expected " + blessedType.value.name + " but " + blessedValue.type.value.name;
-              }, vm.scope);
+              blessedType.value.members["new"] = VMSFunctionNative.create(vm, [blessedType], function(vm, blessedsArgs) {
+                return blessedsArgs[0];
+              })
             };
           }
 
@@ -1059,27 +1058,47 @@
           this.types.typeType = this.createType("Type", null); // 先頭でなければcreateTypeが失敗する
           this.types.typeType.type = this.types.typeType;
 
-           this.types.typeValue = this.createType("Value", null);
-             this.types.typeUndefined = this.createType("Undefined", this.types.typeValue);
-             this.types.typeDefined = this.createType("Defined", this.types.typeValue);
-               this.types.typeType.value.supertype = this.types.typeDefined;
-               this.types.typeNull = this.createType("Null", this.types.typeDefined);
-               this.types.typeNumber = this.createType("Number", this.types.typeDefined); listeners.push(createConstructor(this.types.typeNumber));
-               this.types.typeString = this.createType("String", this.types.typeDefined); listeners.push(createConstructor(this.types.typeString));
-                 this.types.typeKeyword = this.createType("Keyword", this.types.typeString);
-                 this.types.typeText = this.createType("Text", this.types.typeString);
-               this.types.typeBoolean = this.createType("Boolean", this.types.typeDefined); listeners.push(createConstructor(this.types.typeBoolean));
-               this.types.typeFunction = this.createType("Function", this.types.typeDefined); listeners.push(createConstructor(this.types.typeFunction));
-               // this.types.typeFunctionNative = this.createType("FunctionNative", this.types.typeDefined); TODO
-               this.types.typePointer = this.createType("Pointer", this.types.typeDefined); listeners.push(createConstructor(this.types.typePointer));
-               this.types.typeArray = this.createType("Array", this.types.typeDefined); listeners.push(createConstructor(this.types.typeArray));
-                 this.types.typeVector = this.createType("Vector", this.types.typeArray);
-               this.types.typeObject = this.createType("Object", this.types.typeDefined); listeners.push(createConstructor(this.types.typeObject));
-                 this.types.typeHash = this.createType("Hash", this.types.typeObject);
-                 this.types.typeEntry = this.createType("Entry", this.types.typeObject);
-                 this.types.typeException = this.createType("Exception", this.types.typeObject);
-               this.types.typeCode = this.createType("Code", this.types.typeDefined);
-               this.types.typeScope = this.createType("Scope", this.types.typeDefined);
+          this.types.typeValue = this.createType("Value", null);
+          {
+            this.types.typeVector = this.createType("Vector", this.types.typeValue);
+            this.types.typeScalar = this.createType("Scalar", this.types.typeValue);
+            {
+              this.types.typeUndefined = this.createType("Undefined", this.types.typeScalar);
+              this.types.typeDefined = this.createType("Defined", this.types.typeScalar);
+              {
+                this.types.typeNull = this.createType("Null", this.types.typeDefined);
+                this.types.typeNumber = this.createType("Number", this.types.typeDefined); listeners.push(createConstructor(this.types.typeNumber));
+                this.types.typeString = this.createType("String", this.types.typeDefined); listeners.push(createConstructor(this.types.typeString));
+                {
+                  this.types.typeText = this.createType("Text", this.types.typeString);
+                }
+                this.types.typeBoolean = this.createType("Boolean", this.types.typeDefined); listeners.push(createConstructor(this.types.typeBoolean));
+                this.types.typePointer = this.createType("Pointer", this.types.typeDefined); listeners.push(createConstructor(this.types.typePointer));
+                this.types.typeFunction = this.createType("Function", this.types.typeDefined); listeners.push(createConstructor(this.types.typeFunction));
+
+                this.types.typeType.value.supertype = this.types.typeDefined;
+                this.types.typeKeyword = this.createType("Keyword", this.types.typeDefined);
+                this.types.typeObject = this.createType("Object", this.types.typeDefined);
+                this.types.typeEntry = this.createType("Entry", this.types.typeDefined);
+                this.types.typeException = this.createType("Exception", this.types.typeDefined);
+                this.types.typeCode = this.createType("Code", this.types.typeDefined);
+                this.types.typeScope = this.createType("Scope", this.types.typeDefined);
+
+                this.types.typeList = this.createType("List", this.types.typeDefined);
+                {
+                  this.types.typeArray = this.createType("Array", this.types.typeList); listeners.push(createConstructor(this.types.typeArray));
+                  this.types.typeTuple = this.createType("Tuple", this.types.typeList); listeners.push(createConstructor(this.types.typeTuple));
+                }
+
+                this.types.typeMap = this.createType("Map", this.types.typeDefined);
+                {
+                  this.types.typeHash = this.createType("Hash", this.types.typeMap); listeners.push(createConstructor(this.types.typeHash));
+                  this.types.typeDictionary = this.createType("Dictionary", this.types.typeMap); listeners.push(createConstructor(this.types.typeDictionary));
+                }
+
+              }
+            }
+          }
 
           this.UNDEFINED = this.createObject(this.types.typeUndefined, undefined);
           this.NULL = this.createObject(this.types.typeNull, null);
@@ -1112,6 +1131,11 @@
           vm.types.typeValue.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "<" + blessedsArgs[0].type.value.name + ">");
           });
+          vm.types.typeVector.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeVector], function(vm, blessedsArgs) {
+            if (blessedsArgs[0].value.length == 0) return vm.createObject(vm.types.typeString, "<Void>");
+            return vm.createObject(vm.types.typeString, blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
+          });
+
           vm.types.typeNumber.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeNumber], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "" + blessedsArgs[0].value);
           });
@@ -1121,6 +1145,21 @@
           vm.types.typeBoolean.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeBoolean], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "" + blessedsArgs[0].value);
           });
+          vm.types.typeFunction.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeFunction], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, blessedsArgs[0].value.toStringVMS());
+          });
+
+          vm.types.typeType.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeType], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "<Type: " + blessedsArgs[0].value.name + ">");
+          });
+          // TODO keyword
+          vm.types.typeEntry.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeEntry], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, vm.toString(blessedsArgs[0].value.key) + ": " + vm.toString(blessedsArgs[0].value.value));
+          });
+          vm.types.typeException.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeException], function(vm, blessedsArgs) {
+            return vm.createObject(vm.types.typeString, "<Exception: '" + blessedsArgs[0].value.message + "'>");
+          });
+          // List, Map
           vm.types.typeArray.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeArray], function(vm, blessedsArgs) {
             return vm.createObject(vm.types.typeString, "[" + blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", ") + "]");
           });
@@ -1128,22 +1167,6 @@
             return vm.createObject(vm.types.typeString, "{" + Object.keys(blessedsArgs[0].value).map(function(key) {
               return key + ": " + vm.toString(blessedsArgs[0].value[key]);
             }).join(", ") + "}");
-          });
-          vm.types.typeEntry.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeEntry], function(vm, blessedsArgs) {
-            return vm.createObject(vm.types.typeString, vm.toString(blessedsArgs[0].value.key) + ": " + vm.toString(blessedsArgs[0].value.value));
-          });
-          vm.types.typeVector.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeVector], function(vm, blessedsArgs) {
-            if (blessedsArgs[0].value.length == 0) return vm.createObject(vm.types.typeString, "<Void>");
-            return vm.createObject(vm.types.typeString, blessedsArgs[0].value.map(function(scalar) { return vm.toString(scalar); }).join(", "));
-          });
-          vm.types.typeType.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeType], function(vm, blessedsArgs) {
-            return vm.createObject(vm.types.typeString, "<Type: " + blessedsArgs[0].value.name + ">");
-          });
-          vm.types.typeFunction.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeFunction], function(vm, blessedsArgs) {
-            return vm.createObject(vm.types.typeString, blessedsArgs[0].value.toStringVMS());
-          });
-          vm.types.typeException.value.members["toString"] = VMSFunctionNative.create(vm, [vm.types.typeException], function(vm, blessedsArgs) {
-            return vm.createObject(vm.types.typeString, "<Exception: '" + blessedsArgs[0].value.message + "'>");
           });
 
           vm.types.typeValue.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeValue], function(vm, blessedsArgs) {
@@ -1164,6 +1187,7 @@
           vm.types.typeBoolean.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeBoolean], function(vm, blessedsArgs) {
             return blessedsArgs[0];
           });
+          // List
           vm.types.typeArray.value.members["toBoolean"] = VMSFunctionNative.create(vm, [vm.types.typeArray], function(vm, blessedsArgs) {
             return vm.getBoolean(blessedsArgs[0].value.length > 0);
           });
@@ -1173,8 +1197,8 @@
             Object.keys(vm.types).forEach(function(key) {
               hash[vm.types[key].value.name] = vm.types[key];
             });
-            vm.scope.setOrDefine("fluorite", vm.createObject(vm.types.typeHash, {
-              "type": vm.createObject(vm.types.typeHash, hash),
+            vm.scope.setOrDefine("fluorite", vm.createObject(vm.types.typeDictionary, {
+              "type": vm.createObject(vm.types.typeDictionary, hash),
             }));
           }
           Object.keys(vm.types).forEach(function(key) {
@@ -1186,7 +1210,7 @@
               return vm.createObject(restype, func.apply(vm, blessedsArgs.map(function (item) { return item.value; })));
             });
           }
-          vm.scope.setOrDefine("Math", vm.createObject(vm.types.typeHash, {
+          vm.scope.setOrDefine("Math", vm.createObject(vm.types.typeDictionary, {
             "PI": vm.createObject(vm.types.typeNumber, Math.PI),
             "E": vm.createObject(vm.types.typeNumber, Math.E),
             "abs": createNativeBridge(vm.types.typeNumber, [vm.types.typeNumber], Math.abs),
