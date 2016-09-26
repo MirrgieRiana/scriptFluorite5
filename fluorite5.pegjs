@@ -1663,25 +1663,37 @@ VMFactory
   = name:([a-zA-Z0-9_]+ { return text(); }) { return getVM(name); }
 
 Expression
-  = Message
+  = MessageWithShebang
+
+MessageWithShebang
+  = Shebang? main:Message {
+    return main;
+  }
+
+Shebang
+  = ("#!" [^\n\r]* ([\r\n] / "\r\n"))
+
+NL
+  = (("\r"? "\n"))
 
 Message
-  = ("#!" [^\n\r]* ([\r\n] / "\r\n"))? head:MessageText tail:("\\" _ MessageFormula _ "\\" MessageText)* {
-      var result = [head], i;
+  = head:MessageLine tail:(NL MessageLine)* {
+    return [head].concat(tail.map((line) => line[1]));
+  }
 
-      for (i = 0; i < tail.length; i++) {
-        result.push(tail[i][2]);
-        result.push(tail[i][5]);
-      }
-
-      return result;
-    }
+MessageLine
+  = (MessageFormulaText / MessageText)*
 
 MessageText
   = main:(
-      [^\\]
+      [^\\\r\n]
     / "\\" _ "\\" { return "\\"; }
-    )* { return main.join(""); }
+    )+ { return main.join(""); }
+
+MessageFormulaText
+  = "\\" _ main:MessageFormula _ "\\" {
+    return main
+  }
 
 MessageFormula
   = main:Formula {
